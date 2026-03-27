@@ -1,0 +1,105 @@
+import { useState, useEffect, useMemo } from 'react';
+import { PageHeader } from '../../../components/ui/PageHeader';
+import { DateRangeSelector } from '@/components/ui/DateRangeSelector';
+import type { DateRange } from 'react-day-picker';
+import { subDays, format } from 'date-fns';
+
+import { useAuth } from '@/hooks/useAuth';
+import { socialService } from '@/services/social.service';
+
+export function ClientSocialPage() {
+  const { clientId } = useAuth();
+  const [dateRange, setDateRange] = useState<DateRange | undefined>({
+    from: subDays(new Date(), 30),
+    to: new Date()
+  });
+
+  const [isLoading, setIsLoading] = useState(false);
+  const [data, setData] = useState<any | null>(null);
+
+  useEffect(() => {
+    async function fetchData() {
+      if (!clientId || !dateRange?.from || !dateRange?.to) return;
+      
+      try {
+        setIsLoading(true);
+        const overview = await socialService.getSocialOverview(
+          clientId, 
+          format(dateRange.from, 'yyyy-MM-dd'),
+          format(dateRange.to, 'yyyy-MM-dd')
+        );
+        setData(overview);
+      } catch (error) {
+        console.error('Error fetching social data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchData();
+  }, [clientId, dateRange]);
+
+  const mockOverview = useMemo(() => ({
+    total_posts: 42,
+    published: 28,
+    scheduled: 10,
+    pending_approvals: 4,
+    rejected: 0,
+    platforms: {
+      instagram: 20,
+      facebook: 12,
+      linkedin: 10
+    }
+  }), []);
+
+  const overviewData = data || mockOverview;
+
+  return (
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <PageHeader title="Social Media" description="Acompanhe o desempenho, calendário e aprovações do conteúdo social." />
+        <div className="flex items-center gap-2">
+          <DateRangeSelector date={dateRange} setDate={setDateRange} />
+        </div>
+      </div>
+
+      <div className={isLoading ? "opacity-50 pointer-events-none transition-opacity duration-300" : "transition-opacity duration-300"}>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="bg-white p-6 rounded-lg border shadow-sm">
+            <h3 className="text-sm font-medium text-gray-500 mb-2">Total de Posts</h3>
+            <p className="text-3xl font-bold">{overviewData.total_posts}</p>
+          </div>
+          <div className="bg-white p-6 rounded-lg border shadow-sm">
+            <h3 className="text-sm font-medium text-gray-500 mb-2">Publicados</h3>
+            <p className="text-3xl font-bold text-green-600">{overviewData.published}</p>
+          </div>
+          <div className="bg-white p-6 rounded-lg border shadow-sm">
+            <h3 className="text-sm font-medium text-gray-500 mb-2">Agendados</h3>
+            <p className="text-3xl font-bold text-blue-600">{overviewData.scheduled}</p>
+          </div>
+          <div className="bg-white p-6 rounded-lg border shadow-sm">
+            <h3 className="text-sm font-medium text-gray-500 mb-2">Aprovações Pendentes</h3>
+            <p className="text-3xl font-bold text-amber-500">{overviewData.pending_approvals}</p>
+          </div>
+        </div>
+
+        <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
+           <div className="bg-white p-6 rounded-lg border shadow-sm min-h-[300px] flex items-center justify-center">
+             <p className="text-gray-400">Posts by Platform Chart Placeholder</p>
+           </div>
+           
+           <div className="bg-white p-6 rounded-lg border shadow-sm min-h-[300px] flex flex-col items-center justify-center">
+             <p className="text-gray-400">Content Status Donut Placeholder</p>
+           </div>
+        </div>
+
+        <div className="mt-6">
+          <h2 className="text-lg font-semibold mb-4">Últimas Aprovações Pendentes</h2>
+          <div className="bg-white p-6 rounded-lg border shadow-sm">
+             <p className="text-gray-400 text-center py-8">Recent Approvals Widget Placeholder</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
