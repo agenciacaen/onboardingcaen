@@ -1,4 +1,7 @@
+import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { supabase } from './services/supabase';
+import { useAuthStore } from './store/authStore';
 import { useAuth } from './hooks/useAuth';
 
 import { AuthLayout } from './layouts/AuthLayout';
@@ -46,7 +49,60 @@ function RootRedirect() {
 }
 
 export default function App() {
-  useAuth();
+  const { setUser, setProfile, setLoading, clear } = useAuthStore();
+
+  useEffect(() => {
+    async function getProfile(userId: string) {
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', userId)
+          .single();
+
+        if (error) {
+          console.error('Error fetching profile:', error);
+          setProfile(null);
+          return;
+        }
+
+        setProfile(data);
+      } catch (error) {
+        console.error('Unexpected error fetching profile:', error);
+        setProfile(null);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    const initializeAuth = async () => {
+      setLoading(true);
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session?.user) {
+        setUser(session.user);
+        await getProfile(session.user.id);
+      } else {
+        clear();
+        setLoading(false);
+      }
+    };
+
+    initializeAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (session?.user) {
+        setUser(session.user);
+        await getProfile(session.user.id);
+      } else {
+        clear();
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [setUser, setProfile, setLoading, clear]);
 
   return (
     <BrowserRouter>
