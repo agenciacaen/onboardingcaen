@@ -56,14 +56,14 @@ export function DocumentUploadModal({ open, onOpenChange, onSuccess }: DocumentU
       const filePath = `documents/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
-        .from('agency_documents')
+        .from('documents')
         .upload(filePath, file);
 
       if (uploadError) throw uploadError;
 
       // 2. Get Public URL
       const { data: { publicUrl } } = supabase.storage
-        .from('agency_documents')
+        .from('documents')
         .getPublicUrl(filePath);
 
       // 3. Save to database

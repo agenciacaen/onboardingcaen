@@ -12,6 +12,8 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 import { LoginPage } from './app/login/page';
 import { UnauthorizedPage } from './app/unauthorized/page';
 import { Toaster } from './components/ui/sonner';
+import { ErrorBoundary } from './components/ErrorBoundary';
+import { AuthLoadingScreen } from './components/ui/AuthLoadingScreen';
 
 // Agência
 import { AgencyDashboard } from './app/agency/page';
@@ -21,8 +23,10 @@ import { AgencyCalendarPage } from './app/agency/calendar/page';
 import { AgencyTasksPage } from './app/agency/tasks/page';
 import { AgencyFlowsPage } from './app/agency/flows/page';
 import { AgencyTeamPage } from './app/agency/team/page';
+import { AgencyApprovalsPage } from './app/agency/approvals/page';
 import { AgencyDocumentsPage } from './app/agency/documents/page';
 import { AgencyReportsPage } from './app/agency/reports/page';
+import { AgencyFinancialPage } from './app/agency/financial/page';
 
 // Cliente
 import { ClientDashboard } from './app/client/page';
@@ -41,15 +45,15 @@ import { ClientFinancialPage } from './app/client/financial/page';
 function RootRedirect() {
   const { role, isLoading } = useAuth();
   
-  if (isLoading) return null; 
+  if (isLoading) return <AuthLoadingScreen />; 
   
-  if (role === 'admin') return <Navigate to="/agency" replace />;
+  if (role === 'admin' || role === 'member') return <Navigate to="/agency" replace />;
   if (role === 'client') return <Navigate to="/client" replace />;
   return <Navigate to="/login" replace />;
 }
 
 export default function App() {
-  const { setUser, setProfile, setLoading, clear } = useAuthStore();
+  const { setUser, setProfile, setLoading, finishLoading, clear } = useAuthStore();
 
   useEffect(() => {
     async function getProfile(userId: string) {
@@ -58,97 +62,96 @@ export default function App() {
           .from('profiles')
           .select('*')
           .eq('id', userId)
-          .single();
+          .maybeSingle();
 
         if (error) {
           console.error('Error fetching profile:', error);
           setProfile(null);
-          return;
+        } else {
+          setProfile(data);
         }
-
-        setProfile(data);
       } catch (error) {
         console.error('Unexpected error fetching profile:', error);
         setProfile(null);
       } finally {
-        setLoading(false);
+        finishLoading();
       }
     }
 
-    const initializeAuth = async () => {
-      setLoading(true);
-      const { data: { session } } = await supabase.auth.getSession();
-      
+    // Inicia loading — o onAuthStateChange vai disparar INITIAL_SESSION automaticamente
+    setLoading(true);
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth event:', event);
       if (session?.user) {
         setUser(session.user);
-        await getProfile(session.user.id);
+        // Se o LoginPage já populou o store, não busca de novo
+        const currentProfile = useAuthStore.getState().profile;
+        if (!currentProfile || currentProfile.id !== session.user.id) {
+          await getProfile(session.user.id);
+        } else {
+          finishLoading();
+        }
       } else {
         clear();
-        setLoading(false);
-      }
-    };
-
-    initializeAuth();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (session?.user) {
-        setUser(session.user);
-        await getProfile(session.user.id);
-      } else {
-        clear();
+        finishLoading();
       }
     });
 
     return () => {
       subscription.unsubscribe();
     };
-  }, [setUser, setProfile, setLoading, clear]);
+  }, [setUser, setProfile, setLoading, finishLoading, clear]);
 
   return (
     <BrowserRouter>
       <Toaster position="top-right" richColors />
-      <Routes>
-        <Route path="/" element={<RootRedirect />} />
-        
-        <Route element={<AuthLayout />}>
-          <Route path="/login" element={<LoginPage />} />
-        </Route>
-        
-        <Route element={<ProtectedRoute requiredRole="admin" />}>
-          <Route element={<AgencyLayout />}>
-            <Route path="/agency" index element={<AgencyDashboard />} />
-            <Route path="/agency/clients" element={<AgencyClientsPage />} />
-            <Route path="/agency/clients/:id" element={<AgencyClientDetailPage />} />
-            <Route path="/agency/calendar" element={<AgencyCalendarPage />} />
-            <Route path="/agency/tasks" element={<AgencyTasksPage />} />
-            <Route path="/agency/flows" element={<AgencyFlowsPage />} />
-            <Route path="/agency/team" element={<AgencyTeamPage />} />
-            <Route path="/agency/documents" element={<AgencyDocumentsPage />} />
-            <Route path="/agency/reports" element={<AgencyReportsPage />} />
+      <ErrorBoundary>
+        <Routes>
+          <Route path="/" element={<RootRedirect />} />
+          
+          <Route element={<AuthLayout />}>
+            <Route path="/login" element={<LoginPage />} />
           </Route>
-        </Route>
-        
-        <Route element={<ProtectedRoute requiredRole="client" />}>
-          <Route element={<ClientLayout />}>
-            <Route path="/client" index element={<ClientDashboard />} />
-            <Route path="/client/onboarding" element={<ClientOnboardingPage />} />
-            <Route path="/client/traffic" element={<ClientTrafficPage />} />
-            <Route path="/client/traffic/campaigns" element={<ClientCampaignsPage />} />
-            <Route path="/client/traffic/campaigns/:id" element={<ClientCampaignDetailPage />} />
-            <Route path="/client/traffic/ads" element={<ClientAdsPage />} />
-            <Route path="/client/social" element={<ClientSocialPage />} />
-            <Route path="/client/web" element={<ClientWebPage />} />
-            <Route path="/client/approvals" element={<ClientApprovalsPage />} />
-            <Route path="/client/support" element={<ClientSupportPage />} />
-            <Route path="/client/support/:id" element={<ClientTicketDetailPage />} />
-            <Route path="/client/financial" element={<ClientFinancialPage />} />
+          
+          <Route element={<ProtectedRoute requiredRole="admin" />}>
+            <Route element={<AgencyLayout />}>
+              <Route path="/agency" element={<AgencyDashboard />} />
+              <Route path="/agency/clients" element={<AgencyClientsPage />} />
+              <Route path="/agency/clients/:id" element={<AgencyClientDetailPage />} />
+              <Route path="/agency/calendar" element={<AgencyCalendarPage />} />
+              <Route path="/agency/approvals" element={<AgencyApprovalsPage />} />
+              <Route path="/agency/tasks" element={<AgencyTasksPage />} />
+              <Route path="/agency/flows" element={<AgencyFlowsPage />} />
+              <Route path="/agency/team" element={<AgencyTeamPage />} />
+              <Route path="/agency/documents" element={<AgencyDocumentsPage />} />
+              <Route path="/agency/reports" element={<AgencyReportsPage />} />
+              <Route path="/agency/financial" element={<AgencyFinancialPage />} />
+            </Route>
           </Route>
-        </Route>
-        
-        <Route path="/unauthorized" element={<UnauthorizedPage />} />
-        
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+          
+          <Route element={<ProtectedRoute requiredRole="client" />}>
+            <Route element={<ClientLayout />}>
+              <Route path="/client" element={<ClientDashboard />} />
+              <Route path="/client/onboarding" element={<ClientOnboardingPage />} />
+              <Route path="/client/traffic" element={<ClientTrafficPage />} />
+              <Route path="/client/traffic/campaigns" element={<ClientCampaignsPage />} />
+              <Route path="/client/traffic/campaigns/:id" element={<ClientCampaignDetailPage />} />
+              <Route path="/client/traffic/ads" element={<ClientAdsPage />} />
+              <Route path="/client/social" element={<ClientSocialPage />} />
+              <Route path="/client/web" element={<ClientWebPage />} />
+              <Route path="/client/approvals" element={<ClientApprovalsPage />} />
+              <Route path="/client/support" element={<ClientSupportPage />} />
+              <Route path="/client/support/:ticketId" element={<ClientTicketDetailPage />} />
+              <Route path="/client/financial" element={<ClientFinancialPage />} />
+            </Route>
+          </Route>
+          
+          <Route path="/unauthorized" element={<UnauthorizedPage />} />
+          
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </ErrorBoundary>
     </BrowserRouter>
   );
 }

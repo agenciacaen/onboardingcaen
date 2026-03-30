@@ -79,7 +79,7 @@ export function TaskCreateModal({
   const fetchData = async () => {
     const [clientsRes, teamRes] = await Promise.all([
       supabase.from("clients").select("id, name").in('status', ['active', 'onboarding']),
-      supabase.from("profiles").select("id, full_name").eq("role", "member"),
+      supabase.from("profiles").select("id, full_name").in("role", ["admin", "member"]),
     ]);
     if (clientsRes.data) setClients(clientsRes.data);
     if (teamRes.data) setTeam(teamRes.data);
@@ -93,15 +93,22 @@ export function TaskCreateModal({
   const onSubmit = async (data: CreateTaskFormValues) => {
     setLoading(true);
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Usuário não autenticado");
+
+      // Mapeamento silencioso conforme solicitado
+      const moduleMapped = data.module === 'tráfego' ? 'traffic' : data.module;
+      
       const { error } = await supabase.from('tasks').insert({
         title: data.title,
         description: data.description,
         client_id: data.client_id,
-        module: data.module,
+        module: moduleMapped,
         status: data.status,
         priority: data.priority,
         due_date: data.due_date || null,
-        assigned_to: data.assigned_to || null,
+        assigned_to: (data.assigned_to === 'unassigned' || !data.assigned_to) ? null : data.assigned_to,
+        created_by: user.id,
       });
 
       if (error) throw error;
@@ -149,7 +156,7 @@ export function TaskCreateModal({
                 <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="general">Geral</SelectItem>
-                  <SelectItem value="tráfego">Tráfego</SelectItem>
+                  <SelectItem value="traffic">Tráfego</SelectItem>
                   <SelectItem value="social">Social Media</SelectItem>
                   <SelectItem value="web">Desenvolvimento Web</SelectItem>
                 </SelectContent>

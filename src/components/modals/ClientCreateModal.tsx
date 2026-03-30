@@ -75,7 +75,7 @@ export function ClientCreateModal({
     const { data } = await supabase
       .from("profiles")
       .select("id, full_name")
-      .eq("role", "admin");
+      .in("role", ["admin", "member"]);
     if (data) setAdmins(data);
   };
 
@@ -116,7 +116,8 @@ export function ClientCreateModal({
       onOpenChange(false);
     } catch (error) {
       console.error(error);
-      toast.error(error instanceof Error ? error.message : "Erro ao criar cliente");
+      const message = error instanceof Error ? error.message : "Erro ao criar cliente";
+      toast.error(message);
     } finally {
       setLoading(false);
     }

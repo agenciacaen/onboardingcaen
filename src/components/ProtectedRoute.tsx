@@ -1,10 +1,10 @@
-
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { Skeleton } from './ui/skeleton';
+import type { Role } from '../types/auth.types';
 
 interface ProtectedRouteProps {
-  requiredRole?: 'admin' | 'client';
+  requiredRole?: Role;
 }
 
 export function ProtectedRoute({ requiredRole }: ProtectedRouteProps) {
@@ -25,7 +25,18 @@ export function ProtectedRoute({ requiredRole }: ProtectedRouteProps) {
     return <Navigate to="/login" replace />;
   }
 
-  if (requiredRole && role !== requiredRole) {
+  // 'member' pode acessar rotas de 'admin' (painel da agência)
+  // Se for admin/member e estiver com impersonatedClientId, pode acessar rotas de 'client'
+  const isAgencyRole = role === 'admin' || role === 'member';
+  const isImpersonating = isAgencyRole && !!useAuthStore.getState().impersonatedClientId;
+  
+  const hasAccess = 
+    !requiredRole || 
+    role === requiredRole || 
+    (requiredRole === 'admin' && role === 'member') ||
+    (requiredRole === 'client' && isImpersonating);
+
+  if (!hasAccess) {
     return <Navigate to="/unauthorized" replace />;
   }
 

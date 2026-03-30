@@ -14,6 +14,8 @@ import { trafficService } from '@/modules/traffic/services/traffic.service';
 import { supabase } from '@/services/supabase';
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
 import { toast } from 'sonner';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { ClientModuleTasksView } from '@/components/modules/ClientModuleTasksView';
 
 export function ClientTrafficPage() {
   const { clientId } = useAuth();
@@ -134,20 +136,36 @@ export function ClientTrafficPage() {
         </div>
       </div>
 
-      <TrafficKpiCards data={kpis} />
+      <Tabs defaultValue="dashboard" className="w-full">
+        <TabsList className="mb-4 bg-slate-100/50">
+          <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+          <TabsTrigger value="kanban">Quadro Kanban</TabsTrigger>
+          <TabsTrigger value="list">Lista de Tarefas</TabsTrigger>
+        </TabsList>
 
-      <div className="mt-6 flex flex-col gap-4">
-        <CampaignStatusSummary 
-          data={statusCounts} 
-          activeFilter={activeStatus} 
-          onFilterChange={setActiveStatus} 
-        />
-      </div>
+        <TabsContent value="dashboard" className="mt-0 space-y-6">
+          <TrafficKpiCards data={kpis} />
+          <div className="mt-6 flex flex-col gap-4">
+            <CampaignStatusSummary 
+              data={statusCounts} 
+              activeFilter={activeStatus} 
+              onFilterChange={setActiveStatus} 
+            />
+          </div>
+          <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <SpendOverTimeChart data={spendHistory} />
+            <BestAdPreview ads={bestAds} />
+          </div>
+        </TabsContent>
 
-      <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <SpendOverTimeChart data={spendHistory} />
-        <BestAdPreview ads={bestAds} />
-      </div>
+        <TabsContent value="kanban" className="mt-0 pt-2">
+          <ClientModuleTasksView module="traffic" view="kanban" />
+        </TabsContent>
+
+        <TabsContent value="list" className="mt-0 pt-2">
+          <ClientModuleTasksView module="traffic" view="list" />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

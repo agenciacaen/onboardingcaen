@@ -1,11 +1,11 @@
-import { useState, Fragment } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useState, useEffect, Fragment } from "react";
+import { useLocation, useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import { useSidebarStore } from "../../store/sidebarStore";
 import { useNotificationStore } from "../../store/notificationStore";
 import { useAuthStore } from "../../store/authStore";
 import { supabase } from "../../services/supabase";
-import { Bell, Menu, User, LogOut, Check, ChevronRight } from "lucide-react";
+import { Bell, Menu, User, LogOut, ChevronRight } from "lucide-react";
 import { cn } from "../../lib/utils";
 import { Button } from "./button";
 import { Avatar, AvatarFallback, AvatarImage } from "./avatar";
@@ -34,6 +34,31 @@ export function TopBar() {
   const navigate = useNavigate();
   
   const [activeClient, setActiveClient] = useState("all");
+  const [clients, setClients] = useState<{ id: string; name: string }[]>([]);
+
+  useEffect(() => {
+    if (role === "client" && profile?.client_id) {
+      const cleanup = useNotificationStore.getState().initialize(profile.client_id);
+      return cleanup;
+    }
+  }, [role, profile?.client_id]);
+
+  useEffect(() => {
+    const fetchClients = async () => {
+      if (role === "admin") {
+        const { data, error } = await supabase
+          .from("clients")
+          .select("id, name")
+          .is("deleted_at", null);
+        if (error) {
+          console.error("Erro ao buscar clientes para TopBar:", error);
+        } else {
+          setClients(data || []);
+        }
+      }
+    };
+    fetchClients();
+  }, [role]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -77,13 +102,23 @@ export function TopBar() {
           {pathNames.map((value, index) => {
             const isLast = index === pathNames.length - 1;
             const title = breadcrumbMap[value] || value;
+            const url = `/${pathNames.slice(0, index + 1).join("/")}`;
             
             return (
               <Fragment key={value}>
                 {index > 0 && <ChevronRight className="h-4 w-4 mx-1" />}
-                <span className={cn(isLast ? "text-slate-900 dark:text-slate-100" : "")}>
-                  {title.charAt(0).toUpperCase() + title.slice(1)}
-                </span>
+                {isLast ? (
+                  <span className="text-slate-900 dark:text-slate-100 font-semibold truncate">
+                    {title.charAt(0).toUpperCase() + title.slice(1)}
+                  </span>
+                ) : (
+                  <Link 
+                    to={url} 
+                    className="hover:text-primary transition-colors truncate"
+                  >
+                    {title.charAt(0).toUpperCase() + title.slice(1)}
+                  </Link>
+                )}
               </Fragment>
             );
           })}
@@ -99,8 +134,11 @@ export function TopBar() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Visão Geral (Todos)</SelectItem>
-                <SelectItem value="client-1">Empresa Exemplo A</SelectItem>
-                <SelectItem value="client-2">Empresa Exemplo B</SelectItem>
+                {clients.map((client) => (
+                  <SelectItem key={client.id} value={client.id}>
+                    {client.name}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -136,15 +174,20 @@ export function TopBar() {
             <div className="max-h-80 overflow-y-auto">
               {notifications.length > 0 ? (
                 notifications.slice(0, 5).map((notif) => (
-                  <DropdownMenuItem key={notif.id} className="flex flex-col items-start p-3 gap-1 cursor-default" onSelect={(e) => e.preventDefault()}>
+                  <DropdownMenuItem 
+                    key={notif.id} 
+                    className={cn("flex flex-col items-start p-3 gap-1 cursor-pointer hover:bg-slate-50", !notif.read_at && "bg-slate-50/50")}
+                    onSelect={() => {
+                      if (notif.link) navigate(notif.link);
+                      if (!notif.read_at) markAsRead(notif.id);
+                    }}
+                  >
                     <div className="flex w-full items-center justify-between">
                       <span className={cn("text-xs font-semibold", !notif.read_at && "text-primary")}>
                         {notif.title}
                       </span>
                       {!notif.read_at && (
-                        <button onClick={() => markAsRead(notif.id)} className="text-slate-400 hover:text-slate-600" title="Marcar como lida">
-                          <Check className="h-3 w-3" />
-                        </button>
+                        <div className="h-2 w-2 rounded-full bg-primary" />
                       )}
                     </div>
                     {notif.body && <p className="text-xs text-slate-500 line-clamp-2">{notif.body}</p>}

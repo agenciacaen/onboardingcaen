@@ -7,11 +7,14 @@ interface AuthState {
   profile: Profile | null;
   role: Role | null;
   clientId: string | null;
+  impersonatedClientId: string | null;
   isLoading: boolean;
   setUser: (user: User | null) => void;
   setProfile: (profile: Profile | null) => void;
+  setImpersonatedClientId: (id: string | null) => void;
   clear: () => void;
   setLoading: (isLoading: boolean) => void;
+  finishLoading: () => void;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -19,6 +22,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   profile: null,
   role: null,
   clientId: null,
+  impersonatedClientId: null,
   isLoading: true,
   setUser: (user) => set({ user }),
   setProfile: (profile) => set({ 
@@ -26,6 +30,8 @@ export const useAuthStore = create<AuthState>((set) => ({
     role: profile?.role || null, 
     clientId: profile?.client_id || null 
   }),
-  clear: () => set({ user: null, profile: null, role: null, clientId: null, isLoading: false }),
-  setLoading: (isLoading) => set({ isLoading })
+  setImpersonatedClientId: (id) => set({ impersonatedClientId: id }),
+  clear: () => set({ user: null, profile: null, role: null, clientId: null, impersonatedClientId: null, isLoading: false }),
+  setLoading: (isLoading) => set({ isLoading }),
+  finishLoading: () => set({ isLoading: false })
 }));

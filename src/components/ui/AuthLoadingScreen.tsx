@@ -1,0 +1,33 @@
+
+import { Hexagon } from "lucide-react";
+
+export function AuthLoadingScreen() {
+  return (
+    <div className="fixed inset-0 flex flex-col items-center justify-center bg-white dark:bg-slate-950 z-[9999]">
+      <div className="relative flex items-center justify-center mb-6">
+        {/* Camada de pulsação externa */}
+        <div className="absolute inset-0 animate-ping rounded-full bg-primary/20 duration-1000 scale-150" />
+        
+        {/* Logo centralizado com rotação sutil */}
+        <div className="relative bg-white dark:bg-slate-900 p-4 rounded-2xl shadow-xl dark:shadow-primary/5 border dark:border-slate-800">
+          <Hexagon className="h-12 w-12 text-primary animate-pulse" />
+        </div>
+      </div>
+      
+      <div className="flex flex-col items-center space-y-2">
+        <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100 italic">CAEN</h1>
+        <div className="flex items-center gap-1">
+          <span className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce [animation-delay:-0.3s]" />
+          <span className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce [animation-delay:-0.15s]" />
+          <span className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce" />
+        </div>
+        <p className="text-sm text-slate-500 font-medium">Sincronizando agência...</p>
+      </div>
+      
+      {/* Rodapé sutil indicando infraestrutura segura */}
+      <div className="absolute bottom-8 text-[10px] uppercase tracking-widest text-slate-400 font-semibold">
+        Infraestrutura de Marketing Segura
+      </div>
+    </div>
+  );
+}

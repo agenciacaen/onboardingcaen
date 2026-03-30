@@ -26,13 +26,15 @@ export function ClientSummaryGrid() {
           .is('deleted_at', null);
 
         if (error) throw error;
+        
+        const safeData = data || [];
 
-        const active = data.filter(c => c.status === 'active').length;
-        const onboarding = data.filter(c => c.status === 'onboarding').length;
-        const inactive = data.filter(c => c.status === 'inactive').length;
+        const active = safeData.filter(c => c.status === 'active').length;
+        const onboarding = safeData.filter(c => c.status === 'onboarding').length;
+        const inactive = safeData.filter(c => c.status === 'inactive').length;
         
         setStats({
-          total: data.length,
+          total: safeData.length,
           active,
           onboarding,
           inactive,

@@ -114,7 +114,7 @@ serve(async (req) => {
             type: 'task',
             title: 'Onboarding Concluído',
             body: 'O cliente completou todas as etapas do onboarding!',
-            link: `/agency/clients/\${client_id}`
+            link: `/agency/clients/${client_id}`
           }
         })
 

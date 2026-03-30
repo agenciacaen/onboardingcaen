@@ -36,7 +36,6 @@ export const OnboardingService = {
             client_id: clientId,
             flow_id: flowData.id,
             current_step: 0,
-            status: 'in_progress',
             completed_steps: []
           })
           .select()

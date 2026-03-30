@@ -15,6 +15,7 @@ import {
   CheckSquare,
   Bell,
   ArrowRight,
+  Wallet,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -26,6 +27,10 @@ interface DashboardData {
   active_web_pages: number;
   open_tasks: number;
   unread_notifications: number;
+  // Novos campos financeiros
+  ads_investment: number;
+  labor_investment: number;
+  total_pending: number;
 }
 
 function StatCard({
@@ -33,12 +38,14 @@ function StatCard({
   value,
   icon: Icon,
   href,
+  description,
   variant = "default",
 }: {
   title: string;
   value: string | number;
   icon: React.ElementType;
   href?: string;
+  description?: string;
   variant?: "default" | "accent" | "warning";
 }) {
   const navigate = useNavigate();
@@ -61,7 +68,14 @@ function StatCard({
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-sm text-muted-foreground truncate">{title}</p>
-          <p className="text-2xl font-bold tracking-tight">{value}</p>
+          <div className="flex items-baseline gap-1">
+            <p className="text-2xl font-bold tracking-tight">{value}</p>
+          </div>
+          {description && (
+            <p className="text-[10px] text-muted-foreground mt-1 flex items-center gap-1">
+              {description}
+            </p>
+          )}
         </div>
         {href && (
           <ArrowRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
@@ -82,15 +96,53 @@ export function ClientDashboard() {
 
       try {
         setLoading(true);
-        const { data: result, error } = await supabase.rpc("get_client_dashboard", {
-          p_client_id: clientId,
+        
+        // Buscamos os dados base e as faturas em paralelo
+        const [baseDataRes, invoicesRes, campaignsRes, tasksRes, approvalsRes, notifsRes] = await Promise.all([
+          supabase.rpc("get_client_dashboard", { p_client_id: clientId }),
+          supabase.from('financial_invoices').select('amount, category, status, due_date').eq('client_id', clientId),
+          supabase.from('traffic_campaigns').select('id', { count: 'exact', head: true }).eq('client_id', clientId).eq('status', 'active'),
+          supabase.from('tasks').select('id', { count: 'exact', head: true }).eq('client_id', clientId).in('status', ['todo', 'in_progress', 'review']),
+          supabase.from('social_approvals').select('id', { count: 'exact', head: true }).eq('client_id', clientId).eq('status', 'pending'),
+          supabase.from('notifications').select('id', { count: 'exact', head: true }).is('read_at', null),
+        ]);
+
+        // Processamento financeiro
+        const now = new Date();
+        const curMonth = now.getMonth();
+        const curYear = now.getFullYear();
+
+        const financial = (invoicesRes.data || []).reduce((acc, inv) => {
+          const date = new Date(inv.due_date);
+          const isCurrent = date.getMonth() === curMonth && date.getFullYear() === curYear;
+          
+          if (isCurrent) {
+            if (inv.category === 'ads') acc.ads += inv.amount;
+            if (inv.category === 'labor') acc.labor += inv.amount;
+          }
+          if (inv.status !== 'paid') acc.pending += inv.amount;
+          return acc;
+        }, { ads: 0, labor: 0, pending: 0 });
+
+        // Dados do RPC (se disponível)
+        const rpcData = baseDataRes.data ? (typeof baseDataRes.data === 'string' ? JSON.parse(baseDataRes.data) : baseDataRes.data) : {};
+
+        setData({
+          campaigns_active: campaignsRes.count || rpcData.campaigns_active || 0,
+          spend: financial.ads || rpcData.spend || 0,
+          posts_published: rpcData.posts_published || 0,
+          pending_approvals: approvalsRes.count || rpcData.pending_approvals || 0,
+          active_web_pages: rpcData.active_web_pages || 0,
+          open_tasks: tasksRes.count || rpcData.open_tasks || 0,
+          unread_notifications: notifsRes.count || rpcData.unread_notifications || 0,
+          ads_investment: financial.ads,
+          labor_investment: financial.labor,
+          total_pending: financial.pending,
         });
 
-        if (error) throw error;
-        setData(result as DashboardData);
       } catch (err) {
         console.error("Erro ao carregar dashboard:", err);
-        toast.error("Não foi possível carregar os dados do dashboard.");
+        toast.error("Erro ao carregar alguns dados do dashboard.");
       } finally {
         setLoading(false);
       }
@@ -120,6 +172,9 @@ export function ClientDashboard() {
     active_web_pages: 0,
     open_tasks: 0,
     unread_notifications: 0,
+    ads_investment: 0,
+    labor_investment: 0,
+    total_pending: 0,
   };
 
   return (
@@ -139,24 +194,28 @@ export function ClientDashboard() {
           href="/client/traffic"
         />
         <StatCard
-          title="Investimento (mês)"
-          value={`R$ ${stats.spend.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`}
+          title="Investimentos (Mês)"
+          value={`R$ ${stats.ads_investment.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`}
+          description="Total investido em anúncios ↗"
+          icon={TrendingUp}
+          href="/client/financial"
+          variant="default"
+        />
+        <StatCard
+          title="Mão de Obra (Mês)"
+          value={`R$ ${stats.labor_investment.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`}
+          description="Faturamento em serviços"
+          icon={Wallet}
+          href="/client/financial"
+          variant="default"
+        />
+        <StatCard
+          title="Total Pendente"
+          value={`R$ ${stats.total_pending.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`}
+          description="Aguardando pagamento"
           icon={DollarSign}
           href="/client/financial"
-          variant="accent"
-        />
-        <StatCard
-          title="Posts Publicados"
-          value={stats.posts_published}
-          icon={Share2}
-          href="/client/social"
-        />
-        <StatCard
-          title="Aprovações Pendentes"
-          value={stats.pending_approvals}
-          icon={ThumbsUp}
-          href="/client/approvals"
-          variant={stats.pending_approvals > 0 ? "warning" : "default"}
+          variant="warning"
         />
       </div>
 

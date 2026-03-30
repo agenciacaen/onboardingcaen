@@ -4,7 +4,7 @@ import { useSidebarStore } from "../../store/sidebarStore";
 import { useAuth } from "../../hooks/useAuth";
 import { SidebarGroup } from "./SidebarGroup";
 import { SidebarItem } from "./SidebarItem";
-import { ApprovalBadgeCount } from "./ApprovalBadgeCount";
+import { NotificationBadge } from "./NotificationBadge";
 import { cn } from "../../lib/utils";
 import {
   LayoutDashboard, Users, UserCheck, CalendarDays, CheckSquare, GitBranch,
@@ -23,7 +23,7 @@ import {
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const { role } = useAuth();
   const { profile } = useAuthStore();
-  const { isExpanded, isMobile } = useSidebarStore();
+  const { isMobile } = useSidebarStore();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -32,7 +32,9 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
     navigate("/login");
   };
 
-  const showLabels = isExpanded || isMobile;
+  // on desktop, visually hide labels unless hovered, but on mobile always show labels inside the Sheet
+  const textClasses = isMobile ? "block" : "hidden group-hover:block transition-all duration-200";
+
 
   const agencyItems = (
     <>
@@ -41,6 +43,8 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       </SidebarGroup>
       <SidebarGroup label="Gestão">
         <SidebarItem icon={Users} label="Clientes" href="/agency/clients" onNavigate={onNavigate} />
+        <SidebarItem icon={ThumbsUp} label="Aprovações" href="/agency/approvals" onNavigate={onNavigate} />
+        <SidebarItem icon={DollarSign} label="Financeiro" href="/agency/financial" onNavigate={onNavigate} />
         <SidebarItem icon={UserCheck} label="Equipe" href="/agency/team" onNavigate={onNavigate} />
       </SidebarGroup>
       <SidebarGroup label="Operacional">
@@ -63,7 +67,13 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
         <SidebarItem icon={LayoutDashboard} label="Dashboard" href="/client" onNavigate={onNavigate} />
       </SidebarGroup>
       <SidebarGroup label="Início">
-        <SidebarItem icon={Rocket} label="Onboarding" href="/client/onboarding" onNavigate={onNavigate} />
+        <SidebarItem 
+          icon={Rocket} 
+          label="Onboarding" 
+          href="/client/onboarding" 
+          endDecorator={<NotificationBadge type="task" />}
+          onNavigate={onNavigate} 
+        />
       </SidebarGroup>
       <SidebarGroup label="Módulos">
         <SidebarItem icon={TrendingUp} label="Tráfego Pago" href="/client/traffic" onNavigate={onNavigate} />
@@ -75,7 +85,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
           icon={ThumbsUp} 
           label="Aprovações" 
           href="/client/approvals" 
-          endDecorator={<ApprovalBadgeCount />}
+          endDecorator={<NotificationBadge type="approval" />}
           onNavigate={onNavigate}
         />
       </SidebarGroup>
@@ -93,48 +103,37 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       <div className="flex h-16 items-center border-b px-4 dark:border-slate-800">
         <div className="flex items-center gap-2 overflow-hidden">
           <Hexagon className="h-8 w-8 shrink-0 text-primary" />
-          {showLabels && <span className="text-xl font-bold whitespace-nowrap">CAEN</span>}
+          <span className={cn("text-xl font-bold whitespace-nowrap", textClasses)}>CAEN</span>
         </div>
       </div>
 
       <nav className="flex-1 overflow-y-auto overflow-x-hidden p-3" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-        {role === "admin" ? agencyItems : clientItems}
+        {(role === "admin" || role === "member") ? agencyItems : clientItems}
       </nav>
 
       <div className="border-t p-3 dark:border-slate-800">
-        <div className={cn("flex items-center", showLabels ? "justify-between" : "justify-center")}>
+        <div className={cn("flex flex-col sm:flex-row items-center", "justify-center group-hover:justify-between")}>
           <div className="flex items-center overflow-hidden">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">
               <span className="font-semibold text-slate-700 dark:text-slate-300">
                 {profile?.full_name?.charAt(0) || "U"}
               </span>
             </div>
-            {showLabels && (
-              <div className="ml-3 truncate">
-                <p className="truncate text-sm font-medium">{profile?.full_name}</p>
-                <p className="truncate text-xs text-slate-500">{role === "admin" ? "Agência" : "Cliente"}</p>
-              </div>
-            )}
+            <div className={cn("ml-3 truncate", textClasses)}>
+              <p className="truncate text-sm font-medium">{profile?.full_name}</p>
+              <p className="truncate text-xs text-slate-500">{(role === "admin" || role === "member") ? "Agência" : "Cliente"}</p>
+            </div>
           </div>
-          {showLabels && (
-            <button
-              onClick={handleLogout}
-              className="ml-auto rounded-md p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 shrink-0"
-              title="Sair"
-            >
-              <LogOut className="h-5 w-5" />
-            </button>
-          )}
-        </div>
-        {!showLabels && (
           <button
             onClick={handleLogout}
-            className="mt-2 flex w-full justify-center rounded-md p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
+            className={cn("rounded-md p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 shrink-0", 
+              isMobile ? "ml-auto" : "mt-2 group-hover:mt-0 group-hover:ml-auto w-full group-hover:w-auto flex justify-center group-hover:justify-start"
+            )}
             title="Sair"
           >
             <LogOut className="h-5 w-5" />
           </button>
-        )}
+        </div>
       </div>
     </>
   );
@@ -168,14 +167,13 @@ export function Sidebar() {
     );
   }
 
-  // Desktop: Fixed sidebar with hover expand
+  // Desktop: Fixed sidebar with CSS group hover expand
+  // Note we removed `onMouseEnter` because we will rely purely on CSS hover.
   return (
     <aside
-      onMouseEnter={expand}
-      onMouseLeave={collapse}
       className={cn(
-        "fixed inset-y-0 left-0 z-50 hidden md:flex flex-col border-r bg-white transition-all duration-300 ease-in-out dark:bg-slate-950 dark:border-slate-800",
-        isExpanded ? "w-60" : "w-16"
+        "group fixed inset-y-0 left-0 z-50 hidden md:flex flex-col border-r bg-white transition-all duration-300 ease-in-out dark:bg-slate-950 dark:border-slate-800",
+        "w-16 hover:w-60"
       )}
     >
       <SidebarContent />

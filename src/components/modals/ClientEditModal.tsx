@@ -13,10 +13,11 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { Trash2 } from "lucide-react";
 import { supabase } from "@/services/supabase";
 import { toast } from "sonner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { type Client } from "@/types/general.types";
+import { type Client } from "@/types/client.types";
 import { useCallback } from "react";
 
 
@@ -50,6 +51,11 @@ export function ClientEditModal({
 }: ClientEditModalProps) {
   const [loading, setLoading] = useState(false);
   const [admins, setAdmins] = useState<{ id: string; full_name: string }[]>([]);
+  
+  // States de exclusão
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [deleting, setDeleting] = useState(false);
 
   const {
     register,
@@ -129,7 +135,33 @@ export function ClientEditModal({
     }
   };
 
+  const handleDeleteClient = async () => {
+    if (deleteConfirmText !== "EXCLUIR") {
+      toast.error("Você precisa digitar EXCLUIR para confirmar.");
+      return;
+    }
+    if (!client) return;
+    setDeleting(true);
+    try {
+      // Exclui fisicamente do Supabase. As Foreign Keys já foram atualizadas para ON DELETE CASCADE
+      const { error } = await supabase.from("clients").delete().eq("id", client.id);
+      if (error) throw error;
+
+      toast.success("Cliente e todos os seus vínculos excluídos com sucesso!");
+      setIsDeleteDialogOpen(false);
+      onOpenChange(false);
+      onSuccess(); // disparará atualização da lista na página
+    } catch (error) {
+      console.error(error);
+      const message = error instanceof Error ? error.message : "Erro ao excluir cliente.";
+      toast.error(message);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
@@ -207,16 +239,70 @@ export function ClientEditModal({
             </div>
           </div>
 
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Cancelar
+          <DialogFooter className="flex justify-between w-full sm:justify-between items-center mt-4">
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={() => {
+                setDeleteConfirmText("");
+                setIsDeleteDialogOpen(true);
+              }}
+              className="flex items-center gap-2"
+            >
+              <Trash2 className="w-4 h-4" />
+              Excluir
             </Button>
-            <Button type="submit" disabled={loading}>
-              {loading ? "Salvando..." : "Salvar"}
-            </Button>
+            
+            <div className="flex gap-2">
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={loading}>
+                {loading ? "Salvando..." : "Salvar"}
+              </Button>
+            </div>
           </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
+
+    {/* MODAL DE CONFIRMAÇÃO DE EXCLUSÃO */}
+    <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle className="text-red-600">⚠ Atenção Crítica</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4 pt-2">
+          <p className="text-sm text-slate-700 font-medium">Você está preste a deletar irreversivelmente:</p>
+          <ul className="text-xs text-slate-600 list-disc list-inside space-y-1 bg-red-50 p-3 rounded-lg border border-red-100">
+            <li>O cliente <strong>{client?.name}</strong></li>
+            <li>Todas as Métricas, Anúncios e Campanhas</li>
+            <li>Todos os Cards, Tasks, Subtasks e Comentários dele</li>
+            <li>Todas as Aprovações de Social Media e Relatórios</li>
+          </ul>
+          <p className="text-sm">Esta ação <strong>NÃO</strong> pode ser desfeita. Digite <strong>EXCLUIR</strong> para confirmar.</p>
+          
+          <Input 
+            value={deleteConfirmText}
+            onChange={(e) => setDeleteConfirmText(e.target.value)}
+            placeholder="EXCLUIR"
+            className="border-red-300 focus-visible:ring-red-500"
+          />
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)} disabled={deleting}>
+            Cancelar
+          </Button>
+          <Button 
+            variant="destructive" 
+            onClick={handleDeleteClient} 
+            disabled={deleteConfirmText !== "EXCLUIR" || deleting}
+          >
+            {deleting ? "Excluindo..." : "Confirmar Exclusão"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }

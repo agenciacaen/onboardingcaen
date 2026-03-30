@@ -10,6 +10,10 @@ export interface Task {
   created_by: string;
   due_date?: string;
   completed_at?: string;
+  parent_id?: string;
+  stage?: string;
+  is_template?: boolean;
+  order?: number;
   created_at: string;
   updated_at: string;
 }
@@ -54,12 +58,17 @@ export interface SupportMessage {
 export interface FinancialInvoice {
   id: string;
   client_id: string;
+  title: string;
   description: string;
   amount: number;
-  status: 'pending' | 'paid' | 'overdue' | 'cancelled';
+  category: 'labor' | 'ads' | 'software' | 'other' | string;
+  status: 'pending' | 'paid' | 'overdue' | 'cancelled' | 'disputed' | string;
   due_date: string;
   paid_at?: string;
   file_url?: string;
+  client_notes?: string;
+  dispute_message?: string;
+  dispute_at?: string;
   created_at: string;
   updated_at: string;
 }
@@ -83,20 +92,9 @@ export interface Flow {
   name: string;
   description?: string;
   status: FlowStatus;
+  steps: Array<Record<string, unknown>>;
   config?: Record<string, unknown>;
   created_at: string;
   updated_at?: string;
 }
 
-export type Client = {
-  id: string;
-  name: string;
-  legal_name?: string | null;
-  cnpj?: string | null;
-  email: string;
-  phone?: string | null;
-  status: 'active' | 'inactive' | 'onboarding';
-  modules_enabled: { traffic: boolean; social: boolean; web: boolean };
-  assigned_to: string | null;
-  profiles?: { full_name: string; email?: string }; // joined data from profiles
-};

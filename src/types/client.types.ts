@@ -9,17 +9,21 @@ export interface ModulesEnabled {
 export interface Client {
   id: string;
   name: string;
-  legal_name?: string;
-  cnpj?: string;
+  legal_name?: string | null;
+  cnpj?: string | null;
   email: string;
-  phone?: string;
+  phone?: string | null;
   logo_url?: string;
   status: ClientStatus;
-  assigned_to?: string;
+  assigned_to: string | null;
   modules_enabled: ModulesEnabled;
   onboarding_step: number;
   onboarding_completed: boolean;
-  deleted_at?: string;
+  deleted_at?: string | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface ClientWithProfile extends Client {
+  profiles?: { full_name: string; email?: string | null };
 }

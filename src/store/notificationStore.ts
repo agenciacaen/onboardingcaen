@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import type { Notification } from '../types/general.types';
+import { supabase } from '../services/supabase';
 
 interface NotificationState {
   notifications: Notification[];
@@ -7,32 +8,88 @@ interface NotificationState {
   setNotifications: (notifications: Notification[]) => void;
   markAsRead: (id: string) => void;
   markAllAsRead: () => void;
+  initialize: (clientId: string) => () => void;
 }
 
-export const useNotificationStore = create<NotificationState>((set) => ({
+export const useNotificationStore = create<NotificationState>((set, get) => ({
   notifications: [],
   unreadCount: 0,
   setNotifications: (notifications) => set({ 
     notifications,
     unreadCount: notifications.filter(n => !n.read_at).length
   }),
-  markAsRead: (id) => set((state) => {
-    const updated = state.notifications.map(n => 
-      n.id === id ? { ...n, read_at: new Date().toISOString() } : n
-    );
-    return {
-      notifications: updated,
-      unreadCount: updated.filter(n => !n.read_at).length
+  markAsRead: async (id) => {
+    // Update local state first for instant feedback
+    set((state) => {
+      const updated = state.notifications.map(n => 
+        n.id === id ? { ...n, read_at: new Date().toISOString() } : n
+      );
+      return {
+        notifications: updated,
+        unreadCount: updated.filter(n => !n.read_at).length
+      };
+    });
+
+    // Sync with DB
+    await supabase
+      .from('notifications')
+      .update({ read_at: new Date().toISOString() })
+      .eq('id', id);
+  },
+  markAllAsRead: async () => {
+    const notifications = get().notifications;
+    const clientId = notifications[0]?.client_id;
+    if (!clientId) return;
+
+    set((state) => {
+      const updated = state.notifications.map(n => ({
+        ...n,
+        read_at: n.read_at || new Date().toISOString()
+      }));
+      return {
+        notifications: updated,
+        unreadCount: 0
+      };
+    });
+
+    await supabase
+      .from('notifications')
+      .update({ read_at: new Date().toISOString() })
+      .eq('client_id', clientId)
+      .is('read_at', null);
+  },
+  initialize: (clientId: string) => {
+    console.log('Initializing notification store for client:', clientId);
+
+    const fetchNotifications = async () => {
+      const { data, error } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('client_id', clientId)
+        .order('created_at', { ascending: false })
+        .limit(20);
+      
+      if (!error && data) {
+        get().setNotifications(data as Notification[]);
+      }
     };
-  }),
-  markAllAsRead: () => set((state) => {
-    const updated = state.notifications.map(n => ({
-      ...n,
-      read_at: n.read_at || new Date().toISOString()
-    }));
-    return {
-      notifications: updated,
-      unreadCount: 0
+
+    fetchNotifications();
+
+    const channel = supabase
+      .channel(`notifications-${clientId}`)
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'notifications',
+        filter: `client_id=eq.${clientId}`
+      }, () => {
+        fetchNotifications();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
     };
-  })
+  }
 }));

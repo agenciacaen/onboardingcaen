@@ -3,6 +3,8 @@ import { PageHeader } from '../../../components/ui/PageHeader';
 import { useAuth } from '@/hooks/useAuth';
 import { webService } from '@/services/web.service';
 import type { WebOverview } from '@/types/web.types';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { ClientModuleTasksView } from '@/components/modules/ClientModuleTasksView';
 
 export function ClientWebPage() {
   const { clientId } = useAuth();
@@ -46,41 +48,59 @@ export function ClientWebPage() {
         <PageHeader title="Desenvolvimento Web" description="Acompanhe o desempenho do site, auditorias e métricas de SEO." />
       </div>
 
-      <div className={isLoading ? "opacity-50 pointer-events-none transition-opacity duration-300" : "transition-opacity duration-300"}>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-white p-6 rounded-lg border shadow-sm">
-            <h3 className="text-sm font-medium text-gray-500 mb-2">Páginas Ativas</h3>
-            <p className="text-3xl font-bold">{overviewData.active_pages}</p>
-          </div>
-          <div className="bg-white p-6 rounded-lg border shadow-sm">
-            <h3 className="text-sm font-medium text-gray-500 mb-2">SEO Score Médio</h3>
-            <p className={`text-3xl font-bold ${overviewData.avg_seo_score >= 80 ? 'text-green-600' : 'text-amber-500'}`}>
-              {overviewData.avg_seo_score}
-            </p>
-          </div>
-          <div className="bg-white p-6 rounded-lg border shadow-sm">
-            <h3 className="text-sm font-medium text-gray-500 mb-2">Entregas Concluídas</h3>
-            <p className="text-3xl font-bold text-blue-600">{overviewData.deliveries_completed}</p>
-          </div>
-          <div className="bg-white p-6 rounded-lg border shadow-sm">
-            <h3 className="text-sm font-medium text-gray-500 mb-2">Entregas em Andamento</h3>
-            <p className="text-3xl font-bold text-purple-600">{overviewData.deliveries_in_progress}</p>
-          </div>
-        </div>
+      <Tabs defaultValue="dashboard" className="w-full">
+        <TabsList className="mb-4 bg-slate-100/50">
+          <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+          <TabsTrigger value="kanban">Quadro Kanban</TabsTrigger>
+          <TabsTrigger value="list">Lista de Tarefas</TabsTrigger>
+        </TabsList>
 
-        <div className="mt-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
-           <div className="lg:col-span-5 bg-white p-6 rounded-lg border shadow-sm min-h-[400px] flex items-center justify-center">
-             <p className="text-gray-400">Audit Score Radar Placeholder</p>
-           </div>
-           
-           <div className="lg:col-span-7 bg-white p-6 rounded-lg border shadow-sm min-h-[400px]">
-             <h2 className="text-lg font-semibold mb-4">Progresso de Entregas</h2>
-             <div className="flex items-center justify-center py-12">
-               <p className="text-gray-400">Delivery Progress Widget Placeholder</p>
-             </div>
-           </div>
-        </div>
-      </div>
+        <TabsContent value="dashboard" className="mt-0 space-y-6">
+          <div className={isLoading ? "opacity-50 pointer-events-none transition-opacity duration-300" : "transition-opacity duration-300"}>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="bg-white p-6 rounded-lg border shadow-sm">
+                <h3 className="text-sm font-medium text-gray-500 mb-2">Páginas Ativas</h3>
+                <p className="text-3xl font-bold">{overviewData.active_pages}</p>
+              </div>
+              <div className="bg-white p-6 rounded-lg border shadow-sm">
+                <h3 className="text-sm font-medium text-gray-500 mb-2">SEO Score Médio</h3>
+                <p className={`text-3xl font-bold ${overviewData.avg_seo_score >= 80 ? 'text-green-600' : 'text-amber-500'}`}>
+                  {overviewData.avg_seo_score}
+                </p>
+              </div>
+              <div className="bg-white p-6 rounded-lg border shadow-sm">
+                <h3 className="text-sm font-medium text-gray-500 mb-2">Entregas Concluídas</h3>
+                <p className="text-3xl font-bold text-blue-600">{overviewData.deliveries_completed}</p>
+              </div>
+              <div className="bg-white p-6 rounded-lg border shadow-sm">
+                <h3 className="text-sm font-medium text-gray-500 mb-2">Entregas em Andamento</h3>
+                <p className="text-3xl font-bold text-purple-600">{overviewData.deliveries_in_progress}</p>
+              </div>
+            </div>
+
+            <div className="mt-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+               <div className="lg:col-span-5 bg-white p-6 rounded-lg border shadow-sm min-h-[400px] flex items-center justify-center">
+                 <p className="text-gray-400">Audit Score Radar Placeholder</p>
+               </div>
+               
+               <div className="lg:col-span-7 bg-white p-6 rounded-lg border shadow-sm min-h-[400px]">
+                 <h2 className="text-lg font-semibold mb-4">Progresso de Entregas</h2>
+                 <div className="flex items-center justify-center py-12">
+                   <p className="text-gray-400">Delivery Progress Widget Placeholder</p>
+                 </div>
+               </div>
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="kanban" className="mt-0 pt-2">
+          <ClientModuleTasksView module="web" view="kanban" />
+        </TabsContent>
+
+        <TabsContent value="list" className="mt-0 pt-2">
+          <ClientModuleTasksView module="web" view="list" />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

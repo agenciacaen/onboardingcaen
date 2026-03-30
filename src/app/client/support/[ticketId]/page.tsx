@@ -2,13 +2,13 @@ import { useParams } from 'react-router-dom';
 import { TicketChatView } from '@/modules/support/components/TicketChatView';
 
 export function ClientTicketDetailPage() {
-  const { id } = useParams<{ id: string }>();
+  const { ticketId } = useParams<{ ticketId: string }>();
 
-  if (!id) return null;
+  if (!ticketId) return null;
 
   return (
     <div className="w-full h-full">
-      <TicketChatView ticketId={id} />
+      <TicketChatView ticketId={ticketId} />
     </div>
   );
 }

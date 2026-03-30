@@ -46,10 +46,10 @@ export function TasksBoardPreview() {
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'urgent': return 'text-red-500';
-      case 'high': return 'text-orange-500';
-      case 'medium': return 'text-yellow-500';
-      default: return 'text-blue-500';
+      case 'urgent': return 'text-rose-600 bg-rose-50 dark:bg-rose-950/20 px-1.5 py-0.5 rounded-sm';
+      case 'high': return 'text-amber-600 bg-amber-50 dark:bg-amber-950/20 px-1.5 py-0.5 rounded-sm';
+      case 'medium': return 'text-sky-600 bg-sky-50 dark:bg-sky-950/20 px-1.5 py-0.5 rounded-sm';
+      default: return 'text-slate-500 bg-slate-50 dark:bg-slate-900/20 px-1.5 py-0.5 rounded-sm';
     }
   };
 

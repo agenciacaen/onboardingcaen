@@ -24,6 +24,7 @@ const createEventSchema = z.object({
   platform: z.string().optional(),
   client_id: z.string().min(1, "Selecione o cliente"),
   color: z.string().optional(),
+  module: z.enum(['traffic', 'social', 'web', 'general']).optional(),
 });
 
 type CreateEventFormValues = z.infer<typeof createEventSchema>;
@@ -72,6 +73,7 @@ export function EventCreateModal({
         event_type: 'post',
         platform: '',
         color: '#3b82f6',
+        module: 'general',
       });
       fetchClients();
     }
@@ -84,13 +86,16 @@ export function EventCreateModal({
     setLoading(true);
     try {
       if (data.event_type === 'tarefa') {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error("Usuário não autenticado");
         const { error } = await supabase.from('tasks').insert({
           title: data.title,
           client_id: data.client_id,
-          module: 'general',
+          module: data.module || 'general',
           status: 'todo',
           priority: 'medium',
-          due_date: data.event_date
+          due_date: data.event_date,
+          created_by: user.id,
         });
         if (error) throw error;
       } else {
@@ -166,7 +171,23 @@ export function EventCreateModal({
             {errors.client_id && <span className="text-xs text-red-500">{errors.client_id.message}</span>}
           </div>
 
-          {eventType !== 'tarefa' && (
+          {eventType === 'tarefa' ? (
+            <div className="grid w-full items-center gap-1.5">
+              <Label>Módulo da Tarefa</Label>
+              <Select 
+                value={watch("module") || "general"} 
+                onValueChange={(val: "traffic" | "social" | "web" | "general") => setValue("module", val)}
+              >
+                <SelectTrigger><SelectValue placeholder="Selecione o módulo..." /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="general">Geral</SelectItem>
+                  <SelectItem value="traffic">Tráfego</SelectItem>
+                  <SelectItem value="social">Social Media</SelectItem>
+                  <SelectItem value="web">Desenvolvimento Web</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          ) : (
             <div className="grid grid-cols-2 gap-4">
                <div className="grid w-full items-center gap-1.5">
                   <Label>Plataforma</Label>

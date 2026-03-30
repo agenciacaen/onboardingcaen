@@ -44,26 +44,49 @@ export function MonthlyCalendarView({ clientIdFilter }: MonthlyCalendarViewProps
     setLoading(true);
     const mStart = startOfMonth(currentDate);
     const mEnd = endOfMonth(currentDate);
+    const dateStart = format(mStart, 'yyyy-MM-dd');
+    const dateEnd = format(mEnd, 'yyyy-MM-dd');
 
-    let query = supabase
+    // Busca eventos sociais
+    const socialQuery = supabase
       .from('social_calendar_events')
       .select('*')
-      .gte('event_date', format(mStart, 'yyyy-MM-dd'))
-      .lte('event_date', format(mEnd, 'yyyy-MM-dd'));
+      .gte('event_date', dateStart)
+      .lte('event_date', dateEnd);
+
+    // Busca tarefas com prazo (apenas atividades pai)
+    const tasksQuery = supabase
+      .from('tasks')
+      .select('*')
+      .is('parent_id', null)
+      .not('due_date', 'is', null)
+      .gte('due_date', dateStart)
+      .lte('due_date', dateEnd);
 
     if (clientIdFilter && clientIdFilter !== 'all') {
-      query = query.eq('client_id', clientIdFilter);
+      socialQuery.eq('client_id', clientIdFilter);
+      tasksQuery.eq('client_id', clientIdFilter);
     }
 
-    const { data, error } = await query;
-    if (error) {
-      toast.error('Erro ao buscar eventos do calendário.');
-      console.error(error);
-    } else {
-      setEvents(data || []);
-    }
+    const [socialRes, tasksRes] = await Promise.all([socialQuery, tasksQuery]);
+
+    if (socialRes.error) toast.error('Erro ao buscar eventos sociais.');
+    if (tasksRes.error) toast.error('Erro ao buscar tarefas.');
+
+    const socialEvents = socialRes.data || [];
+    const taskEvents = (tasksRes.data || []).map(task => ({
+      id: task.id,
+      title: `[T] ${task.title}`, // Adicionando [T] para destacar que é tarefa
+      event_date: task.due_date,
+      event_type: 'tarefa',
+      color: '#6366f1', // Cor Indigo para tarefas
+      client_id: task.client_id
+    }));
+
+    setEvents([...socialEvents, ...taskEvents]);
     setLoading(false);
   }, [currentDate, clientIdFilter]);
+
 
   useEffect(() => {
     let isMounted = true;

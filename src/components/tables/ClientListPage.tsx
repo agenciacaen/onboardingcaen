@@ -8,16 +8,18 @@ import { ClientCreateModal } from "@/components/modals/ClientCreateModal";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { LoadingSkeleton } from "@/components/ui/LoadingSkeleton";
 import { Input } from "@/components/ui/input";
+import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { Search } from "lucide-react";
-import { type Client } from "@/types/general.types";
+import { type ClientWithProfile } from "@/types/client.types";
 
 
 export function ClientListPage() {
-  const [data, setData] = useState<Client[]>([]);
+  const [data, setData] = useState<ClientWithProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [isCreateModalOpen, setCreateModalOpen] = useState(false);
+  const [financials, setFinancials] = useState<Record<string, number>>({});
 
   const fetchClients = useCallback(async () => {
     setLoading(true);
@@ -25,7 +27,7 @@ export function ClientListPage() {
       .from("clients")
       .select(`
         id, name, email, status, modules_enabled, assigned_to,
-        profiles ( full_name )
+        profiles!clients_assigned_to_fkey ( full_name )
       `)
       .is('deleted_at', null);
 
@@ -41,13 +43,30 @@ export function ClientListPage() {
     } else {
       // Garantir que profiles seja um objeto simples se vier como array
       const formatted = (clients || []).map((c) => {
-        const row = c as any; // Cast necessário para o join do Supabase
+        const row = c as Record<string, unknown>;
+        const profiles = row.profiles;
         return {
           ...row,
-          profiles: Array.isArray(row.profiles) ? row.profiles[0] : row.profiles
+          profiles: Array.isArray(profiles) ? profiles[0] : profiles
         };
       });
-      setData(formatted as Client[]);
+      setData(formatted as ClientWithProfile[]);
+      
+      // Fetch financial summary
+      const clientIds = (clients || []).map(c => c.id);
+      if (clientIds.length > 0) {
+        const { data: finData } = await supabase
+          .from('financial_invoices')
+          .select('client_id, amount')
+          .in('client_id', clientIds)
+          .eq('status', 'pending');
+        
+        const summary: Record<string, number> = {};
+        finData?.forEach(f => {
+          summary[f.client_id] = (summary[f.client_id] || 0) + (f.amount || 0);
+        });
+        setFinancials(summary);
+      }
     }
     setLoading(false);
   }, [search]);
@@ -60,7 +79,7 @@ export function ClientListPage() {
   }, [fetchClients]);
 
 
-  const columns = useMemo<ColumnDef<Client>[]>(() => [
+  const columns = useMemo<ColumnDef<ClientWithProfile>[]>(() => [
     {
       accessorKey: "name",
       header: "Nome da Empresa",
@@ -93,16 +112,28 @@ export function ClientListPage() {
       cell: ({ row }) => row.original.profiles?.full_name || "Não atribuído",
     },
     {
+      id: "balance",
+      header: "Pendente",
+      cell: ({ row }) => {
+        const amount = financials[row.original.id] || 0;
+        return (
+          <span className={amount > 0 ? "text-amber-600 font-bold" : "text-green-600"}>
+            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(amount)}
+          </span>
+        );
+      }
+    },
+    {
       id: "actions",
       cell: ({ row }) => {
         return (
           <Button variant="ghost" size="sm" asChild>
-            <a href={`/agency/clients/${row.original.id}`}>Ver Detalhes</a>
+            <Link to={`/agency/clients/${row.original.id}`}>Ver Detalhes</Link>
           </Button>
         );
       },
     },
-  ], []);
+  ], [financials]);
 
   return (
     <div className="space-y-6">

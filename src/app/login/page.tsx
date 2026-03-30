@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { supabase } from '../../services/supabase';
+import { useAuthStore } from '../../store/authStore';
 
 import { toast } from 'sonner';
 
@@ -22,6 +23,19 @@ export function LoginPage() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  // Previne "Lock was not released" do Supabase gotrue travando o login de maneira resiliente
+  useEffect(() => {
+    try {
+      const lockKeys = Object.keys(localStorage).filter(key => key.startsWith('lock:sb-'));
+      if (lockKeys.length > 0) {
+        console.warn(`Removendo ${lockKeys.length} lock(s) de auth travados:`, lockKeys);
+        lockKeys.forEach(key => localStorage.removeItem(key));
+      }
+    } catch (e) {
+      console.error('Falha ao limpar locks de autenticação:', e);
+    }
+  }, []);
+
   const { register, handleSubmit, formState: { errors } } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema)
   });
@@ -38,7 +52,10 @@ export function LoginPage() {
 
       if (error) {
         console.error('Erro Supabase Auth:', error.message);
-        toast.error(`Erro ao fazer login: ${error.message}`);
+        const errorMsg = error.message.includes('Invalid login credentials')
+          ? 'Email ou senha incorretos.'
+          : `Erro de autenticação: ${error.message}`;
+        toast.error(errorMsg);
         setLoading(false);
         return;
       }
@@ -48,27 +65,35 @@ export function LoginPage() {
       if (authData.user) {
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
-          .select('role')
+          .select('*')
           .eq('id', authData.user.id)
-          .single();
+          .maybeSingle();
           
         if (profileError) {
           console.error('Erro ao buscar perfil:', profileError);
           toast.error('Erro ao carregar perfil de usuário.');
+          setLoading(false);
+          return;
         }
 
         if (profile) {
+          // Pre-populate store so ProtectedRoute doesn't reject us prematurely while onAuthStateChange is still fetching
+          useAuthStore.getState().setProfile(profile);
           console.log('Perfil encontrado, redirecionando para:', profile.role);
-          if (profile.role === 'admin') navigate('/agency');
-          else navigate('/client');
+          
+          if (profile.role === 'admin' || profile.role === 'member') {
+            navigate('/agency');
+          } else {
+            navigate('/client');
+          }
         } else {
           console.warn('Perfil não encontrado para o usuário logado.');
-          toast.error('Perfil não encontrado.');
+          toast.error('Nenhum perfil encontrado para este usuário.');
         }
       }
     } catch (err) {
       console.error('Erro inesperado no login:', err);
-      toast.error('Ocorreu um erro inesperado.');
+      toast.error('Ocorreu um erro inesperado ao conectar.');
     } finally {
       setLoading(false);
     }

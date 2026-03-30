@@ -13,6 +13,7 @@ import { useState } from "react";
 import { supabase } from "@/services/supabase";
 import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
+import { useAuthStore } from "@/store/authStore";
 
 interface FlowCreateModalProps {
   open: boolean;
@@ -24,6 +25,7 @@ export function FlowCreateModal({ open, onOpenChange, onSuccess }: FlowCreateMod
   const [loading, setLoading] = useState(false);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const { user } = useAuthStore();
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,7 +43,9 @@ export function FlowCreateModal({ open, onOpenChange, onSuccess }: FlowCreateMod
         name,
         description,
         steps: initialSteps,
-        status: 'draft',
+        is_active: false,
+        created_by: user?.id,
+        flow_type: 'onboarding',
       });
 
       if (error) throw error;

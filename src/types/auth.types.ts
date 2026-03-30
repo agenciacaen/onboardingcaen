@@ -1,8 +1,12 @@
-export type Role = 'admin' | 'client';
+export type Role = 'admin' | 'client' | 'member';
 
-export interface User {
-  id: string;
-  email: string;
+export interface Permissions {
+  approvals?: 'view' | 'manage';
+  social?: 'view' | 'manage';
+  traffic?: 'view' | 'manage';
+  web?: 'view' | 'manage';
+  financial?: 'view' | 'manage';
+  onboarding?: 'view' | 'manage';
 }
 
 export interface Profile {
@@ -14,6 +18,7 @@ export interface Profile {
   avatar_url?: string;
   phone?: string;
   is_active: boolean;
+  permissions?: Permissions;
   created_at: string;
   updated_at: string;
 }

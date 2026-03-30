@@ -18,6 +18,24 @@ const getStatusColor = (status: string) => {
 };
 
 const getStatusLabel = (status: string) => {
+  const normalized = status.toLowerCase();
+  const translations: Record<string, string> = {
+    'paid': 'Pago',
+    'pending': 'Pendente',
+    'overdue': 'Atrasado',
+    'disputed': 'Contestado',
+    'active': 'Ativo',
+    'approved': 'Aprovado',
+    'done': 'Concluído',
+    'scheduled': 'Agendado',
+    'in_progress': 'Em Andamento',
+    'review': 'Em Revisão',
+    'onboarding': 'Onboarding',
+    'todo': 'A Fazer'
+  };
+
+  if (translations[normalized]) return translations[normalized];
+
   const formatted = status.replace(/_/g, ' ');
   return formatted.charAt(0).toUpperCase() + formatted.slice(1);
 }
