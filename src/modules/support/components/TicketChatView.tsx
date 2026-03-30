@@ -60,7 +60,7 @@ export function TicketChatView({ ticketId }: TicketChatViewProps) {
       setTicket(tData);
       setMessages(mData as unknown as SupportMessage[]);
       await SupportService.markMessagesAsRead(ticketId);
-    } catch {
+    } catch (_err) {
       toast.error('Erro ao carregar detalhes do chamado.');
     } finally {
       if (showLoader) setIsLoading(false);
@@ -85,7 +85,7 @@ export function TicketChatView({ ticketId }: TicketChatViewProps) {
       
       await SupportService.sendMessage(clientId, ticketId, content);
       scrollToBottom();
-    } catch {
+    } catch (_err) {
        toast.error('Falha ao enviar mensagem.');
     } finally {
       setIsSending(false);

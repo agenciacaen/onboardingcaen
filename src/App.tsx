@@ -78,23 +78,44 @@ export default function App() {
       }
     }
 
-    // Inicia loading — o onAuthStateChange vai disparar INITIAL_SESSION automaticamente
-    setLoading(true);
+    async function initializeAuth() {
+      try {
+        setLoading(true);
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session?.user) {
+          setUser(session.user);
+          await getProfile(session.user.id);
+        } else {
+          clear();
+          finishLoading();
+        }
+      } catch (error) {
+        console.error('Error during auth initialization:', error);
+        clear();
+        finishLoading();
+      }
+    }
+
+    initializeAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('Auth event:', event);
+      
+      if (event === 'SIGNED_OUT') {
+        clear();
+        finishLoading();
+        return;
+      }
+
       if (session?.user) {
         setUser(session.user);
-        // Se o LoginPage já populou o store, não busca de novo
         const currentProfile = useAuthStore.getState().profile;
         if (!currentProfile || currentProfile.id !== session.user.id) {
           await getProfile(session.user.id);
         } else {
           finishLoading();
         }
-      } else {
-        clear();
-        finishLoading();
       }
     });
 

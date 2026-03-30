@@ -102,7 +102,8 @@ export const ApprovalsService = {
             web: webCount || 0,
             total: (socialCount || 0) + (webCount || 0)
         };
-      } catch {
+      } catch (error) {
+          console.error('Error fetching approval counts:', error);
           return { social: 0, web: 0, total: 0 };
       }
   }

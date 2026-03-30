@@ -49,7 +49,8 @@ export function ApprovalUnifiedQueue() {
       } else {
         setWebItems(prev => prev.filter(item => item.id !== id));
       }
-    } catch {
+      } catch (error) {
+      console.error('Approval item error:', error);
       toast.error('Ocorreu um erro ao processar sua resposta.');
     } finally {
       setIsApproving(null);

@@ -263,7 +263,10 @@ export function TaskDetailModal({
         created_at: c.created_at as string,
         author: c.author as { full_name: string } | null,
       })));
-    } catch { /* silent */ }
+    } catch (error) { 
+      console.error('Task detail error:', error);
+      /* silent */ 
+    }
     finally { setLoadingComments(false); }
   }, [taskData?.id, user?.id]);
 
@@ -283,7 +286,10 @@ export function TaskDetailModal({
       setNewComment('');
       await loadComments();
       toast.success('Nota adicionada!');
-    } catch { toast.error('Não foi possível enviar a nota.'); }
+    } catch (error) { 
+      console.error('Note add error:', error);
+      toast.error('Não foi possível enviar a nota.'); 
+    }
     finally { setSendingComment(false); }
   };
 
@@ -310,7 +316,10 @@ export function TaskDetailModal({
       setSubtasks(prev => prev.map(s => s.id === subId ? { ...s, status: newStatus } : s));
       onSubtaskToggle?.(subId, newStatus);
       onTaskUpdated?.();
-    } catch { toast.error('Não foi possível atualizar.'); }
+    } catch (error) { 
+      console.error('Update task error:', error);
+      toast.error('Não foi possível atualizar.'); 
+    }
     finally { setTogglingId(null); }
   };
 
@@ -343,7 +352,10 @@ export function TaskDetailModal({
       setNewSubTitle('');
       toast.success('Subtarefa adicionada!');
       onTaskUpdated?.();
-    } catch { toast.error('Não foi possível adicionar.'); }
+    } catch (error) { 
+      console.error('Add checklist item error:', error);
+      toast.error('Não foi possível adicionar.'); 
+    }
     finally { setAddingSubtask(false); }
   };
 
@@ -356,7 +368,10 @@ export function TaskDetailModal({
       setSubtasks(prev => prev.filter(s => s.id !== subId));
       toast.success('Subtarefa removida.');
       onTaskUpdated?.();
-    } catch { toast.error('Não foi possível remover.'); }
+    } catch (error) { 
+      console.error('Remove checklist item error:', error);
+      toast.error('Não foi possível remover.'); 
+    }
     finally { setDeletingId(null); }
   };
 
@@ -373,7 +388,8 @@ export function TaskDetailModal({
       onOpenChange(false);
       onTaskDeleted?.(taskData.id);
       onTaskUpdated?.();
-    } catch {
+    } catch (error) {
+      console.error('Final task check error:', error);
       toast.error('Erro ao excluir a tarefa.');
     } finally {
       setDeletingTask(false);

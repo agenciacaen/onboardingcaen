@@ -32,7 +32,8 @@ export function SupportTicketList() {
       if (!clientId) return;
       const data = await SupportService.getTickets(clientId);
       setTickets(data);
-    } catch {
+    } catch (error) {
+      console.error('Error loading tickets:', error);
       toast.error('Erro ao carregar seus tickets de suporte.');
     } finally {
       setIsLoading(false);
