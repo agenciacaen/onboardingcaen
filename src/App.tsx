@@ -28,6 +28,10 @@ import { AgencyDocumentsPage } from './app/agency/documents/page';
 import { AgencyReportsPage } from './app/agency/reports/page';
 import { AgencyFinancialPage } from './app/agency/financial/page';
 import { AgencyAccessPage } from './app/agency/access/page';
+import AgencySocialPage from './app/agency/social/page';
+import AgencyTrafficPage from './app/agency/traffic/page';
+import AgencyWebPage from './app/agency/web/page';
+import AgencyCRMPage from './app/agency/crm/page';
 
 // Cliente
 import { ClientDashboard } from './app/client/page';
@@ -198,6 +202,10 @@ export default function App() {
               <Route path="/agency/reports" element={<AgencyReportsPage />} />
               <Route path="/agency/financial" element={<AgencyFinancialPage />} />
               <Route path="/agency/access" element={<AgencyAccessPage />} />
+              <Route path="/agency/social" element={<AgencySocialPage />} />
+              <Route path="/agency/traffic" element={<AgencyTrafficPage />} />
+              <Route path="/agency/web" element={<AgencyWebPage />} />
+              <Route path="/agency/crm" element={<AgencyCRMPage />} />
             </Route>
           </Route>
           
