@@ -23,23 +23,38 @@ export function LoginPage() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  // Previne "Lock was not released" do Supabase gotrue travando o login
+  // Limpar qualquer lock/sessão travada ao montar a página de login
   useEffect(() => {
     try {
-      const lockKeys = Object.keys(localStorage).filter(key => key.startsWith('lock:sb-'));
+      // Limpar locks do GoTrue que podem ter ficado órfãos
+      const lockKeys = Object.keys(localStorage).filter(key => 
+        key.startsWith('lock:sb-') || key.includes('-auth-token-code-verifier')
+      );
       if (lockKeys.length > 0) {
-        console.warn(`Removendo ${lockKeys.length} lock(s) de auth travados:`, lockKeys);
+        console.warn(`[Login] Removendo ${lockKeys.length} lock(s) travados:`, lockKeys);
         lockKeys.forEach(key => localStorage.removeItem(key));
       }
     } catch (e) {
-      console.error('Falha ao limpar locks de autenticação:', e);
+      console.error('[Login] Falha ao limpar locks:', e);
     }
   }, []);
 
-  // Se o usuário já está logado, redirecionar imediatamente
+  // Se o usuário já está autenticado (veio aqui por engano), redirecionar
   useEffect(() => {
+    const unsub = useAuthStore.subscribe((state) => {
+      if (!state.isLoading && state.user && state.profile) {
+        const role = state.profile.role;
+        if (role === 'admin' || role === 'member') {
+          navigate('/agency', { replace: true });
+        } else if (role === 'client') {
+          navigate('/client', { replace: true });
+        }
+      }
+    });
+    
+    // Verificação instantânea
     const state = useAuthStore.getState();
-    if (state.user && state.profile && !state.isLoading) {
+    if (!state.isLoading && state.user && state.profile) {
       const role = state.profile.role;
       if (role === 'admin' || role === 'member') {
         navigate('/agency', { replace: true });
@@ -47,6 +62,8 @@ export function LoginPage() {
         navigate('/client', { replace: true });
       }
     }
+    
+    return unsub;
   }, [navigate]);
 
   const { register, handleSubmit, formState: { errors } } = useForm<LoginFormValues>({
@@ -54,7 +71,7 @@ export function LoginPage() {
   });
 
   const onSubmit = async (data: LoginFormValues) => {
-    console.log('Iniciando submissão de login:', data.email);
+    console.log('[Login] Iniciando login:', data.email);
     setLoading(true);
     
     try {
@@ -64,7 +81,7 @@ export function LoginPage() {
       });
 
       if (error) {
-        console.error('Erro Supabase Auth:', error.message);
+        console.error('[Login] Erro Auth:', error.message);
         const errorMsg = error.message.includes('Invalid login credentials')
           ? 'Email ou senha incorretos.'
           : `Erro de autenticação: ${error.message}`;
@@ -73,7 +90,7 @@ export function LoginPage() {
         return;
       }
 
-      console.log('Login Auth bem-sucedido, buscando perfil...', authData.user?.id);
+      console.log('[Login] Auth OK, buscando perfil...', authData.user?.id);
 
       if (authData.user) {
         const { data: profile, error: profileError } = await supabase
@@ -83,22 +100,22 @@ export function LoginPage() {
           .maybeSingle();
           
         if (profileError) {
-          console.error('Erro ao buscar perfil:', profileError);
+          console.error('[Login] Erro ao buscar perfil:', profileError);
           toast.error('Erro ao carregar perfil de usuário.');
           setLoading(false);
           return;
         }
 
         if (profile) {
-          // Pré-popularizar o store ANTES de navegar para que o 
-          // ProtectedRoute e onAuthStateChange não rejeitem prematuramente
+          // Pré-popular o store ANTES de navegar.
+          // Isso garante que o ProtectedRoute não rejeite e
+          // que o onAuthStateChange no App.tsx encontre o profile já setado.
           const store = useAuthStore.getState();
           store.setUser(authData.user);
           store.setProfile(profile);
-          // Garantir que isLoading esteja false para evitar tela de loading após navegar
           store.finishLoading();
           
-          console.log('Perfil encontrado, redirecionando para:', profile.role);
+          console.log('[Login] Perfil carregado. Role:', profile.role, '- Redirecionando...');
           
           if (profile.role === 'admin' || profile.role === 'member') {
             navigate('/agency', { replace: true });
@@ -106,15 +123,14 @@ export function LoginPage() {
             navigate('/client', { replace: true });
           }
         } else {
-          console.warn('Perfil não encontrado para o usuário logado.');
+          console.warn('[Login] Nenhum perfil encontrado para:', authData.user.id);
           toast.error('Nenhum perfil encontrado para este usuário.');
-          // Fazer logout se não tem perfil
           await supabase.auth.signOut();
           useAuthStore.getState().clear();
         }
       }
     } catch (err) {
-      console.error('Erro inesperado no login:', err);
+      console.error('[Login] Erro inesperado:', err);
       toast.error('Ocorreu um erro inesperado ao conectar.');
     } finally {
       setLoading(false);

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { supabase } from './services/supabase';
 import { useAuthStore } from './store/authStore';
@@ -53,40 +53,22 @@ function RootRedirect() {
 }
 
 export default function App() {
-  const { setUser, setProfile, setLoading, finishLoading, clear } = useAuthStore();
-  const profileFetchRef = useRef<string | null>(null);
+  const { setUser, setProfile, finishLoading, clear } = useAuthStore();
 
   useEffect(() => {
     let mounted = true;
-    let authTimeout: ReturnType<typeof setTimeout>;
 
-    const startTimeout = () => {
-      clearTimeout(authTimeout);
-      authTimeout = setTimeout(() => {
-        if (mounted && useAuthStore.getState().isLoading) {
-          console.warn('Auth check timeout reached (8s). Forcing initialization.');
-          finishLoading();
-        }
-      }, 8000);
-    };
-
-    const getProfile = async (userId: string) => {
-      if (!mounted) return;
-      
-      // Previne fetches duplicados para o mesmo userId
-      if (profileFetchRef.current === userId) {
-        const existingProfile = useAuthStore.getState().profile;
-        if (existingProfile && existingProfile.id === userId) {
-          console.log('Profile already loaded for:', userId);
-          finishLoading();
-          clearTimeout(authTimeout);
-          return;
-        }
+    // Timeout de segurança: se após 8s o auth ainda estiver em loading, forçar finalização
+    const authTimeout = setTimeout(() => {
+      if (mounted && useAuthStore.getState().isLoading) {
+        console.warn('[Auth] Timeout de 8s atingido. Forçando finalização.');
+        finishLoading();
       }
-      
-      profileFetchRef.current = userId;
-      console.log('Fetching profile for:', userId);
-      
+    }, 8000);
+
+    const fetchProfile = async (userId: string) => {
+      if (!mounted) return;
+      console.log('[Auth] Buscando perfil para:', userId);
       try {
         const { data, error } = await supabase
           .from('profiles')
@@ -97,108 +79,88 @@ export default function App() {
         if (!mounted) return;
 
         if (error) {
-          console.error('Error fetching profile:', error);
+          console.error('[Auth] Erro ao buscar perfil:', error);
           setProfile(null);
         } else {
-          console.log('Profile loaded successfully:', data?.role);
+          console.log('[Auth] Perfil carregado:', data?.role);
           setProfile(data);
         }
-      } catch (error) {
+      } catch (err) {
         if (!mounted) return;
-        console.error('Unexpected error fetching profile:', error);
+        console.error('[Auth] Erro inesperado ao buscar perfil:', err);
         setProfile(null);
-      } finally {
-        if (mounted) {
-          console.log('Auth flow: Finishing loading');
-          finishLoading();
-          clearTimeout(authTimeout);
-        }
       }
     };
 
-    const initializeAuth = async () => {
-      console.log('Auth flow: Starting initialization');
-      try {
-        setLoading(true);
-        startTimeout();
-
-        const { data: { session }, error } = await supabase.auth.getSession();
-        
-        if (error) {
-          console.error('Session error:', error);
-          clear();
-          return;
-        }
-
-        if (!mounted) return;
-
-        if (session?.user) {
-          console.log('Session found for:', session.user.email);
-          setUser(session.user);
-          await getProfile(session.user.id);
-        } else {
-          console.log('No session found');
-          clear();
-          clearTimeout(authTimeout);
-        }
-      } catch (error) {
-        console.error('Initialization error:', error);
-        if (mounted) clear();
-      }
-    };
-
-    initializeAuth();
-
+    // Usamos APENAS onAuthStateChange como fonte única de verdade.
+    // O evento INITIAL_SESSION é disparado imediatamente ao se inscrever,
+    // contendo a sessão restaurada do localStorage (se existir).
+    // Isso evita race conditions entre getSession() e onAuthStateChange.
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!mounted) return;
-      console.log('Auth flow: Event observed -', event);
-      
-      if (event === 'SIGNED_OUT') {
-        profileFetchRef.current = null;
-        clear();
-        clearTimeout(authTimeout);
-        return;
-      }
+      console.log('[Auth] Evento:', event, session?.user?.email || 'sem sessão');
 
-      if (event === 'SIGNED_IN' && session?.user) {
-        // Um novo login aconteceu — garantir que o estado está em loading
-        // até que o profile seja carregado
-        const state = useAuthStore.getState();
-        setUser(session.user);
-        
-        // Se o profile já foi setado pela LoginPage (pre-populated), não buscar de novo
-        if (state.profile && state.profile.id === session.user.id) {
-          console.log('Auth flow: Profile already set by login page, skipping fetch');
-          finishLoading();
+      switch (event) {
+        case 'INITIAL_SESSION': {
+          // Sessão restaurada do localStorage no carregamento da página
+          if (session?.user) {
+            setUser(session.user);
+            // Verificar se o profile já foi pré-populado pela LoginPage
+            const existingProfile = useAuthStore.getState().profile;
+            if (existingProfile && existingProfile.id === session.user.id) {
+              console.log('[Auth] Perfil já existe no store, pulando fetch.');
+              finishLoading();
+            } else {
+              await fetchProfile(session.user.id);
+              if (mounted) finishLoading();
+            }
+          } else {
+            console.log('[Auth] Nenhuma sessão encontrada no carregamento.');
+            clear();
+          }
           clearTimeout(authTimeout);
-          return;
+          break;
         }
-        
-        // Se não tem profile, buscar
-        startTimeout();
-        await getProfile(session.user.id);
-        return;
-      }
 
-      if (event === 'TOKEN_REFRESHED' && session?.user) {
-        // Token refresh — apenas atualizar user, não mexer no profile
-        setUser(session.user);
-        return;
-      }
-
-      if (session?.user) {
-        setUser(session.user);
-        const currentProfile = useAuthStore.getState().profile;
-        if (!currentProfile || currentProfile.id !== session.user.id) {
-          startTimeout();
-          await getProfile(session.user.id);
-        } else {
-          finishLoading();
+        case 'SIGNED_IN': {
+          if (session?.user) {
+            setUser(session.user);
+            // Verificar se o profile já foi setado pela LoginPage
+            const existingProfile = useAuthStore.getState().profile;
+            if (existingProfile && existingProfile.id === session.user.id) {
+              console.log('[Auth] Profile já setado pela LoginPage.');
+              finishLoading();
+            } else {
+              await fetchProfile(session.user.id);
+              if (mounted) finishLoading();
+            }
+          }
           clearTimeout(authTimeout);
+          break;
         }
-      } else if (event === 'INITIAL_SESSION') {
-        finishLoading();
-        clearTimeout(authTimeout);
+
+        case 'SIGNED_OUT': {
+          console.log('[Auth] Usuário deslogou.');
+          clear();
+          clearTimeout(authTimeout);
+          break;
+        }
+
+        case 'TOKEN_REFRESHED': {
+          // Apenas atualizar o user object, não mexer no profile
+          if (session?.user) {
+            setUser(session.user);
+          }
+          break;
+        }
+
+        default: {
+          // USER_UPDATED, PASSWORD_RECOVERY, etc.
+          if (session?.user) {
+            setUser(session.user);
+          }
+          break;
+        }
       }
     });
 
@@ -207,7 +169,7 @@ export default function App() {
       clearTimeout(authTimeout);
       subscription.unsubscribe();
     };
-  }, [setUser, setProfile, setLoading, finishLoading, clear]);
+  }, [setUser, setProfile, finishLoading, clear]);
 
   return (
     <BrowserRouter>
