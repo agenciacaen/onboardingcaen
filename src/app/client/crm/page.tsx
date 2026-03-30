@@ -1,13 +1,22 @@
-import { useState, useMemo } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { PageHeader } from '../../../components/ui/PageHeader';
 import { DateRangeSelector } from '@/components/ui/DateRangeSelector';
+import { supabase } from '@/services/supabase';
 import type { DateRange } from 'react-day-picker';
 import { subDays } from 'date-fns';
 
 import { useAuth } from '@/hooks/useAuth';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { ClientModuleTasksView } from '@/components/modules/ClientModuleTasksView';
-import { Database, Cpu, Zap, Target } from 'lucide-react';
+import { Database, Cpu, Zap, CheckCircle2, Clock } from 'lucide-react';
+
+interface TaskCounts {
+  todo: number;
+  in_progress: number;
+  review: number;
+  done: number;
+  total: number;
+}
 
 export function ClientCRMPage() {
   const { clientId } = useAuth();
@@ -16,14 +25,53 @@ export function ClientCRMPage() {
     to: new Date()
   });
 
-  const [isLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [taskCounts, setTaskCounts] = useState<TaskCounts>({
+    todo: 0,
+    in_progress: 0,
+    review: 0,
+    done: 0,
+    total: 0
+  });
 
-  const stats = useMemo(() => ({
-    active_automations: 12,
-    leads_in_funnel: 485,
-    conversion_rate: '3.2%',
-    health_score: 94
-  }), []);
+  useEffect(() => {
+    if (!clientId) return;
+
+    const fetchTaskStats = async () => {
+      setIsLoading(true);
+      try {
+        const { data: tasks, error } = await supabase
+          .from('tasks')
+          .select('status')
+          .eq('client_id', clientId)
+          .eq('module', 'crm');
+
+        if (error) throw error;
+
+        const counts = (tasks || []).reduce((acc: TaskCounts, task: { status: string }) => {
+          const status = task.status as keyof Omit<TaskCounts, 'total'>;
+          if (acc[status] !== undefined) {
+            acc[status]++;
+          }
+          acc.total++;
+          return acc;
+        }, { todo: 0, in_progress: 0, review: 0, done: 0, total: 0 });
+        
+        setTaskCounts(counts);
+      } catch (err) {
+        console.error('Erro ao buscar estatísticas de CRM:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchTaskStats();
+  }, [clientId]);
+
+  const completionRate = useMemo(() => {
+    if (taskCounts.total === 0) return 0;
+    return Math.round((taskCounts.done / taskCounts.total) * 100);
+  }, [taskCounts]);
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -52,43 +100,49 @@ export function ClientCRMPage() {
                   <div className="p-2 bg-blue-50 rounded-lg text-blue-600">
                     <Zap className="w-4 h-4" />
                   </div>
-                  <h3 className="text-sm font-medium text-gray-500">Automações Ativas</h3>
+                  <h3 className="text-sm font-medium text-gray-500">Implantação CRM e IA</h3>
                 </div>
-                <p className="text-3xl font-bold text-slate-900">{stats.active_automations}</p>
-                <p className="text-xs text-green-600 mt-1 font-medium">+2 este mês</p>
-              </div>
-
-              <div className="bg-white p-6 rounded-lg border shadow-sm hover:shadow-md transition-shadow">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="p-2 bg-indigo-50 rounded-lg text-indigo-600">
-                    <Target className="w-4 h-4" />
-                  </div>
-                  <h3 className="text-sm font-medium text-gray-500">Leads no Funil</h3>
+                <p className="text-3xl font-bold text-slate-900">{completionRate}%</p>
+                <div className="w-full bg-slate-100 h-1.5 rounded-full mt-3 overflow-hidden">
+                  <div 
+                    className="bg-blue-600 h-full transition-all duration-1000 ease-out" 
+                    style={{ width: `${completionRate}%` }} 
+                  />
                 </div>
-                <p className="text-3xl font-bold text-slate-900">{stats.leads_in_funnel}</p>
-                <p className="text-xs text-indigo-600 mt-1 font-medium">Fluxo constante</p>
-              </div>
-
-              <div className="bg-white p-6 rounded-lg border shadow-sm hover:shadow-md transition-shadow">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="p-2 bg-emerald-50 rounded-lg text-emerald-600">
-                    <Cpu className="w-4 h-4" />
-                  </div>
-                  <h3 className="text-sm font-medium text-gray-500">Taxa de Conversão</h3>
-                </div>
-                <p className="text-3xl font-bold text-emerald-600">{stats.conversion_rate}</p>
-                <p className="text-xs text-gray-400 mt-1 font-medium">Média do período</p>
+                <p className="text-xs text-slate-400 mt-2 font-medium">Progresso Geral</p>
               </div>
 
               <div className="bg-white p-6 rounded-lg border shadow-sm hover:shadow-md transition-shadow">
                 <div className="flex items-center gap-3 mb-2">
                   <div className="p-2 bg-amber-50 rounded-lg text-amber-600">
+                    <Clock className="w-4 h-4" />
+                  </div>
+                  <h3 className="text-sm font-medium text-gray-500">Em Andamento</h3>
+                </div>
+                <p className="text-3xl font-bold text-slate-900">{taskCounts.in_progress}</p>
+                <p className="text-xs text-amber-600 mt-1 font-medium">Implementação ativa</p>
+              </div>
+
+              <div className="bg-white p-6 rounded-lg border shadow-sm hover:shadow-md transition-shadow">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="p-2 bg-emerald-50 rounded-lg text-emerald-600">
+                    <CheckCircle2 className="w-4 h-4" />
+                  </div>
+                  <h3 className="text-sm font-medium text-gray-500">CRM Ativo</h3>
+                </div>
+                <p className="text-3xl font-bold text-emerald-600">{taskCounts.done}</p>
+                <p className="text-xs text-emerald-600 mt-1 font-medium">Etapas concluídas</p>
+              </div>
+
+              <div className="bg-white p-6 rounded-lg border shadow-sm hover:shadow-md transition-shadow">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="p-2 bg-indigo-50 rounded-lg text-indigo-600">
                     <Database className="w-4 h-4" />
                   </div>
-                  <h3 className="text-sm font-medium text-gray-500">Health Score</h3>
+                  <h3 className="text-sm font-medium text-gray-500">Backlog / Planejado</h3>
                 </div>
-                <p className="text-3xl font-bold text-amber-500">{stats.health_score}%</p>
-                <p className="text-xs text-amber-600 mt-1 font-medium">Saúde tecnológica</p>
+                <p className="text-3xl font-bold text-slate-900">{taskCounts.todo}</p>
+                <p className="text-xs text-slate-500 mt-1 font-medium">Próximas melhorias</p>
               </div>
             </div>
 

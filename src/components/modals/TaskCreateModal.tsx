@@ -21,7 +21,7 @@ const createTaskSchema = z.object({
   title: z.string().min(2, "Título obrigatório"),
   description: z.string().optional(),
   client_id: z.string().min(1, "Selecione o cliente"),
-  module: z.enum(['tráfego', 'social', 'web', 'general']),
+  module: z.enum(['traffic', 'social', 'web', 'crm', 'general']),
   status: z.enum(['todo', 'in_progress', 'review', 'done']).optional(),
   priority: z.enum(['low', 'medium', 'high', 'urgent']).optional(),
   due_date: z.string().optional(),
@@ -34,12 +34,14 @@ interface TaskCreateModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
+  defaultModule?: 'traffic' | 'social' | 'web' | 'crm' | 'general';
 }
 
 export function TaskCreateModal({
   open,
   onOpenChange,
   onSuccess,
+  defaultModule = 'general',
 }: TaskCreateModalProps) {
   const [loading, setLoading] = useState(false);
   const [clients, setClients] = useState<{ id: string; name: string }[]>([]);
@@ -56,7 +58,7 @@ export function TaskCreateModal({
     defaultValues: {
       status: "todo",
       priority: "medium",
-      module: "general",
+      module: defaultModule,
     }
   });
 
@@ -96,14 +98,11 @@ export function TaskCreateModal({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Usuário não autenticado");
 
-      // Mapeamento silencioso conforme solicitado
-      const moduleMapped = data.module === 'tráfego' ? 'traffic' : data.module;
-      
       const { error } = await supabase.from('tasks').insert({
         title: data.title,
         description: data.description,
         client_id: data.client_id,
-        module: moduleMapped,
+        module: data.module,
         status: data.status,
         priority: data.priority,
         due_date: data.due_date || null,
@@ -156,9 +155,10 @@ export function TaskCreateModal({
                 <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="general">Geral</SelectItem>
-                  <SelectItem value="traffic">Tráfego</SelectItem>
+                  <SelectItem value="traffic">Tráfego Pago</SelectItem>
                   <SelectItem value="social">Social Media</SelectItem>
                   <SelectItem value="web">Desenvolvimento Web</SelectItem>
+                  <SelectItem value="crm">CRM e Tecnologia</SelectItem>
                 </SelectContent>
               </Select>
             </div>

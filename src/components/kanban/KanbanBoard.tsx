@@ -26,7 +26,13 @@ const columns = [
   { id: 'done', title: 'Concluído' }
 ];
 
-export function KanbanBoard({ clientIdFilter }: { clientIdFilter?: string }) {
+export function KanbanBoard({ 
+  clientIdFilter, 
+  moduleFilter 
+}: { 
+  clientIdFilter?: string;
+  moduleFilter?: string;
+}) {
   const [allTasks, setAllTasks] = useState<Task[]>([]);
   const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
@@ -41,6 +47,10 @@ export function KanbanBoard({ clientIdFilter }: { clientIdFilter?: string }) {
     if (clientIdFilter && clientIdFilter !== 'all') {
       query = query.eq('client_id', clientIdFilter);
     }
+
+    if (moduleFilter) {
+      query = query.eq('module', moduleFilter);
+    }
     
     const { data, error } = await query;
     if (error) {
@@ -48,7 +58,7 @@ export function KanbanBoard({ clientIdFilter }: { clientIdFilter?: string }) {
     } else {
       setAllTasks((data as unknown as Task[]) || []);
     }
-  }, [clientIdFilter]);
+  }, [clientIdFilter, moduleFilter]);
 
   useEffect(() => {
     let isMounted = true;
