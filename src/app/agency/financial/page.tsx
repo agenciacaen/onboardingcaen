@@ -201,18 +201,35 @@ export function AgencyFinancialPage() {
         };
 
         const handleDelete = async () => {
-          if (!window.confirm("Tem certeza que deseja excluir esta fatura permanentemente?")) return;
+          console.group('Financeiro: Exclusão de Fatura');
+          console.log('Documento alvo ID:', row.original.id);
+          console.log('Dados da linha:', row.original);
           
-          const { error } = await supabase
-            .from('financial_invoices')
-            .delete()
-            .eq('id', row.original.id);
+          if (!window.confirm("Tem certeza que deseja excluir esta fatura permanentemente?")) {
+            console.log('Exclusão cancelada pelo usuário.');
+            console.groupEnd();
+            return;
+          }
           
-          if (error) {
-            toast.error("Erro ao excluir fatura.");
-          } else {
-            toast.success("Fatura excluída com sucesso!");
-            fetchInvoices();
+          try {
+            const { error, count } = await supabase
+              .from('financial_invoices')
+              .delete()
+              .eq('id', row.original.id);
+            
+            if (error) {
+              console.error('Erro retornado pelo Supabase:', error);
+              toast.error(`Erro ao excluir: ${error.message || 'Erro desconhecido'}`);
+            } else {
+              console.log('Operação de exclusão concluída. Linhas afetadas (se count ativado):', count);
+              toast.success("Fatura excluída com sucesso!");
+              fetchInvoices();
+            }
+          } catch (err) {
+            console.error('Exceção capturada na exclusão:', err);
+            toast.error("Ocorreu um erro inesperado ao tentar excluir.");
+          } finally {
+            console.groupEnd();
           }
         };
 
