@@ -97,4 +97,14 @@ export interface Flow {
   created_at: string;
   updated_at?: string;
 }
-
+export interface ClientCredential {
+  id: string;
+  client_id: string;
+  platform: string;
+  url?: string;
+  username?: string;
+  password?: string;
+  notes?: string;
+  created_at: string;
+  updated_at: string;
+}

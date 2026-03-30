@@ -9,7 +9,7 @@ import { cn } from "../../lib/utils";
 import {
   LayoutDashboard, Users, UserCheck, CalendarDays, CheckSquare, GitBranch,
   FileText, BarChart2, Rocket, TrendingUp, Share2, Globe, ThumbsUp,
-  MessageCircle, DollarSign, LogOut, Hexagon
+  MessageCircle, DollarSign, LogOut, Hexagon, ShieldCheck
 } from "lucide-react";
 import { supabase } from "../../services/supabase";
 import { useAuthStore } from "../../store/authStore";
@@ -48,6 +48,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       </SidebarGroup>
       <SidebarGroup label="Gestão">
         <SidebarItem icon={Users} label="Clientes" href="/agency/clients" onNavigate={onNavigate} />
+        <SidebarItem icon={ShieldCheck} label="Acessos" href="/agency/access" onNavigate={onNavigate} />
         <SidebarItem icon={ThumbsUp} label="Aprovações" href="/agency/approvals" onNavigate={onNavigate} />
         <SidebarItem icon={DollarSign} label="Financeiro" href="/agency/financial" onNavigate={onNavigate} />
         <SidebarItem icon={UserCheck} label="Equipe" href="/agency/team" onNavigate={onNavigate} />

@@ -27,6 +27,7 @@ import { AgencyApprovalsPage } from './app/agency/approvals/page';
 import { AgencyDocumentsPage } from './app/agency/documents/page';
 import { AgencyReportsPage } from './app/agency/reports/page';
 import { AgencyFinancialPage } from './app/agency/financial/page';
+import { AgencyAccessPage } from './app/agency/access/page';
 
 // Cliente
 import { ClientDashboard } from './app/client/page';
@@ -192,9 +193,10 @@ export default function App() {
               <Route path="/agency/tasks" element={<AgencyTasksPage />} />
               <Route path="/agency/flows" element={<AgencyFlowsPage />} />
               <Route path="/agency/team" element={<AgencyTeamPage />} />
-              <Route path="/agency/documents" element={<AgencyDocumentsPage />} />
+               <Route path="/agency/documents" element={<AgencyDocumentsPage />} />
               <Route path="/agency/reports" element={<AgencyReportsPage />} />
               <Route path="/agency/financial" element={<AgencyFinancialPage />} />
+              <Route path="/agency/access" element={<AgencyAccessPage />} />
             </Route>
           </Route>
           
