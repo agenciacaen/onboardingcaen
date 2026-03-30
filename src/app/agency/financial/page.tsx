@@ -15,7 +15,8 @@ import {
   FileText, 
   MessageSquare, 
   StickyNote,
-  AlertTriangle 
+  AlertTriangle,
+  Trash2
 } from "lucide-react";
 import { FinancialCreateModal } from "@/components/modals/FinancialCreateModal";
 import { type FinancialInvoice } from "@/types/general.types";
@@ -199,6 +200,22 @@ export function AgencyFinancialPage() {
           }
         };
 
+        const handleDelete = async () => {
+          if (!window.confirm("Tem certeza que deseja excluir esta fatura permanentemente?")) return;
+          
+          const { error } = await supabase
+            .from('financial_invoices')
+            .delete()
+            .eq('id', row.original.id);
+          
+          if (error) {
+            toast.error("Erro ao excluir fatura.");
+          } else {
+            toast.success("Fatura excluída com sucesso!");
+            fetchInvoices();
+          }
+        };
+
         return (
           <div className="flex gap-2">
             {row.original.status !== 'paid' && (
@@ -211,6 +228,9 @@ export function AgencyFinancialPage() {
                 Resolver
               </Button>
             )}
+            <Button variant="ghost" size="icon" onClick={handleDelete} className="text-destructive hover:text-destructive hover:bg-destructive/10">
+              <Trash2 className="h-4 w-4" />
+            </Button>
           </div>
         );
       },

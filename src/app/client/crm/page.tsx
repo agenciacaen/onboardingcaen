@@ -1,0 +1,163 @@
+import { useState, useMemo } from 'react';
+import { PageHeader } from '../../../components/ui/PageHeader';
+import { DateRangeSelector } from '@/components/ui/DateRangeSelector';
+import type { DateRange } from 'react-day-picker';
+import { subDays } from 'date-fns';
+
+import { useAuth } from '@/hooks/useAuth';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { ClientModuleTasksView } from '@/components/modules/ClientModuleTasksView';
+import { Database, Cpu, Zap, Target } from 'lucide-react';
+
+export function ClientCRMPage() {
+  const { clientId } = useAuth();
+  const [dateRange, setDateRange] = useState<DateRange | undefined>({
+    from: subDays(new Date(), 30),
+    to: new Date()
+  });
+
+  const [isLoading] = useState(false);
+
+  const stats = useMemo(() => ({
+    active_automations: 12,
+    leads_in_funnel: 485,
+    conversion_rate: '3.2%',
+    health_score: 94
+  }), []);
+
+  return (
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <PageHeader 
+          title="CRM e Tecnologia" 
+          description="Acompanhe a implantação de processos, automações e saúde do seu ecossistema digital." 
+        />
+        <div className="flex items-center gap-2">
+          <DateRangeSelector date={dateRange} setDate={setDateRange} />
+        </div>
+      </div>
+
+      <Tabs defaultValue="dashboard" className="w-full">
+        <TabsList className="mb-4 bg-slate-100/50">
+          <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+          <TabsTrigger value="kanban">Quadro Kanban</TabsTrigger>
+          <TabsTrigger value="list">Lista de Tarefas</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="dashboard" className="mt-0 space-y-6">
+          <div className={isLoading ? "opacity-50 pointer-events-none transition-opacity duration-300" : "transition-opacity duration-300"}>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="bg-white p-6 rounded-lg border shadow-sm hover:shadow-md transition-shadow">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="p-2 bg-blue-50 rounded-lg text-blue-600">
+                    <Zap className="w-4 h-4" />
+                  </div>
+                  <h3 className="text-sm font-medium text-gray-500">Automações Ativas</h3>
+                </div>
+                <p className="text-3xl font-bold text-slate-900">{stats.active_automations}</p>
+                <p className="text-xs text-green-600 mt-1 font-medium">+2 este mês</p>
+              </div>
+
+              <div className="bg-white p-6 rounded-lg border shadow-sm hover:shadow-md transition-shadow">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="p-2 bg-indigo-50 rounded-lg text-indigo-600">
+                    <Target className="w-4 h-4" />
+                  </div>
+                  <h3 className="text-sm font-medium text-gray-500">Leads no Funil</h3>
+                </div>
+                <p className="text-3xl font-bold text-slate-900">{stats.leads_in_funnel}</p>
+                <p className="text-xs text-indigo-600 mt-1 font-medium">Fluxo constante</p>
+              </div>
+
+              <div className="bg-white p-6 rounded-lg border shadow-sm hover:shadow-md transition-shadow">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="p-2 bg-emerald-50 rounded-lg text-emerald-600">
+                    <Cpu className="w-4 h-4" />
+                  </div>
+                  <h3 className="text-sm font-medium text-gray-500">Taxa de Conversão</h3>
+                </div>
+                <p className="text-3xl font-bold text-emerald-600">{stats.conversion_rate}</p>
+                <p className="text-xs text-gray-400 mt-1 font-medium">Média do período</p>
+              </div>
+
+              <div className="bg-white p-6 rounded-lg border shadow-sm hover:shadow-md transition-shadow">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="p-2 bg-amber-50 rounded-lg text-amber-600">
+                    <Database className="w-4 h-4" />
+                  </div>
+                  <h3 className="text-sm font-medium text-gray-500">Health Score</h3>
+                </div>
+                <p className="text-3xl font-bold text-amber-500">{stats.health_score}%</p>
+                <p className="text-xs text-amber-600 mt-1 font-medium">Saúde tecnológica</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
+              <div className="lg:col-span-2 bg-white p-6 rounded-lg border shadow-sm min-h-[350px] flex flex-col">
+                <h3 className="font-semibold text-slate-900 mb-4">Fluxo de Dados e Integrações</h3>
+                <div className="flex-1 flex items-center justify-center border-2 border-dashed border-slate-100 rounded-lg bg-slate-50/50">
+                  <div className="text-center space-y-2">
+                    <div className="p-3 bg-white rounded-full shadow-sm mx-auto w-fit">
+                      <Cpu className="w-6 h-6 text-slate-300" />
+                    </div>
+                    <p className="text-sm text-slate-400">Visualização de fluxo em desenvolvimento</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white p-6 rounded-lg border shadow-sm flex flex-col">
+                <h3 className="font-semibold text-slate-900 mb-4">Status de Ferramentas</h3>
+                <div className="space-y-4">
+                  {[
+                    { name: 'CRM (RD Station)', status: 'Ativo', color: 'bg-green-500' },
+                    { name: 'API de Conversões', status: 'Ativo', color: 'bg-green-500' },
+                    { name: 'Meta Pixel', status: 'Ativo', color: 'bg-green-500' },
+                    { name: 'Google Tag Manager', status: 'Ativo', color: 'bg-green-500' },
+                    { name: 'N8N Automações', status: 'Manutenção', color: 'bg-amber-500' },
+                  ].map((tool) => (
+                    <div key={tool.name} className="flex items-center justify-between p-2 rounded-md hover:bg-slate-50 border border-transparent hover:border-slate-100 transition-all">
+                      <span className="text-sm text-slate-600">{tool.name}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-bold uppercase text-slate-400">{tool.status}</span>
+                        <div className={`w-2 h-2 rounded-full ${tool.color}`} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-6">
+               <div className="flex items-center justify-between mb-4">
+                 <h2 className="text-lg font-semibold text-slate-900">Roadmap de Tecnologia</h2>
+                 <span className="text-xs text-slate-400">Próximos passos da sua infraestrutura</span>
+               </div>
+               <div className="bg-white p-6 rounded-lg border shadow-sm">
+                  <div className="space-y-6">
+                    <div className="relative pl-8 border-l-2 border-primary/20 pb-2">
+                      <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-primary border-4 border-white shadow-sm" />
+                      <h4 className="text-sm font-bold text-slate-900">Integração Omni-channel</h4>
+                      <p className="text-xs text-slate-500 mt-1">Conexão centralizada de todos os canais de atendimento no CRM.</p>
+                    </div>
+                    <div className="relative pl-8 border-l-2 border-primary/20 pb-2">
+                      <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-slate-200 border-4 border-white shadow-sm" />
+                      <h4 className="text-sm font-bold text-slate-400 text-slate-600">Lead Scoring Avançado</h4>
+                      <p className="text-xs text-slate-500 mt-1">Implementação de regras de pontuação automática para qualificação de leads.</p>
+                    </div>
+                  </div>
+               </div>
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="kanban" className="mt-0 pt-2">
+          {clientId && <ClientModuleTasksView module="crm" view="kanban" />}
+        </TabsContent>
+
+        <TabsContent value="list" className="mt-0 pt-2">
+          {clientId && <ClientModuleTasksView module="crm" view="list" />}
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}

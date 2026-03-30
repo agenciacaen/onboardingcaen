@@ -38,6 +38,7 @@ import { ClientCampaignDetailPage } from './app/client/traffic/campaigns/[id]/pa
 import { ClientAdsPage } from './app/client/traffic/ads/page';
 import { ClientSocialPage } from './app/client/social/page';
 import { ClientWebPage } from './app/client/web/page';
+import { ClientCRMPage } from './app/client/crm/page';
 import { ClientApprovalsPage } from './app/client/approvals/page';
 import { ClientSupportPage } from './app/client/support/page';
 import { ClientTicketDetailPage } from './app/client/support/[ticketId]/page';
@@ -210,6 +211,7 @@ export default function App() {
               <Route path="/client/traffic/ads" element={<ClientAdsPage />} />
               <Route path="/client/social" element={<ClientSocialPage />} />
               <Route path="/client/web" element={<ClientWebPage />} />
+              <Route path="/client/crm" element={<ClientCRMPage />} />
               <Route path="/client/approvals" element={<ClientApprovalsPage />} />
               <Route path="/client/support" element={<ClientSupportPage />} />
               <Route path="/client/support/:ticketId" element={<ClientTicketDetailPage />} />

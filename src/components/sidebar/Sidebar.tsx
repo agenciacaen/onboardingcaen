@@ -9,7 +9,7 @@ import { cn } from "../../lib/utils";
 import {
   LayoutDashboard, Users, UserCheck, CalendarDays, CheckSquare, GitBranch,
   FileText, BarChart2, Rocket, TrendingUp, Share2, Globe, ThumbsUp,
-  MessageCircle, DollarSign, LogOut, Hexagon, ShieldCheck
+  MessageCircle, DollarSign, LogOut, Hexagon, ShieldCheck, Database
 } from "lucide-react";
 import { supabase } from "../../services/supabase";
 import { useAuthStore } from "../../store/authStore";
@@ -85,6 +85,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
         <SidebarItem icon={TrendingUp} label="Tráfego Pago" href="/client/traffic" onNavigate={onNavigate} />
         <SidebarItem icon={Share2} label="Social Media" href="/client/social" onNavigate={onNavigate} />
         <SidebarItem icon={Globe} label="Web" href="/client/web" onNavigate={onNavigate} />
+        <SidebarItem icon={Database} label="CRM e Tecnologia" href="/client/crm" onNavigate={onNavigate} />
       </SidebarGroup>
       <SidebarGroup label="Ações">
         <SidebarItem 
@@ -96,7 +97,16 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
         />
       </SidebarGroup>
       <SidebarGroup label="Suporte">
-        <SidebarItem icon={MessageCircle} label="Suporte" href="/client/support" onNavigate={onNavigate} />
+        <div className="relative">
+          <div className={cn(
+            "absolute -top-2 left-8 z-10",
+            "bg-primary text-[9px] font-bold text-white px-1.5 py-0.5 rounded-full shadow-sm uppercase tracking-wider animate-pulse",
+            !isMobile && "hidden group-hover:block"
+          )}>
+            Em Breve
+          </div>
+          <SidebarItem icon={MessageCircle} label="Suporte" href="/client/support" onNavigate={onNavigate} disabled />
+        </div>
       </SidebarGroup>
       <SidebarGroup label="Financeiro">
         <SidebarItem icon={DollarSign} label="Financeiro" href="/client/financial" onNavigate={onNavigate} />

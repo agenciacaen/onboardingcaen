@@ -3,7 +3,7 @@ export interface Task {
   client_id?: string;
   title: string;
   description?: string;
-  module?: 'traffic' | 'social' | 'web' | 'general';
+  module?: 'traffic' | 'social' | 'web' | 'crm' | 'general';
   status: 'todo' | 'in_progress' | 'review' | 'done';
   priority: 'low' | 'medium' | 'high' | 'urgent';
   assigned_to?: string;
@@ -64,7 +64,7 @@ export interface FinancialInvoice {
   category: 'labor' | 'ads' | 'software' | 'other' | string;
   status: 'pending' | 'paid' | 'overdue' | 'cancelled' | 'disputed' | string;
   due_date: string;
-  paid_at?: string;
+  paid_at?: string | null;
   file_url?: string;
   client_notes?: string;
   dispute_message?: string;

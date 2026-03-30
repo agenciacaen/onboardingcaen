@@ -7,7 +7,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 interface ClientModuleTasksViewProps {
-  module: 'traffic' | 'social' | 'web' | 'onboarding';
+  module: 'traffic' | 'social' | 'web' | 'crm' | 'onboarding';
   view: 'kanban' | 'list';
 }
 

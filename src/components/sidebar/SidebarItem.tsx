@@ -10,9 +10,10 @@ export interface SidebarItemProps {
   isActive?: boolean;
   endDecorator?: React.ReactNode;
   onNavigate?: () => void;
+  disabled?: boolean;
 }
 
-export function SidebarItem({ icon: Icon, label, href, isActive, endDecorator, onNavigate }: SidebarItemProps) {
+export function SidebarItem({ icon: Icon, label, href, isActive, endDecorator, onNavigate, disabled }: SidebarItemProps) {
   const { isMobile } = useSidebarStore();
   const location = useLocation();
   
@@ -23,6 +24,24 @@ export function SidebarItem({ icon: Icon, label, href, isActive, endDecorator, o
     : (href === "/agency" && location.pathname === "/agency") || 
       (href === "/client" && location.pathname === "/client") ||
       (href !== "/agency" && href !== "/client" && location.pathname.startsWith(href));
+
+  if (disabled) {
+    return (
+      <div
+        className={cn(
+          "flex items-center rounded-md px-3 py-2 text-sm font-medium mb-1 whitespace-nowrap overflow-hidden transition-all duration-300",
+          "text-slate-400 opacity-60 cursor-not-allowed select-none",
+          isDesktop && "justify-center px-2 group-hover:justify-start group-hover:px-3"
+        )}
+        title={isDesktop ? `${label} (Em breve)` : undefined}
+      >
+        <Icon className={cn("h-5 w-5 shrink-0 transition-all", isDesktop ? "group-hover:mr-3" : "mr-3")} />
+        <span className={cn("flex-1 text-left truncate transition-all duration-300", isDesktop && "hidden group-hover:block")}>
+          {label}
+        </span>
+      </div>
+    );
+  }
 
   return (
     <NavLink

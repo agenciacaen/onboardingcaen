@@ -12,6 +12,7 @@ import {
   AlertCircle, 
   MessageSquare, 
   StickyNote,
+  RotateCcw,
 } from "lucide-react";
 import { format } from "date-fns";
 import { useAuth } from "@/hooks/useAuth";
@@ -143,10 +144,25 @@ export function ClientFinancialPage() {
                       <Button 
                         variant="default" 
                         className="shadow-md bg-green-600 hover:bg-green-700" 
-                        onClick={() => handleUpdateInvoice(invoice.id, { status: 'paid' })}
+                        onClick={() => handleUpdateInvoice(invoice.id, { status: 'paid', paid_at: new Date().toISOString() })}
                         disabled={submitting}
                       >
                         <CheckCircle2 className="mr-2 h-4 w-4" /> Já fiz o pagamento
+                      </Button>
+                    )}
+
+                    {invoice.status === 'paid' && (
+                      <Button 
+                        variant="outline" 
+                        className="border-amber-200 text-amber-700 hover:bg-amber-50"
+                        onClick={() => {
+                          if (window.confirm("Deseja marcar esta fatura como pendente novamente?")) {
+                            handleUpdateInvoice(invoice.id, { status: 'pending', paid_at: null });
+                          }
+                        }}
+                        disabled={submitting}
+                      >
+                        <RotateCcw className="mr-2 h-4 w-4" /> Reverter Pagamento
                       </Button>
                     )}
 

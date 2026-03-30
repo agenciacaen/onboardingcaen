@@ -76,8 +76,9 @@ const PRIORITY_OPTIONS = [
 ];
 
 const MODULE_LABELS: Record<string, string> = {
-  social: 'Redes Sociais', general: 'CRM / Geral',
+  social: 'Redes Sociais', general: 'Geral',
   traffic: 'Tráfego Pago', web: 'Web & SEO',
+  crm: 'CRM e Tecnologia'
 };
 
 // ============================================================
