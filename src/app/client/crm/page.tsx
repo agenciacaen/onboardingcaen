@@ -146,8 +146,8 @@ export function ClientCRMPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
-              <div className="lg:col-span-2 bg-white p-6 rounded-lg border shadow-sm min-h-[350px] flex flex-col">
+            <div className="grid grid-cols-1 gap-6 mt-6">
+              <div className="bg-white p-6 rounded-lg border shadow-sm min-h-[350px] flex flex-col">
                 <h3 className="font-semibold text-slate-900 mb-4">Fluxo de Dados e Integrações</h3>
                 <div className="flex-1 flex items-center justify-center border-2 border-dashed border-slate-100 rounded-lg bg-slate-50/50">
                   <div className="text-center space-y-2">
@@ -156,27 +156,6 @@ export function ClientCRMPage() {
                     </div>
                     <p className="text-sm text-slate-400">Visualização de fluxo em desenvolvimento</p>
                   </div>
-                </div>
-              </div>
-
-              <div className="bg-white p-6 rounded-lg border shadow-sm flex flex-col">
-                <h3 className="font-semibold text-slate-900 mb-4">Status de Ferramentas</h3>
-                <div className="space-y-4">
-                  {[
-                    { name: 'CRM (RD Station)', status: 'Ativo', color: 'bg-green-500' },
-                    { name: 'API de Conversões', status: 'Ativo', color: 'bg-green-500' },
-                    { name: 'Meta Pixel', status: 'Ativo', color: 'bg-green-500' },
-                    { name: 'Google Tag Manager', status: 'Ativo', color: 'bg-green-500' },
-                    { name: 'N8N Automações', status: 'Manutenção', color: 'bg-amber-500' },
-                  ].map((tool) => (
-                    <div key={tool.name} className="flex items-center justify-between p-2 rounded-md hover:bg-slate-50 border border-transparent hover:border-slate-100 transition-all">
-                      <span className="text-sm text-slate-600">{tool.name}</span>
-                      <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-bold uppercase text-slate-400">{tool.status}</span>
-                        <div className={`w-2 h-2 rounded-full ${tool.color}`} />
-                      </div>
-                    </div>
-                  ))}
                 </div>
               </div>
             </div>
