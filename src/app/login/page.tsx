@@ -34,6 +34,12 @@ export function LoginPage() {
         console.warn(`[Login] Removendo ${lockKeys.length} lock(s) travados:`, lockKeys);
         lockKeys.forEach(key => localStorage.removeItem(key));
       }
+      
+      // Forçar limpeza de tema se existir (evita conflito de cor invisível)
+      if (localStorage.getItem('theme')) {
+        localStorage.removeItem('theme');
+        document.documentElement.classList.remove('dark');
+      }
     } catch (e) {
       console.error('[Login] Falha ao limpar locks:', e);
     }
