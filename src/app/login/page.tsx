@@ -23,7 +23,7 @@ export function LoginPage() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  // Previne "Lock was not released" do Supabase gotrue travando o login de maneira resiliente
+  // Previne "Lock was not released" do Supabase gotrue travando o login
   useEffect(() => {
     try {
       const lockKeys = Object.keys(localStorage).filter(key => key.startsWith('lock:sb-'));
@@ -35,6 +35,19 @@ export function LoginPage() {
       console.error('Falha ao limpar locks de autenticação:', e);
     }
   }, []);
+
+  // Se o usuário já está logado, redirecionar imediatamente
+  useEffect(() => {
+    const state = useAuthStore.getState();
+    if (state.user && state.profile && !state.isLoading) {
+      const role = state.profile.role;
+      if (role === 'admin' || role === 'member') {
+        navigate('/agency', { replace: true });
+      } else if (role === 'client') {
+        navigate('/client', { replace: true });
+      }
+    }
+  }, [navigate]);
 
   const { register, handleSubmit, formState: { errors } } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema)
@@ -77,18 +90,27 @@ export function LoginPage() {
         }
 
         if (profile) {
-          // Pre-populate store so ProtectedRoute doesn't reject us prematurely while onAuthStateChange is still fetching
-          useAuthStore.getState().setProfile(profile);
+          // Pré-popularizar o store ANTES de navegar para que o 
+          // ProtectedRoute e onAuthStateChange não rejeitem prematuramente
+          const store = useAuthStore.getState();
+          store.setUser(authData.user);
+          store.setProfile(profile);
+          // Garantir que isLoading esteja false para evitar tela de loading após navegar
+          store.finishLoading();
+          
           console.log('Perfil encontrado, redirecionando para:', profile.role);
           
           if (profile.role === 'admin' || profile.role === 'member') {
-            navigate('/agency');
+            navigate('/agency', { replace: true });
           } else {
-            navigate('/client');
+            navigate('/client', { replace: true });
           }
         } else {
           console.warn('Perfil não encontrado para o usuário logado.');
           toast.error('Nenhum perfil encontrado para este usuário.');
+          // Fazer logout se não tem perfil
+          await supabase.auth.signOut();
+          useAuthStore.getState().clear();
         }
       }
     } catch (err) {
@@ -121,7 +143,6 @@ export function LoginPage() {
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <Label htmlFor="password">Senha</Label>
-            {/* Opcional: <a href="#" className="text-sm text-primary hover:underline">Esqueceu a senha?</a> */}
           </div>
           <Input 
             id="password" 

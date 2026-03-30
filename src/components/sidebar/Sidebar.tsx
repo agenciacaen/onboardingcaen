@@ -27,9 +27,14 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const navigate = useNavigate();
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    useAuthStore.getState().clear();
-    navigate("/login");
+    try {
+      await supabase.auth.signOut();
+    } catch (e) {
+      console.error('Erro ao fazer logout:', e);
+    } finally {
+      useAuthStore.getState().clear();
+      navigate("/login", { replace: true });
+    }
   };
 
   // on desktop, visually hide labels unless hovered, but on mobile always show labels inside the Sheet

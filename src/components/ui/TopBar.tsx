@@ -61,9 +61,14 @@ export function TopBar() {
   }, [role]);
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    useAuthStore.getState().clear();
-    navigate("/login");
+    try {
+      await supabase.auth.signOut();
+    } catch (e) {
+      console.error('Erro ao fazer logout:', e);
+    } finally {
+      useAuthStore.getState().clear();
+      navigate("/login", { replace: true });
+    }
   };
 
   const pathNames = location.pathname.split("/").filter(x => x);

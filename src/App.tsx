@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { supabase } from './services/supabase';
 import { useAuthStore } from './store/authStore';
@@ -54,19 +54,39 @@ function RootRedirect() {
 
 export default function App() {
   const { setUser, setProfile, setLoading, finishLoading, clear } = useAuthStore();
+  const profileFetchRef = useRef<string | null>(null);
 
   useEffect(() => {
     let mounted = true;
-    const authTimeout = setTimeout(() => {
-      if (mounted && useAuthStore.getState().isLoading) {
-        console.warn('Auth check timeout reached (6s). Forcing initialization.');
-        finishLoading();
-      }
-    }, 6000);
+    let authTimeout: ReturnType<typeof setTimeout>;
+
+    const startTimeout = () => {
+      clearTimeout(authTimeout);
+      authTimeout = setTimeout(() => {
+        if (mounted && useAuthStore.getState().isLoading) {
+          console.warn('Auth check timeout reached (8s). Forcing initialization.');
+          finishLoading();
+        }
+      }, 8000);
+    };
 
     const getProfile = async (userId: string) => {
       if (!mounted) return;
+      
+      // Previne fetches duplicados para o mesmo userId
+      if (profileFetchRef.current === userId) {
+        const existingProfile = useAuthStore.getState().profile;
+        if (existingProfile && existingProfile.id === userId) {
+          console.log('Profile already loaded for:', userId);
+          finishLoading();
+          clearTimeout(authTimeout);
+          return;
+        }
+      }
+      
+      profileFetchRef.current = userId;
       console.log('Fetching profile for:', userId);
+      
       try {
         const { data, error } = await supabase
           .from('profiles')
@@ -74,14 +94,17 @@ export default function App() {
           .eq('id', userId)
           .maybeSingle();
 
+        if (!mounted) return;
+
         if (error) {
           console.error('Error fetching profile:', error);
           setProfile(null);
         } else {
-          console.log('Profile loaded successfully');
+          console.log('Profile loaded successfully:', data?.role);
           setProfile(data);
         }
       } catch (error) {
+        if (!mounted) return;
         console.error('Unexpected error fetching profile:', error);
         setProfile(null);
       } finally {
@@ -97,14 +120,17 @@ export default function App() {
       console.log('Auth flow: Starting initialization');
       try {
         setLoading(true);
+        startTimeout();
+
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
           console.error('Session error:', error);
           clear();
-          finishLoading();
           return;
         }
+
+        if (!mounted) return;
 
         if (session?.user) {
           console.log('Session found for:', session.user.email);
@@ -113,13 +139,11 @@ export default function App() {
         } else {
           console.log('No session found');
           clear();
-          finishLoading();
           clearTimeout(authTimeout);
         }
       } catch (error) {
         console.error('Initialization error:', error);
-        clear();
-        finishLoading();
+        if (mounted) clear();
       }
     };
 
@@ -130,9 +154,35 @@ export default function App() {
       console.log('Auth flow: Event observed -', event);
       
       if (event === 'SIGNED_OUT') {
+        profileFetchRef.current = null;
         clear();
-        finishLoading();
         clearTimeout(authTimeout);
+        return;
+      }
+
+      if (event === 'SIGNED_IN' && session?.user) {
+        // Um novo login aconteceu — garantir que o estado está em loading
+        // até que o profile seja carregado
+        const state = useAuthStore.getState();
+        setUser(session.user);
+        
+        // Se o profile já foi setado pela LoginPage (pre-populated), não buscar de novo
+        if (state.profile && state.profile.id === session.user.id) {
+          console.log('Auth flow: Profile already set by login page, skipping fetch');
+          finishLoading();
+          clearTimeout(authTimeout);
+          return;
+        }
+        
+        // Se não tem profile, buscar
+        startTimeout();
+        await getProfile(session.user.id);
+        return;
+      }
+
+      if (event === 'TOKEN_REFRESHED' && session?.user) {
+        // Token refresh — apenas atualizar user, não mexer no profile
+        setUser(session.user);
         return;
       }
 
@@ -140,15 +190,15 @@ export default function App() {
         setUser(session.user);
         const currentProfile = useAuthStore.getState().profile;
         if (!currentProfile || currentProfile.id !== session.user.id) {
+          startTimeout();
           await getProfile(session.user.id);
         } else {
           finishLoading();
           clearTimeout(authTimeout);
         }
       } else if (event === 'INITIAL_SESSION') {
-         // Se não há usuário na sessão inicial, garantir que o loading termine
-         finishLoading();
-         clearTimeout(authTimeout);
+        finishLoading();
+        clearTimeout(authTimeout);
       }
     });
 

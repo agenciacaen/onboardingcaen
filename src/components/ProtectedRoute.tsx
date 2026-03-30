@@ -1,6 +1,6 @@
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
-import { Skeleton } from './ui/skeleton';
+import { AuthLoadingScreen } from './ui/AuthLoadingScreen';
 import type { Role } from '../types/auth.types';
 
 interface ProtectedRouteProps {
@@ -8,21 +8,22 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ requiredRole }: ProtectedRouteProps) {
-  const { user, role, isLoading } = useAuthStore();
+  const { user, profile, role, isLoading } = useAuthStore();
 
+  // Enquanto estiver carregando, mostrar tela de loading
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="space-y-4">
-          <Skeleton className="h-12 w-[250px]" />
-          <Skeleton className="h-4 w-[200px]" />
-        </div>
-      </div>
-    );
+    return <AuthLoadingScreen />;
   }
 
+  // Se não tem user após o loading terminar, redirecionar para login
   if (!user) {
     return <Navigate to="/login" replace />;
+  }
+
+  // Se tem user mas o profile ainda não carregou (pode acontecer em edge cases),
+  // mostrar loading ao invés de rejeitar
+  if (!profile) {
+    return <AuthLoadingScreen />;
   }
 
   // 'member' pode acessar rotas de 'admin' (painel da agência)
