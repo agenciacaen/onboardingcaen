@@ -56,7 +56,17 @@ export default function App() {
   const { setUser, setProfile, setLoading, finishLoading, clear } = useAuthStore();
 
   useEffect(() => {
-    async function getProfile(userId: string) {
+    let mounted = true;
+    const authTimeout = setTimeout(() => {
+      if (mounted && useAuthStore.getState().isLoading) {
+        console.warn('Auth check timeout reached (6s). Forcing initialization.');
+        finishLoading();
+      }
+    }, 6000);
+
+    const getProfile = async (userId: string) => {
+      if (!mounted) return;
+      console.log('Fetching profile for:', userId);
       try {
         const { data, error } = await supabase
           .from('profiles')
@@ -68,43 +78,61 @@ export default function App() {
           console.error('Error fetching profile:', error);
           setProfile(null);
         } else {
+          console.log('Profile loaded successfully');
           setProfile(data);
         }
       } catch (error) {
         console.error('Unexpected error fetching profile:', error);
         setProfile(null);
       } finally {
-        finishLoading();
+        if (mounted) {
+          console.log('Auth flow: Finishing loading');
+          finishLoading();
+          clearTimeout(authTimeout);
+        }
       }
-    }
+    };
 
-    async function initializeAuth() {
+    const initializeAuth = async () => {
+      console.log('Auth flow: Starting initialization');
       try {
         setLoading(true);
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data: { session }, error } = await supabase.auth.getSession();
         
+        if (error) {
+          console.error('Session error:', error);
+          clear();
+          finishLoading();
+          return;
+        }
+
         if (session?.user) {
+          console.log('Session found for:', session.user.email);
           setUser(session.user);
           await getProfile(session.user.id);
         } else {
+          console.log('No session found');
           clear();
           finishLoading();
+          clearTimeout(authTimeout);
         }
       } catch (error) {
-        console.error('Error during auth initialization:', error);
+        console.error('Initialization error:', error);
         clear();
         finishLoading();
       }
-    }
+    };
 
     initializeAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth event:', event);
+      if (!mounted) return;
+      console.log('Auth flow: Event observed -', event);
       
       if (event === 'SIGNED_OUT') {
         clear();
         finishLoading();
+        clearTimeout(authTimeout);
         return;
       }
 
@@ -115,11 +143,18 @@ export default function App() {
           await getProfile(session.user.id);
         } else {
           finishLoading();
+          clearTimeout(authTimeout);
         }
+      } else if (event === 'INITIAL_SESSION') {
+         // Se não há usuário na sessão inicial, garantir que o loading termine
+         finishLoading();
+         clearTimeout(authTimeout);
       }
     });
 
     return () => {
+      mounted = false;
+      clearTimeout(authTimeout);
       subscription.unsubscribe();
     };
   }, [setUser, setProfile, setLoading, finishLoading, clear]);
