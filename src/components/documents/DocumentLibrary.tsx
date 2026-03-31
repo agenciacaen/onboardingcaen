@@ -11,7 +11,6 @@ import { useAuth } from "@/hooks/useAuth";
 type DocumentItem = {
   id: string;
   title: string;
-  doc_type: string; // compatibility
   file_type?: string;
   category: string;
   file_url: string;
@@ -39,7 +38,7 @@ export function DocumentLibrary({ clientIdFilter }: { clientIdFilter?: string })
     let query = supabase
       .from("documents")
       .select(`
-         id, title, doc_type, file_type, category, file_url, created_at,
+         id, title, file_type, category, file_url, created_at,
          clients ( name )
       `)
       .order('created_at', { ascending: false });
@@ -69,12 +68,14 @@ export function DocumentLibrary({ clientIdFilter }: { clientIdFilter?: string })
   const handleDelete = async (id: string) => {
     if (!confirm("Tem certeza que deseja excluir?")) return;
     
+    setLoading(true);
     const { error } = await supabase.from('documents').delete().eq('id', id);
     if (!error) {
        toast.success("Documento excluído");
        fetchDocuments();
     } else {
        toast.error("Erro interno. Apenas admins.");
+       setLoading(false);
     }
   };
 

@@ -157,7 +157,6 @@ export function EventCreateModal({
           event_type: data.event_type,
           platform: data.platform,
           color: data.color,
-          description: data.description,
         };
 
         if (isEdit) {

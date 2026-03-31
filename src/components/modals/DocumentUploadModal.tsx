@@ -71,7 +71,7 @@ export function DocumentUploadModal({ open, onOpenChange, onSuccess }: DocumentU
         // 1. Upload to Supabase Storage
         const fileExt = file.name.split('.').pop();
         const fileName = `${clientId}/${Date.now()}.${fileExt}`;
-        const filePath = `documents/${fileName}`;
+        const filePath = fileName;
 
         const { error: uploadError } = await supabase.storage
           .from('documents')
