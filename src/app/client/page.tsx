@@ -18,6 +18,7 @@ import {
   Wallet,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ClientProjectRoadmap } from "@/components/cards/ClientProjectRoadmap";
 
 interface DashboardData {
   campaigns_active: number;
@@ -238,6 +239,8 @@ export function ClientDashboard() {
           variant={stats.unread_notifications > 0 ? "warning" : "default"}
         />
       </div>
+
+      <ClientProjectRoadmap clientId={clientId || ""} />
 
       {/* Quick Actions */}
       <Card>

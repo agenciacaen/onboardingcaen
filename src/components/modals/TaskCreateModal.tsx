@@ -26,6 +26,7 @@ const createTaskSchema = z.object({
   priority: z.enum(['low', 'medium', 'high', 'urgent']).optional(),
   due_date: z.string().optional(),
   assigned_to: z.string().optional(),
+  stage: z.string().optional(),
 });
 
 type CreateTaskFormValues = z.infer<typeof createTaskSchema>;
@@ -73,6 +74,7 @@ export function TaskCreateModal({
         priority: 'medium',
         due_date: '',
         assigned_to: '',
+        stage: '',
       });
       fetchData();
     }
@@ -91,6 +93,7 @@ export function TaskCreateModal({
   const moduleVal = watch("module");
   const priorityVal = watch("priority");
   const assignedTo = watch("assigned_to");
+  const stageVal = watch("stage");
 
   const onSubmit = async (data: CreateTaskFormValues) => {
     setLoading(true);
@@ -107,6 +110,7 @@ export function TaskCreateModal({
         priority: data.priority,
         due_date: data.due_date || null,
         assigned_to: (data.assigned_to === 'unassigned' || !data.assigned_to) ? null : data.assigned_to,
+        stage: (data.stage === 'none' || !data.stage) ? null : data.stage,
         created_by: user.id,
       });
 
@@ -191,6 +195,18 @@ export function TaskCreateModal({
               <SelectContent>
                  <SelectItem value="unassigned">Não atribuído</SelectItem>
                 {team.map(m => <SelectItem key={m.id} value={m.id}>{m.full_name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="grid w-full items-center gap-1.5">
+            <Label>Etapa / Fase (Opcional)</Label>
+            <Select value={stageVal} onValueChange={(val) => setValue("stage", val)}>
+              <SelectTrigger><SelectValue placeholder="Selecione a fase..." /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Geral / Não Definido</SelectItem>
+                <SelectItem value="onboarding_phase_1">Fase 1 — Setup Inicial</SelectItem>
+                <SelectItem value="onboarding_phase_2">Fase 2 — Escalabilidade</SelectItem>
               </SelectContent>
             </Select>
           </div>
