@@ -44,9 +44,9 @@ export function FinancialSummaryWidget() {
           .select('amount')
           .neq('status', 'paid');
 
-        const invested = (adsData || []).reduce((acc, curr) => acc + (curr.amount || 0), 0);
-        const labor = (laborData || []).reduce((acc, curr) => acc + (curr.amount || 0), 0);
-        const pending = (pendingData || []).reduce((acc, curr) => acc + (curr.amount || 0), 0);
+        const invested = (adsData || []).reduce((acc, curr) => acc + Number(curr.amount || 0), 0);
+        const labor = (laborData || []).reduce((acc, curr) => acc + Number(curr.amount || 0), 0);
+        const pending = (pendingData || []).reduce((acc, curr) => acc + Number(curr.amount || 0), 0);
 
         setStats({
           investedMonth: invested,
