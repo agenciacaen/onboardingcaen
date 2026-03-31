@@ -151,8 +151,14 @@ export function DocumentLibrary({ clientIdFilter }: { clientIdFilter?: string })
                 </a>
              </Button>
              {isAdmin && (
-               <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600" onClick={() => handleDelete(row.original.id)} title="Excluir documento">
-                  <Trash2 className="w-4 h-4" />
+               <Button 
+                variant="outline" 
+                size="sm" 
+                className="text-red-500 border-red-200 hover:bg-red-50 hover:text-red-600" 
+                onClick={() => handleDelete(row.original.id)} 
+                title="Excluir documento"
+              >
+                  <Trash2 className="w-4 h-4 mr-2" /> Excluir
                </Button>
              )}
           </div>

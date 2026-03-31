@@ -296,6 +296,20 @@ export function TaskDetailModal({
     finally { setSendingComment(false); }
   };
 
+  const handleDeleteComment = async (commentId: string) => {
+    if (!window.confirm('Excluir esta nota permanentemente?')) return;
+    
+    try {
+      const { error } = await supabase.from('task_comments').delete().eq('id', commentId);
+      if (error) throw error;
+      setComments(prev => prev.filter(c => c.id !== commentId));
+      toast.success('Nota removida.');
+    } catch (error) {
+      console.error('Remove comment error:', error);
+      toast.error('Não foi possível excluir a nota.');
+    }
+  };
+
   // ---- Task field updates ----
   const updateTaskField = async (field: string, value: string) => {
     if (!taskData) return;
@@ -664,11 +678,23 @@ export function TaskDetailModal({
             ) : (
               <div className="space-y-3 mb-4">
                 {comments.map(c => (
-                  <div key={c.id} className="bg-slate-50 rounded-lg px-4 py-3">
+                  <div key={c.id} className="bg-slate-50 rounded-lg px-4 py-3 relative group">
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs font-semibold text-slate-700">
-                        {c.author?.full_name || 'Equipe'}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-semibold text-slate-700">
+                          {c.author?.full_name || 'Equipe'}
+                        </span>
+                        {!readOnly && (
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteComment(c.id)}
+                            className="p-1 hover:bg-red-50 text-slate-300 hover:text-red-500 rounded transition-colors"
+                            title="Excluir nota"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        )}
+                      </div>
                       <span className="text-[10px] text-slate-400">
                         {format(new Date(c.created_at), "dd/MM 'às' HH:mm", { locale: ptBR })}
                       </span>
