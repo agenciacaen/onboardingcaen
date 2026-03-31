@@ -1,6 +1,9 @@
-import { PageHeader } from '../../../components/ui/PageHeader';
+import { PageHeader } from '@/components/ui/PageHeader';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { ClientModuleTasksView } from '@/components/modules/ClientModuleTasksView';
+
+// FORCE UPDATE: 2026-03-31T21:26:45Z
+// Removed unused useState to fix Vercel Build Error
 
 export function ClientGeneralPage() {
   return (

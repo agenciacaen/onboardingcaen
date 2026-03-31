@@ -4,6 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DollarSign, TrendingUp, Wallet, ArrowUpRight } from "lucide-react";
 import { startOfMonth, endOfMonth } from "date-fns";
 
+// FORCE UPDATE: 2026-03-31T21:26:00Z
+
 export function FinancialSummaryWidget() {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
@@ -20,7 +22,7 @@ export function FinancialSummaryWidget() {
         const start = startOfMonth(now).toISOString();
         const end = endOfMonth(now).toISOString();
 
-        // 1. Get Investment (Ads) for current month
+        // 1. Get Paid Investment (Ads) for current month
         const { data: adsData } = await supabase
           .from('financial_invoices')
           .select('amount')
@@ -29,7 +31,7 @@ export function FinancialSummaryWidget() {
           .gte('created_at', start)
           .lte('created_at', end);
 
-        // 2. Get Labor for current month
+        // 2. Get Paid Labor for current month
         const { data: laborData } = await supabase
           .from('financial_invoices')
           .select('amount')
@@ -38,7 +40,7 @@ export function FinancialSummaryWidget() {
           .gte('created_at', start)
           .lte('created_at', end);
 
-        // 3. Get Pending Total (all time)
+        // 3. Get Pending Total (all time) - Anything NOT paid
         const { data: pendingData } = await supabase
           .from('financial_invoices')
           .select('amount')
