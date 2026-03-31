@@ -49,11 +49,18 @@ const MODULE_CONFIG: Record<string, { icon: React.ElementType; color: string; gr
     gradient: 'from-emerald-500/20 to-emerald-900/10',
     label: 'Web & SEO',
   },
+  onboarding: {
+    icon: Rocket,
+    color: 'text-blue-400',
+    gradient: 'from-blue-500/20 to-blue-900/10',
+    label: 'Onboarding',
+  },
 };
 
 function getPhaseLabel(stage: string) {
   if (stage === 'onboarding_phase_1') return 'Fase 1 — Setup Inicial';
   if (stage === 'onboarding_phase_2') return 'Fase 2 — Escalabilidade';
+  if (stage === 'unknown') return 'Atividades Complementares';
   return stage;
 }
 
@@ -149,7 +156,7 @@ export function OnboardingRoadmap({ tasks, onToggleSubtask, isToggling, readOnly
 
       {/* Fases */}
       {stages.map(stage => {
-        const phaseTasks = parentTasks.filter(t => t.stage === stage);
+        const phaseTasks = parentTasks.filter(t => (t.stage || 'unknown') === stage);
 
         return (
           <div key={stage} className="space-y-4">

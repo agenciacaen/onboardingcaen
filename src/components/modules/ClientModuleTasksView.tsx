@@ -46,7 +46,7 @@ export function ClientModuleTasksView({ module, view }: ClientModuleTasksViewPro
           .eq('client_id', clientId);
 
         if (module === 'onboarding') {
-          query = query.in('stage', ['onboarding_phase_1', 'onboarding_phase_2']);
+          query = query.or(`stage.in.(onboarding_phase_1,onboarding_phase_2),module.eq.onboarding`);
         } else {
           query = query.eq('module', module);
         }
