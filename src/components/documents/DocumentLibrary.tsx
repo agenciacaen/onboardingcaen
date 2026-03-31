@@ -130,13 +130,13 @@ export function DocumentLibrary({ clientIdFilter }: { clientIdFilter?: string })
     },
     {
       id: "actions",
-      header: "",
+      header: "Ações",
       cell: ({ row }: CellContext<DocumentItem, unknown>) => {
         return (
           <div className="flex space-x-2 justify-end">
-             <Button variant="ghost" size="icon" asChild title="Visualizar documento">
+             <Button variant="outline" size="sm" asChild title="Visualizar documento">
                 <a href={row.original.file_url} target="_blank" rel="noopener noreferrer">
-                   <Eye className="w-4 h-4 text-slate-500" />
+                   <Eye className="w-4 h-4 mr-2" /> Visualizar
                 </a>
              </Button>
              <Button variant="ghost" size="icon" asChild title="Baixar arquivo">
@@ -159,7 +159,7 @@ export function DocumentLibrary({ clientIdFilter }: { clientIdFilter?: string })
         )
       }
     }
-  ].filter(col => col.header !== "");
+  ];
 
   return (
     <div className="bg-white rounded-lg border shadow-sm">
