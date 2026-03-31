@@ -59,6 +59,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
         <SidebarItem icon={GitBranch} label="Fluxos" href="/agency/flows" onNavigate={onNavigate} />
       </SidebarGroup>
       <SidebarGroup label="Módulos">
+        <SidebarItem icon={CheckSquare} label="Geral" href="/agency/general" onNavigate={onNavigate} />
         <SidebarItem icon={TrendingUp} label="Tráfego Pago" href="/agency/traffic" onNavigate={onNavigate} />
         <SidebarItem icon={Share2} label="Social Media" href="/agency/social" onNavigate={onNavigate} />
         <SidebarItem icon={Globe} label="Web" href="/agency/web" onNavigate={onNavigate} />
@@ -89,6 +90,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
         />
       </SidebarGroup>
       <SidebarGroup label="Módulos">
+        <SidebarItem icon={CheckSquare} label="Geral" href="/client/general" onNavigate={onNavigate} />
         <SidebarItem icon={TrendingUp} label="Tráfego Pago" href="/client/traffic" onNavigate={onNavigate} />
         <SidebarItem icon={Share2} label="Social Media" href="/client/social" onNavigate={onNavigate} />
         <SidebarItem icon={Globe} label="Web" href="/client/web" onNavigate={onNavigate} />

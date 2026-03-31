@@ -7,7 +7,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 interface ClientModuleTasksViewProps {
-  module: 'traffic' | 'social' | 'web' | 'crm' | 'onboarding';
+  module: 'traffic' | 'social' | 'web' | 'crm' | 'onboarding' | 'general';
   view: 'kanban' | 'list';
 }
 
@@ -84,7 +84,7 @@ export function ClientModuleTasksView({ module, view }: ClientModuleTasksViewPro
     return (
       <div className="flex flex-col items-center justify-center p-12 text-zinc-500">
         <Loader2 className="w-8 h-8 animate-spin mb-4 text-primary" />
-        <p>Carregando atividades {module === 'onboarding' ? 'do onboarding' : `de ${module}`}...</p>
+        <p>Carregando atividades {module === 'onboarding' ? 'do onboarding' : module === 'general' ? 'gerais' : `de ${module}`}...</p>
       </div>
     );
   }
