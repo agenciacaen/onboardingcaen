@@ -17,7 +17,7 @@ export function ClientSocialPage() {
   });
 
   const [isLoading, setIsLoading] = useState(false);
-  const [data, setData] = useState<any | null>(null);
+  const [data, setData] = useState<Record<string, any> | null>(null);
 
   useEffect(() => {
     async function fetchData() {
@@ -65,12 +65,20 @@ export function ClientSocialPage() {
         </div>
       </div>
 
-      <Tabs defaultValue="dashboard" className="w-full">
+      <Tabs defaultValue="kanban" className="w-full">
         <TabsList className="mb-4 bg-slate-100/50">
-          <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
           <TabsTrigger value="kanban">Quadro Kanban</TabsTrigger>
           <TabsTrigger value="list">Lista de Tarefas</TabsTrigger>
+          <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="kanban" className="mt-0 pt-2">
+          <ClientModuleTasksView module="social" view="kanban" />
+        </TabsContent>
+
+        <TabsContent value="list" className="mt-0 pt-2">
+          <ClientModuleTasksView module="social" view="list" />
+        </TabsContent>
 
         <TabsContent value="dashboard" className="mt-0 space-y-6">
           <div className={isLoading ? "opacity-50 pointer-events-none transition-opacity duration-300" : "transition-opacity duration-300"}>
@@ -110,14 +118,6 @@ export function ClientSocialPage() {
               </div>
             </div>
           </div>
-        </TabsContent>
-
-        <TabsContent value="kanban" className="mt-0 pt-2">
-          <ClientModuleTasksView module="social" view="kanban" />
-        </TabsContent>
-
-        <TabsContent value="list" className="mt-0 pt-2">
-          <ClientModuleTasksView module="social" view="list" />
         </TabsContent>
       </Tabs>
     </div>

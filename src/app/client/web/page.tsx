@@ -48,12 +48,20 @@ export function ClientWebPage() {
         <PageHeader title="Desenvolvimento Web" description="Acompanhe o desempenho do site, auditorias e métricas de SEO." />
       </div>
 
-      <Tabs defaultValue="dashboard" className="w-full">
+      <Tabs defaultValue="kanban" className="w-full">
         <TabsList className="mb-4 bg-slate-100/50">
-          <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
           <TabsTrigger value="kanban">Quadro Kanban</TabsTrigger>
           <TabsTrigger value="list">Lista de Tarefas</TabsTrigger>
+          <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="kanban" className="mt-0 pt-2">
+          <ClientModuleTasksView module="web" view="kanban" />
+        </TabsContent>
+
+        <TabsContent value="list" className="mt-0 pt-2">
+          <ClientModuleTasksView module="web" view="list" />
+        </TabsContent>
 
         <TabsContent value="dashboard" className="mt-0 space-y-6">
           <div className={isLoading ? "opacity-50 pointer-events-none transition-opacity duration-300" : "transition-opacity duration-300"}>
@@ -91,14 +99,6 @@ export function ClientWebPage() {
                </div>
             </div>
           </div>
-        </TabsContent>
-
-        <TabsContent value="kanban" className="mt-0 pt-2">
-          <ClientModuleTasksView module="web" view="kanban" />
-        </TabsContent>
-
-        <TabsContent value="list" className="mt-0 pt-2">
-          <ClientModuleTasksView module="web" view="list" />
         </TabsContent>
       </Tabs>
     </div>
