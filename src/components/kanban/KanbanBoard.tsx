@@ -49,7 +49,10 @@ export function KanbanBoard({
     }
 
     if (moduleFilter) {
-      query = query.eq('module', moduleFilter);
+      // Buscamos o módulo específico OU qualquer item que seja subtarefa (parent_id não nulo).
+      // A lógica de filtragem posterior (parentTasks) garantirá que só mostramos
+      // subtarefas cujos pais pertençam ao módulo atual.
+      query = query.or(`module.eq.${moduleFilter},parent_id.not.is.null`);
     }
     
     const { data, error } = await query;

@@ -15,18 +15,9 @@ import {
 import { ptBR } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { EventCreateModal } from '@/components/modals/EventCreateModal';
+import { EventCreateModal, type CalendarEventItem } from '@/components/modals/EventCreateModal';
 import { toast } from 'sonner';
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
-
-type CalendarEvent = {
-  id: string;
-  title: string;
-  event_date: string;
-  event_type: string;
-  color: string;
-  client_id: string;
-};
 
 interface MonthlyCalendarViewProps {
   clientIdFilter?: string;
@@ -34,11 +25,12 @@ interface MonthlyCalendarViewProps {
 
 export function MonthlyCalendarView({ clientIdFilter }: MonthlyCalendarViewProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [events, setEvents] = useState<CalendarEventItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [isModalOpen, setModalOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [selectedEvent, setSelectedEvent] = useState<CalendarEventItem | null>(null);
 
   const fetchEvents = useCallback(async () => {
     setLoading(true);
@@ -73,14 +65,20 @@ export function MonthlyCalendarView({ clientIdFilter }: MonthlyCalendarViewProps
     if (socialRes.error) toast.error('Erro ao buscar eventos sociais.');
     if (tasksRes.error) toast.error('Erro ao buscar tarefas.');
 
-    const socialEvents = socialRes.data || [];
+    const socialEvents = (socialRes.data || []).map(e => ({
+       ...e,
+       title: e.title,
+    }));
+
     const taskEvents = (tasksRes.data || []).map(task => ({
       id: task.id,
-      title: `[T] ${task.title}`, // Adicionando [T] para destacar que é tarefa
+      title: `[T] ${task.title}`,
       event_date: task.due_date,
       event_type: 'tarefa',
-      color: '#6366f1', // Cor Indigo para tarefas
-      client_id: task.client_id
+      color: '#6366f1',
+      client_id: task.client_id,
+      module: task.module,
+      description: task.description
     }));
 
     setEvents([...socialEvents, ...taskEvents]);
@@ -104,6 +102,13 @@ export function MonthlyCalendarView({ clientIdFilter }: MonthlyCalendarViewProps
 
   const handleDayClick = (day: Date) => {
     setSelectedDate(day);
+    setSelectedEvent(null);
+    setModalOpen(true);
+  };
+
+  const handleEventClick = (e: React.MouseEvent, event: CalendarEventItem) => {
+    e.stopPropagation();
+    setSelectedEvent(event);
     setModalOpen(true);
   };
 
@@ -136,6 +141,7 @@ export function MonthlyCalendarView({ clientIdFilter }: MonthlyCalendarViewProps
             {dayEvents.map(evt => (
               <div 
                 key={evt.id} 
+                onClick={(e) => handleEventClick(e, evt)}
                 className="text-xs px-1.5 py-0.5 rounded truncate text-white calendar-event-item"
                 style={{ "--event-color": evt.color || '#3b82f6' } as React.CSSProperties}
                 title={evt.title}
@@ -196,6 +202,7 @@ export function MonthlyCalendarView({ clientIdFilter }: MonthlyCalendarViewProps
         open={isModalOpen} 
         onOpenChange={setModalOpen}
         initialDate={selectedDate}
+        initialEvent={selectedEvent}
         onSuccess={fetchEvents}
       />
     </div>

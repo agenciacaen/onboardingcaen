@@ -77,6 +77,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
     <>
       <SidebarGroup label="Principal">
         <SidebarItem icon={LayoutDashboard} label="Dashboard" href="/client" onNavigate={onNavigate} />
+        <SidebarItem icon={CalendarDays} label="Calendário" href="/client/calendar" onNavigate={onNavigate} />
       </SidebarGroup>
       <SidebarGroup label="Início">
         <SidebarItem 
@@ -116,6 +117,9 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       </SidebarGroup>
       <SidebarGroup label="Financeiro">
         <SidebarItem icon={DollarSign} label="Financeiro" href="/client/financial" onNavigate={onNavigate} />
+      </SidebarGroup>
+      <SidebarGroup label="Conteúdo">
+        <SidebarItem icon={FileText} label="Documentos" href="/client/documents" onNavigate={onNavigate} />
       </SidebarGroup>
     </>
   );

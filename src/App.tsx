@@ -47,6 +47,8 @@ import { ClientApprovalsPage } from './app/client/approvals/page';
 import { ClientSupportPage } from './app/client/support/page';
 import { ClientTicketDetailPage } from './app/client/support/[ticketId]/page';
 import { ClientFinancialPage } from './app/client/financial/page';
+import { ClientDocumentsPage } from './app/client/documents/page';
+import { ClientCalendarPage } from './app/client/calendar/page';
 
 function RootRedirect() {
   const { role, isLoading } = useAuth();
@@ -213,6 +215,7 @@ export default function App() {
             <Route element={<ClientLayout />}>
               <Route path="/client" element={<ClientDashboard />} />
               <Route path="/client/onboarding" element={<ClientOnboardingPage />} />
+              <Route path="/client/calendar" element={<ClientCalendarPage />} />
               <Route path="/client/traffic" element={<ClientTrafficPage />} />
               <Route path="/client/traffic/campaigns" element={<ClientCampaignsPage />} />
               <Route path="/client/traffic/campaigns/:id" element={<ClientCampaignDetailPage />} />
@@ -223,6 +226,7 @@ export default function App() {
               <Route path="/client/approvals" element={<ClientApprovalsPage />} />
               <Route path="/client/support" element={<ClientSupportPage />} />
               <Route path="/client/support/:ticketId" element={<ClientTicketDetailPage />} />
+              <Route path="/client/documents" element={<ClientDocumentsPage />} />
               <Route path="/client/financial" element={<ClientFinancialPage />} />
             </Route>
           </Route>

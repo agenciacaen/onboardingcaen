@@ -75,11 +75,13 @@ const PRIORITY_OPTIONS = [
   { value: 'urgent', label: 'Urgente', bg: 'bg-red-100',    text: 'text-red-700' },
 ];
 
-const MODULE_LABELS: Record<string, string> = {
-  social: 'Redes Sociais', general: 'Geral',
-  traffic: 'Tráfego Pago', web: 'Web & SEO',
-  crm: 'CRM e Tecnologia'
-};
+const MODULE_OPTIONS = [
+  { value: 'social',  label: 'Redes Sociais',   bg: 'bg-pink-100',    text: 'text-pink-700' },
+  { value: 'traffic', label: 'Tráfego Pago',    bg: 'bg-indigo-100',  text: 'text-indigo-700' },
+  { value: 'web',     label: 'Web & SEO',       bg: 'bg-emerald-100', text: 'text-emerald-700' },
+  { value: 'crm',     label: 'CRM e Tecnologia',bg: 'bg-purple-100',  text: 'text-purple-700' },
+  { value: 'general', label: 'Geral',           bg: 'bg-slate-100',   text: 'text-slate-700' },
+];
 
 // ============================================================
 // INLINE EDIT FIELD (click-to-edit)
@@ -269,7 +271,7 @@ export function TaskDetailModal({
       /* silent */ 
     }
     finally { setLoadingComments(false); }
-  }, [taskData?.id, user?.id]);
+  }, [taskData, user?.id]);
 
   useEffect(() => {
     if (open && taskData) loadComments();
@@ -297,9 +299,25 @@ export function TaskDetailModal({
   // ---- Task field updates ----
   const updateTaskField = async (field: string, value: string) => {
     if (!taskData) return;
+    
     const { error } = await supabase
-      .from('tasks').update({ [field]: value, updated_at: new Date().toISOString() }).eq('id', taskData.id);
-    if (error) { toast.error('Erro ao salvar.'); return; }
+      .from('tasks')
+      .update({ [field]: value, updated_at: new Date().toISOString() })
+      .eq('id', taskData.id);
+    
+    if (error) { 
+      toast.error('Erro ao salvar.'); 
+      return; 
+    }
+
+    // Se mudarmos o módulo ou cliente, propagamos para as subtarefas para garantir a "integração 100%"
+    if (field === 'module' || field === 'client_id') {
+      await supabase
+        .from('tasks')
+        .update({ [field]: value, updated_at: new Date().toISOString() })
+        .eq('parent_id', taskData.id);
+    }
+
     setTaskData(prev => prev ? { ...prev, [field]: value } : prev);
     onTaskUpdated?.();
   };
@@ -425,11 +443,12 @@ export function TaskDetailModal({
                   onSelect={v => updateTaskField('priority', v)}
                   readOnly={readOnly}
                 />
-                {taskData.module && (
-                  <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
-                    {MODULE_LABELS[taskData.module] || taskData.module}
-                  </span>
-                )}
+                <BadgeSelect
+                  options={MODULE_OPTIONS}
+                  value={taskData.module || 'general'}
+                  onSelect={v => updateTaskField('module', v)}
+                  readOnly={readOnly}
+                />
               </div>
 
               {/* Editable title */}

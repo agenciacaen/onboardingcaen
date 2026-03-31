@@ -16,6 +16,7 @@ import { supabase } from "@/services/supabase";
 import { toast } from "sonner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { format } from "date-fns";
+import { Trash2 } from "lucide-react";
 
 const createEventSchema = z.object({
   title: z.string().min(2, "Título obrigatório"),
@@ -24,15 +25,29 @@ const createEventSchema = z.object({
   platform: z.string().optional(),
   client_id: z.string().min(1, "Selecione o cliente"),
   color: z.string().optional(),
-  module: z.enum(['traffic', 'social', 'web', 'general']).optional(),
+  module: z.enum(['traffic', 'social', 'web', 'crm', 'general']).optional(),
+  description: z.string().optional(),
 });
 
 type CreateEventFormValues = z.infer<typeof createEventSchema>;
+
+export type CalendarEventItem = {
+  id: string;
+  title: string;
+  event_date: string;
+  event_type: string;
+  color?: string;
+  client_id: string;
+  platform?: string;
+  module?: string;
+  description?: string;
+};
 
 interface EventCreateModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   initialDate?: Date;
+  initialEvent?: CalendarEventItem | null;
   onSuccess: () => void;
 }
 
@@ -40,10 +55,14 @@ export function EventCreateModal({
   open,
   onOpenChange,
   initialDate,
+  initialEvent,
   onSuccess,
 }: EventCreateModalProps) {
   const [loading, setLoading] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [clients, setClients] = useState<{ id: string; name: string }[]>([]);
+
+  const isEdit = !!initialEvent;
 
   const {
     register,
@@ -67,17 +86,36 @@ export function EventCreateModal({
 
   useEffect(() => {
     if (open) {
-      reset({
-        title: '',
-        event_date: initialDate ? format(initialDate, 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd'),
-        event_type: 'post',
-        platform: '',
-        color: '#3b82f6',
-        module: 'general',
-      });
+      if (initialEvent) {
+          // No tittle check if it has [T] prefix (task) and cleaning it if needed
+          const displayTitle = initialEvent.title.startsWith('[T] ') 
+            ? initialEvent.title.replace('[T] ', '') 
+            : initialEvent.title;
+
+          reset({
+            title: displayTitle,
+            event_date: initialEvent.event_date,
+            event_type: initialEvent.event_type as 'post' | 'story' | 'live' | 'meeting' | 'tarefa',
+            platform: initialEvent.platform || '',
+            color: initialEvent.color || '#3b82f6',
+            client_id: initialEvent.client_id,
+            module: (initialEvent.module as 'traffic' | 'social' | 'web' | 'crm' | 'general') || 'general',
+            description: initialEvent.description || '',
+          });
+      } else {
+          reset({
+            title: '',
+            event_date: initialDate ? format(initialDate, 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd'),
+            event_type: 'post',
+            platform: '',
+            color: '#3b82f6',
+            module: 'general',
+            description: '',
+          });
+      }
       fetchClients();
     }
-  }, [open, initialDate, reset, fetchClients]);
+  }, [open, initialDate, initialEvent, reset, fetchClients]);
 
   const clientId = watch("client_id");
   const eventType = watch("event_type");
@@ -85,46 +123,91 @@ export function EventCreateModal({
   const onSubmit = async (data: CreateEventFormValues) => {
     setLoading(true);
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Usuário não autenticado");
+
       if (data.event_type === 'tarefa') {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) throw new Error("Usuário não autenticado");
-        const { error } = await supabase.from('tasks').insert({
+        const payload = {
           title: data.title,
           client_id: data.client_id,
           module: data.module || 'general',
-          status: 'todo',
-          priority: 'medium',
           due_date: data.event_date,
-          created_by: user.id,
-        });
-        if (error) throw error;
+          description: data.description,
+        };
+
+        if (isEdit) {
+           const { error } = await supabase.from('tasks')
+             .update(payload)
+             .eq('id', initialEvent!.id);
+           if (error) throw error;
+        } else {
+           const { error } = await supabase.from('tasks').insert({
+             ...payload,
+             status: 'todo',
+             priority: 'medium',
+             created_by: user.id
+           });
+           if (error) throw error;
+        }
       } else {
-        const { error } = await supabase.from('social_calendar_events').insert({
+        const payload = {
           title: data.title,
           client_id: data.client_id,
           event_date: data.event_date,
           event_type: data.event_type,
           platform: data.platform,
-          color: data.color
-        });
-        if (error) throw error;
+          color: data.color,
+          description: data.description,
+        };
+
+        if (isEdit) {
+           const { error } = await supabase.from('social_calendar_events')
+             .update(payload)
+             .eq('id', initialEvent!.id);
+           if (error) throw error;
+        } else {
+           const { error } = await supabase.from('social_calendar_events').insert(payload);
+           if (error) throw error;
+        }
       }
-      toast.success("Evento criado com sucesso!");
+
+      toast.success(isEdit ? "Evento atualizado!" : "Evento criado!");
       onSuccess();
       onOpenChange(false);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Erro ao criar evento";
+      const message = error instanceof Error ? error.message : "Erro ao salvar evento";
       toast.error(message);
     } finally {
       setLoading(false);
     }
   };
 
+  const handleDelete = async () => {
+     if (!initialEvent) return;
+     if (!confirm("Excluir este evento permanentemente?")) return;
+
+     setDeleting(true);
+     try {
+        const table = initialEvent.event_type === 'tarefa' ? 'tasks' : 'social_calendar_events';
+        const { error } = await supabase.from(table).delete().eq('id', initialEvent.id);
+        if (error) throw error;
+        
+        toast.success("Evento removido");
+        onSuccess();
+        onOpenChange(false);
+     } catch (err) {
+        console.error("Erro ao remover:", err);
+        toast.error("Erro ao remover evento");
+     } finally {
+        setDeleting(false);
+     }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Novo Evento</DialogTitle>
+          <DialogTitle>{isEdit ? "Editar Evento" : "Novo Evento"}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="grid w-full items-center gap-1.5">
@@ -176,7 +259,7 @@ export function EventCreateModal({
               <Label>Módulo da Tarefa</Label>
               <Select 
                 value={watch("module") || "general"} 
-                onValueChange={(val: "traffic" | "social" | "web" | "general") => setValue("module", val)}
+                onValueChange={(val: "traffic" | "social" | "web" | "general" | "crm") => setValue("module", val)}
               >
                 <SelectTrigger><SelectValue placeholder="Selecione o módulo..." /></SelectTrigger>
                 <SelectContent>
@@ -184,6 +267,7 @@ export function EventCreateModal({
                   <SelectItem value="traffic">Tráfego</SelectItem>
                   <SelectItem value="social">Social Media</SelectItem>
                   <SelectItem value="web">Desenvolvimento Web</SelectItem>
+                  <SelectItem value="crm">CRM e Tecnologia</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -200,9 +284,17 @@ export function EventCreateModal({
             </div>
           )}
 
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-            <Button type="submit" disabled={loading}>Salvar</Button>
+          <DialogFooter className="flex justify-between items-center sm:justify-between w-full">
+            {isEdit ? (
+                <Button type="button" variant="ghost" className="text-red-500 hover:text-red-600 px-2" onClick={handleDelete} disabled={deleting}>
+                   <Trash2 className="w-4 h-4 mr-2" /> 
+                   Excluir
+                </Button>
+            ) : <div />}
+            <div className="flex gap-2">
+                <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
+                <Button type="submit" disabled={loading}>{isEdit ? "Atualizar" : "Salvar"}</Button>
+            </div>
           </DialogFooter>
         </form>
       </DialogContent>
