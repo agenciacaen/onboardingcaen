@@ -107,11 +107,18 @@ export function OnboardingRoadmap({ tasks, onToggleSubtask, isToggling, readOnly
     setExpanded(prev => ({ ...prev, [taskId]: !prev[taskId] }));
   };
 
-  // Calcular progresso global
+  // Calcular progresso global (considera subtarefas + tarefas pai que não possuem subtarefas)
   const allSubtasks = tasks.filter(t => t.parent_id);
   const completedSubtasks = allSubtasks.filter(t => t.status === 'done');
-  const globalProgress = allSubtasks.length > 0
-    ? Math.round((completedSubtasks.length / allSubtasks.length) * 100)
+  
+  const parentsWithNoSubs = parentTasks.filter(pt => !subtasksMap.has(pt.id));
+  const completedParentsWithNoSubs = parentsWithNoSubs.filter(pt => pt.status === 'done');
+
+  const totalItems = allSubtasks.length + parentsWithNoSubs.length;
+  const completedItems = completedSubtasks.length + completedParentsWithNoSubs.length;
+
+  const globalProgress = totalItems > 0
+    ? Math.round((completedItems / totalItems) * 100)
     : 0;
 
   return (
@@ -136,7 +143,7 @@ export function OnboardingRoadmap({ tasks, onToggleSubtask, isToggling, readOnly
           />
         </div>
         <p className="text-xs text-slate-500 mt-2">
-          {completedSubtasks.length} de {allSubtasks.length} itens concluídos
+          {completedItems} de {totalItems} entregáveis concluídos
         </p>
       </div>
 

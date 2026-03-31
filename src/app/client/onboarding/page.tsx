@@ -38,7 +38,7 @@ export function ClientOnboardingPage() {
         .from('tasks')
         .select('*')
         .eq('client_id', clientId)
-        .in('stage', ['onboarding_phase_1', 'onboarding_phase_2'])
+        .or(`stage.in.(onboarding_phase_1,onboarding_phase_2),module.eq.onboarding`)
         .order('created_at', { ascending: true });
 
       if (taskError) throw taskError;
