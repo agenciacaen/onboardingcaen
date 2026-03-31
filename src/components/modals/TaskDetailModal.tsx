@@ -271,7 +271,7 @@ export function TaskDetailModal({
       /* silent */ 
     }
     finally { setLoadingComments(false); }
-  }, [taskData, user?.id]);
+  }, [taskData]);
 
   useEffect(() => {
     if (open && taskData) loadComments();

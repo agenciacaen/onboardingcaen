@@ -2,7 +2,7 @@ import * as React from "react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/services/supabase";
 import { DataTable } from "@/components/tables/DataTable";
-import { type ColumnDef } from "@tanstack/react-table";
+import { type ColumnDef, type CellContext } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import { Eye, FileText, Trash2, Link as LinkIcon, FileSignature } from "lucide-react";
 import { toast } from "sonner";
@@ -82,7 +82,7 @@ export function DocumentLibrary({ clientIdFilter }: { clientIdFilter?: string })
     {
       accessorKey: "title",
       header: "Arquivo",
-      cell: ({ row }) => {
+      cell: ({ row }: CellContext<DocumentItem, unknown>) => {
         const doc = row.original;
         const isLink = doc.file_type === 'link';
         const isDraft = doc.category === 'draft';
@@ -106,7 +106,7 @@ export function DocumentLibrary({ clientIdFilter }: { clientIdFilter?: string })
     isAdmin ? {
       accessorKey: "clients.name",
       header: "Cliente",
-      cell: ({ row }) => <span className="text-slate-500">{row.original.clients?.name || 'Geral'}</span>
+      cell: ({ row }: CellContext<DocumentItem, unknown>) => <span className="text-slate-500">{row.original.clients?.name || 'Geral'}</span>
     } : {
       id: "client_name_hidden",
       header: "",
@@ -116,7 +116,7 @@ export function DocumentLibrary({ clientIdFilter }: { clientIdFilter?: string })
     {
       accessorKey: "category",
       header: "Categoria",
-      cell: ({ row }) => (
+      cell: ({ row }: CellContext<DocumentItem, unknown>) => (
         <span className="text-xs font-semibold px-2 py-1 bg-slate-100 text-slate-600 rounded-full">
           {CATEGORY_LABELS[row.original.category] || row.original.category}
         </span>
@@ -125,12 +125,12 @@ export function DocumentLibrary({ clientIdFilter }: { clientIdFilter?: string })
     {
       accessorKey: "created_at",
       header: "Data",
-      cell: ({ row }) => new Date(row.original.created_at).toLocaleDateString('pt-BR'),
+      cell: ({ row }: CellContext<DocumentItem, unknown>) => new Date(row.original.created_at).toLocaleDateString('pt-BR'),
     },
     {
       id: "actions",
       header: "",
-      cell: ({ row }) => {
+      cell: ({ row }: CellContext<DocumentItem, unknown>) => {
         return (
           <div className="flex space-x-2 justify-end">
              <Button variant="ghost" size="icon" asChild title="Visualizar documento">
