@@ -239,16 +239,24 @@ export function TaskDetailModal({
   // Sync fresh data from parent
   useEffect(() => {
     if (open && initialTask) {
-      setTaskData({ ...initialTask });
-      setSubtasks([...(initialSubtasks || [])]);
+      // Usamos uma verificação simples para evitar loops: só atualizamos se o ID mudou
+      // ou se o estado interno ainda está vazio.
+      if (!taskData || taskData.id !== initialTask.id) {
+        setTaskData({ ...initialTask });
+        setSubtasks([...(initialSubtasks || [])]);
+      }
     }
+    
     if (!open) {
+      setTaskData(null);
+      setSubtasks([]);
       setComments([]);
       setNewComment('');
       setShowAddSubtask(false);
       setNewSubTitle('');
     }
-  }, [open, initialTask, initialSubtasks]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, initialTask?.id]);
 
   // ---- Comments ----
   const loadComments = useCallback(async () => {
