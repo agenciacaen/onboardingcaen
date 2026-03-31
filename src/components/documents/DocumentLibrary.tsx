@@ -4,7 +4,7 @@ import { supabase } from "@/services/supabase";
 import { DataTable } from "@/components/tables/DataTable";
 import { type ColumnDef, type CellContext } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
-import { Eye, FileText, Trash2, Link as LinkIcon, FileSignature } from "lucide-react";
+import { Eye, FileText, Trash2, Link as LinkIcon, FileSignature, Download } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -62,7 +62,7 @@ export function DocumentLibrary({ clientIdFilter }: { clientIdFilter?: string })
   }, [clientIdFilter]);
 
   useEffect(() => {
-    fetchDocuments();
+    void fetchDocuments();
   }, [fetchDocuments]);
 
   const handleDelete = async (id: string) => {
@@ -135,8 +135,19 @@ export function DocumentLibrary({ clientIdFilter }: { clientIdFilter?: string })
         return (
           <div className="flex space-x-2 justify-end">
              <Button variant="ghost" size="icon" asChild title="Visualizar documento">
-                <a href={row.original.file_url} target="_blank" rel="noopener noreferrer" title={`Ver ${row.original.title}`}>
-                   <Eye className="w-4 h-4" />
+                <a href={row.original.file_url} target="_blank" rel="noopener noreferrer">
+                   <Eye className="w-4 h-4 text-slate-500" />
+                </a>
+             </Button>
+             <Button variant="ghost" size="icon" asChild title="Baixar arquivo">
+                <a 
+                  href={row.original.file_url} 
+                  download={row.original.title} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="text-indigo-600 hover:text-indigo-700"
+                >
+                   <Download className="w-4 h-4" />
                 </a>
              </Button>
              {isAdmin && (
