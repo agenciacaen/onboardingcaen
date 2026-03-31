@@ -13,7 +13,7 @@ import {
   addDays,
 } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Flag, Camera, Calendar as CalendarIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { EventCreateModal, type CalendarEventItem } from '@/components/modals/EventCreateModal';
 import { toast } from 'sonner';
@@ -130,25 +130,40 @@ export function MonthlyCalendarView({ clientIdFilter }: MonthlyCalendarViewProps
         <div
           key={day.toString()}
           onClick={() => handleDayClick(cloneDay)}
-          className={`min-h-[100px] p-2 border border-slate-200 transition-colors hover:bg-slate-50 cursor-pointer ${
-            !isSameMonth(day, currentDate) ? 'bg-slate-100 text-slate-400' : 'bg-white'
-          } ${isSameDay(day, new Date()) ? 'ring-2 ring-primary ring-inset' : ''}`}
+          className={`min-h-[120px] p-2 border border-slate-100 transition-all hover:bg-indigo-50/30 cursor-pointer group flex flex-col ${
+            !isSameMonth(day, currentDate) ? 'bg-slate-50/50 text-slate-300' : 'bg-white'
+          } ${isSameDay(day, new Date()) ? 'bg-indigo-50/50 border-indigo-200' : ''}`}
         >
-          <div className="flex justify-between items-start">
-            <span className="text-sm font-semibold">{formattedDate}</span>
+          <div className="flex justify-between items-center mb-2 px-1">
+            <span className={`text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full transition-colors ${
+              isSameDay(day, new Date()) ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-500 group-hover:text-indigo-600'
+            }`}>
+              {formattedDate}
+            </span>
           </div>
-          <div className="mt-2 flex flex-col gap-1 space-y-1">
-            {dayEvents.map(evt => (
-              <div 
-                key={evt.id} 
-                onClick={(e) => handleEventClick(e, evt)}
-                className="text-xs px-1.5 py-0.5 rounded truncate text-white calendar-event-item"
-                style={{ "--event-color": evt.color || '#3b82f6' } as React.CSSProperties}
-                title={evt.title}
-              >
-                {evt.title}
-              </div>
-            ))}
+
+          <div className="flex-1 flex flex-col gap-1.5 overflow-y-auto custom-scrollbar pr-0.5">
+            {dayEvents.map(evt => {
+              const Icon = evt.event_type === 'tarefa' ? Flag : (evt.platform === 'insta' ? Camera : CalendarIcon);
+              const color = evt.color || '#3b82f6';
+              
+              return (
+                <div 
+                  key={evt.id} 
+                  onClick={(e) => handleEventClick(e, evt)}
+                  className="group/card relative flex items-center gap-1.5 px-2 py-1.5 rounded-md border border-transparent hover:border-slate-200 bg-white shadow-sm hover:shadow-md transition-all calendar-card-item overflow-hidden"
+                  title={`${evt.title}${evt.module ? ` • ${evt.module.toUpperCase()}` : ''}`}
+                >
+                  <div className="absolute left-0 top-0 bottom-0 w-1" style={{ backgroundColor: color }} />
+                  <Icon className="w-3 h-3 shrink-0" style={{ color: color }} />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-[10px] font-semibold text-slate-800 truncate leading-tight">
+                      {evt.title.replace('[T] ', '')}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       );

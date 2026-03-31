@@ -127,7 +127,7 @@ export function EventCreateModal({
       if (!user) throw new Error("Usuário não autenticado");
 
       if (data.event_type === 'tarefa') {
-        const payload = {
+        const taskPayload = {
           title: data.title,
           client_id: data.client_id,
           module: data.module || 'general',
@@ -137,12 +137,12 @@ export function EventCreateModal({
 
         if (isEdit) {
            const { error } = await supabase.from('tasks')
-             .update(payload)
+             .update(taskPayload)
              .eq('id', initialEvent!.id);
            if (error) throw error;
         } else {
            const { error } = await supabase.from('tasks').insert({
-             ...payload,
+             ...taskPayload,
              status: 'todo',
              priority: 'medium',
              created_by: user.id
@@ -150,22 +150,22 @@ export function EventCreateModal({
            if (error) throw error;
         }
       } else {
-        const payload = {
+        const socialPayload = {
           title: data.title,
           client_id: data.client_id,
           event_date: data.event_date,
           event_type: data.event_type,
-          platform: data.platform,
+          platform: data.platform === 'crm' ? 'insta' : data.platform, // 'crm' is not a valid platform for social_calendar_events
           color: data.color,
         };
 
         if (isEdit) {
            const { error } = await supabase.from('social_calendar_events')
-             .update(payload)
+             .update(socialPayload)
              .eq('id', initialEvent!.id);
            if (error) throw error;
         } else {
-           const { error } = await supabase.from('social_calendar_events').insert(payload);
+           const { error } = await supabase.from('social_calendar_events').insert(socialPayload);
            if (error) throw error;
         }
       }
