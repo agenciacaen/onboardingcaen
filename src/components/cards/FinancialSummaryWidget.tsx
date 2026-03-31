@@ -25,6 +25,7 @@ export function FinancialSummaryWidget() {
           .from('financial_invoices')
           .select('amount')
           .eq('category', 'ads')
+          .eq('status', 'paid')
           .gte('created_at', start)
           .lte('created_at', end);
 
@@ -33,6 +34,7 @@ export function FinancialSummaryWidget() {
           .from('financial_invoices')
           .select('amount')
           .eq('category', 'labor')
+          .eq('status', 'paid')
           .gte('created_at', start)
           .lte('created_at', end);
 
@@ -40,7 +42,7 @@ export function FinancialSummaryWidget() {
         const { data: pendingData } = await supabase
           .from('financial_invoices')
           .select('amount')
-          .eq('status', 'pending');
+          .neq('status', 'paid');
 
         const invested = (adsData || []).reduce((acc, curr) => acc + (curr.amount || 0), 0);
         const labor = (laborData || []).reduce((acc, curr) => acc + (curr.amount || 0), 0);

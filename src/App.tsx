@@ -32,6 +32,7 @@ import AgencySocialPage from './app/agency/social/page';
 import AgencyTrafficPage from './app/agency/traffic/page';
 import AgencyWebPage from './app/agency/web/page';
 import AgencyCRMPage from './app/agency/crm/page';
+import { AgencyGeneralPage } from './app/agency/general/page';
 
 // Cliente
 import { ClientDashboard } from './app/client/page';
@@ -48,6 +49,7 @@ import { ClientSupportPage } from './app/client/support/page';
 import { ClientTicketDetailPage } from './app/client/support/[ticketId]/page';
 import { ClientFinancialPage } from './app/client/financial/page';
 import { ClientDocumentsPage } from './app/client/documents/page';
+import { ClientGeneralPage } from './app/client/general/page';
 import { ClientCalendarPage } from './app/client/calendar/page';
 
 function RootRedirect() {
@@ -208,6 +210,7 @@ export default function App() {
               <Route path="/agency/traffic" element={<AgencyTrafficPage />} />
               <Route path="/agency/web" element={<AgencyWebPage />} />
               <Route path="/agency/crm" element={<AgencyCRMPage />} />
+              <Route path="/agency/general" element={<AgencyGeneralPage />} />
             </Route>
           </Route>
           
@@ -228,6 +231,7 @@ export default function App() {
               <Route path="/client/support/:ticketId" element={<ClientTicketDetailPage />} />
               <Route path="/client/documents" element={<ClientDocumentsPage />} />
               <Route path="/client/financial" element={<ClientFinancialPage />} />
+              <Route path="/client/general" element={<ClientGeneralPage />} />
             </Route>
           </Route>
           

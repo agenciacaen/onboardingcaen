@@ -6,7 +6,7 @@ import { ClientFilterBar } from "@/components/calendar/ClientFilterBar";
 import { TaskCreateModal } from "@/components/modals/TaskCreateModal";
 import { KanbanBoard } from "@/components/kanban/KanbanBoard";
 
-export default function AgencyGeneralPage() {
+export function AgencyGeneralPage() {
   const [clientIdFilter, setClientIdFilter] = useState("all");
   const [isCreateModalOpen, setCreateModalOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
