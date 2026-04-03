@@ -59,6 +59,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
         <SidebarItem icon={GitBranch} label="Fluxos" href="/agency/flows" onNavigate={onNavigate} />
       </SidebarGroup>
       <SidebarGroup label="Módulos">
+        <SidebarItem icon={MessageCircle} label="Agente IA" href="/agency/ai-agent" onNavigate={onNavigate} />
         <SidebarItem icon={CheckSquare} label="Geral" href="/agency/general" onNavigate={onNavigate} />
         <SidebarItem icon={TrendingUp} label="Tráfego Pago" href="/agency/traffic" onNavigate={onNavigate} />
         <SidebarItem icon={Share2} label="Social Media" href="/agency/social" onNavigate={onNavigate} />

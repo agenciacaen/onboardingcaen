@@ -11,8 +11,9 @@ import { ClientEditModal } from "@/components/modals/ClientEditModal";
 import { OnboardingRoadmap } from "@/modules/onboarding/components/OnboardingRoadmap";
 import { AutomationService } from "@/services/automation.service";
 import { useAuthStore } from "@/store/authStore";
-import { UserCog, Rocket, Zap, Loader2 } from "lucide-react";
+import { UserCog, Rocket, Zap, Loader2, FileText } from "lucide-react";
 import { ClientAccessTab } from "@/components/team/ClientAccessTab";
+import { DocumentsTab } from "@/components/documents/DocumentsTab";
 
 import type { Task } from "@/types/general.types";
 import type { ClientWithProfile } from "@/types/client.types";
@@ -75,7 +76,6 @@ export function AgencyClientDetailPage() {
   useEffect(() => {
     let isMounted = true;
     const load = async () => {
-      await new Promise(resolve => setTimeout(resolve, 0));
       if (isMounted) {
         fetchClient();
         fetchOnboardingTasks();
@@ -89,7 +89,6 @@ export function AgencyClientDetailPage() {
     if (!id || !user?.id) return;
     setInitializingPhase1(true);
     try {
-      // 1. Buscar o fluxo de onboarding padrão
       const { data: flows } = await supabase
         .from('flows')
         .select('id')
@@ -97,13 +96,11 @@ export function AgencyClientDetailPage() {
         .limit(1);
 
       if (flows && flows.length > 0) {
-        // 2. Executar o fluxo encontrado
         await AutomationService.executeFlow(flows[0].id, id, user.id);
-        toast.success('Onboarding (via Fluxo) inicializado com sucesso!');
+        toast.success('Onboarding inicializado com sucesso!');
       } else {
-        // Fallback para o método antigo se nenhum fluxo for achado
         await AutomationService.initializeOnboarding(id, user.id);
-        toast.success('Onboarding (via Template) inicializado!');
+        toast.success('Onboarding inicializado!');
       }
 
       await fetchOnboardingTasks();
@@ -190,14 +187,14 @@ export function AgencyClientDetailPage() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-start flex-wrap gap-4">
-        <div>
-          <PageHeader 
-            title={client.name} 
-            description={client.email}
-          />
-          <div className="mt-2">
-            <StatusBadge status={client.status} />
-          </div>
+        <div className="flex flex-col gap-2">
+            <PageHeader 
+                title={client.name} 
+                description={client.email}
+            />
+            <div className="flex">
+                <StatusBadge status={client.status} />
+            </div>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={handleImpersonate}>Acessar Portal</Button>
@@ -217,7 +214,10 @@ export function AgencyClientDetailPage() {
           {client.modules_enabled.social && <TabsTrigger value="social">Social</TabsTrigger>}
           {client.modules_enabled.web && <TabsTrigger value="web">Web</TabsTrigger>}
           <TabsTrigger value="tasks">Tarefas</TabsTrigger>
-          <TabsTrigger value="documents">Documentos</TabsTrigger>
+          <TabsTrigger value="documents">
+             <FileText className="w-4 h-4 mr-2" />
+             Documentos
+          </TabsTrigger>
           <TabsTrigger value="financial">Financeiro</TabsTrigger>
         </TabsList>
 
@@ -253,9 +253,7 @@ export function AgencyClientDetailPage() {
           </div>
         </TabsContent>
 
-        {/* Aba Onboarding */}
         <TabsContent value="onboarding" className="space-y-4 pt-4">
-          {/* Ações */}
           <div className="flex flex-wrap gap-3">
             <Button
               variant={hasPhase1 ? "outline" : "default"}
@@ -288,7 +286,6 @@ export function AgencyClientDetailPage() {
             )}
           </div>
 
-          {/* Roadmap */}
           {loadingOnboarding ? (
             <div className="flex items-center justify-center p-8 text-zinc-500">
               <Loader2 className="w-6 h-6 animate-spin" />
@@ -307,17 +304,13 @@ export function AgencyClientDetailPage() {
           )}
         </TabsContent>
 
-        {client.modules_enabled.traffic && (
-          <TabsContent value="traffic">Preview de Tráfego Aqui</TabsContent>
-        )}
-        {client.modules_enabled.social && (
-          <TabsContent value="social">Preview Social Aqui</TabsContent>
-        )}
-        {client.modules_enabled.web && (
-          <TabsContent value="web">Preview Web Aqui</TabsContent>
-        )}
+        {client.modules_enabled.traffic && <TabsContent value="traffic">Preview de Tráfego Aqui</TabsContent>}
+        {client.modules_enabled.social && <TabsContent value="social">Preview Social Aqui</TabsContent>}
+        {client.modules_enabled.web && <TabsContent value="web">Preview Web Aqui</TabsContent>}
         <TabsContent value="tasks">Listagem de tarefas vinculadas</TabsContent>
-        <TabsContent value="documents">Arquivos enviados</TabsContent>
+        <TabsContent value="documents" className="pt-4">
+          <DocumentsTab clientId={id || ""} />
+        </TabsContent>
         <TabsContent value="financial">
           <div className="pt-4">
             <h3 className="font-semibold text-lg mb-4">Gestão Financeira do Cliente</h3>

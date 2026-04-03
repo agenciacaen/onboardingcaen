@@ -22,6 +22,11 @@ export interface Client {
   deleted_at?: string | null;
   created_at: string;
   updated_at: string;
+  whatsapp_group_id?: string | null;
+  ai_summary_enabled?: boolean;
+  last_ai_summary_at?: string | null;
+  evolution_instance_name?: string | null;
+  evolution_instance_status?: string | null;
 }
 
 export interface ClientWithProfile extends Client {
