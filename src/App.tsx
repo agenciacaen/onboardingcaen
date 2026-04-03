@@ -33,6 +33,7 @@ import AgencyTrafficPage from './app/agency/traffic/page';
 import AgencyWebPage from './app/agency/web/page';
 import AgencyCRMPage from './app/agency/crm/page';
 import { AgencyGeneralPage } from './app/agency/general/page';
+import AIAgentPage from './app/agency/ai-agent/page';
 
 // Cliente
 import { ClientDashboard } from './app/client/page';
@@ -210,6 +211,7 @@ export default function App() {
               <Route path="/agency/traffic" element={<AgencyTrafficPage />} />
               <Route path="/agency/web" element={<AgencyWebPage />} />
               <Route path="/agency/crm" element={<AgencyCRMPage />} />
+              <Route path="/agency/ai-agent" element={<AIAgentPage />} />
               <Route path="/agency/general" element={<AgencyGeneralPage />} />
             </Route>
           </Route>
