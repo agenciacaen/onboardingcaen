@@ -13,7 +13,7 @@ import { AutomationService } from "@/services/automation.service";
 import { useAuthStore } from "@/store/authStore";
 import { UserCog, Rocket, Zap, Loader2, FileText } from "lucide-react";
 import { ClientAccessTab } from "@/components/team/ClientAccessTab";
-import { DocumentsTab } from "@/components/documents/DocumentsTab";
+import { DocumentLibrary } from "@/components/documents/DocumentLibrary";
 
 import type { Task } from "@/types/general.types";
 import type { ClientWithProfile } from "@/types/client.types";
@@ -309,7 +309,7 @@ export function AgencyClientDetailPage() {
         {client.modules_enabled.web && <TabsContent value="web">Preview Web Aqui</TabsContent>}
         <TabsContent value="tasks">Listagem de tarefas vinculadas</TabsContent>
         <TabsContent value="documents" className="pt-4">
-          <DocumentsTab clientId={id || ""} />
+          <DocumentLibrary clientIdFilter={id || ""} />
         </TabsContent>
         <TabsContent value="financial">
           <div className="pt-4">
