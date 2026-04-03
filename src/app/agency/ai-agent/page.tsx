@@ -53,7 +53,7 @@ export default function AIAgentPage() {
     setLoading(true);
     try {
       const { data: instData } = await supabase.from("whatsapp_instances").select("*").order("created_at", { ascending: false });
-      const { data: clientData } = await supabase.from("clients").select("id, name, whatsapp_instance_id, whatsapp_group_id, ai_summary_enabled").eq("onboarding_completed", true);
+      const { data: clientData } = await supabase.from("clients").select("id, name, whatsapp_instance_id, whatsapp_group_id, ai_summary_enabled").order("name", { ascending: true });
 
       setInstances(instData || []);
       setClients(clientData || []);
