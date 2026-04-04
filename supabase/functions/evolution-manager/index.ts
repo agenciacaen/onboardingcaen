@@ -36,6 +36,7 @@ serve(async (req) => {
         body: JSON.stringify({
           instanceName: technicalName,
           token: "caen-token-secure",
+          integration: "WHATSAPP-BAILEYS",
           qrcode: true
         })
       })
