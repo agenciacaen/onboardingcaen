@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { 
   Bot, MessageCircle, Zap, Loader2, Plus, RefreshCw, 
-  Trash2, Rocket, Users, ListFilter, Search
+  Trash2, Rocket, Users, ListFilter, Search, Copy, Check
 } from "lucide-react";
 import { toast } from "sonner";
 import { 
@@ -66,7 +66,7 @@ export default function AIAgentPage() {
   const [groups, setGroups] = useState<WhatsAppGroup[]>([]);
   const [loadingGroups, setLoadingGroups] = useState(false);
   const [groupSearch, setGroupSearch] = useState("");
-  const [currentClientId, setCurrentClientId] = useState<string | null>(null);
+  const [copiedJid, setCopiedJid] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -181,15 +181,11 @@ export default function AIAgentPage() {
     }
   };
 
-  const openGroupPicker = async (clientId: string, instanceId: string | null) => {
-    if (!instanceId) {
-      toast.error("Selecione uma instância antes.");
-      return;
-    }
-    setCurrentClientId(clientId);
+  const openGroupPicker = async (instanceId: string) => {
     setIsGroupModalOpen(true);
     setLoadingGroups(true);
     setGroups([]);
+    setCopiedJid(null);
 
     try {
       const { data, error } = await supabase.functions.invoke("evolution-manager", {
@@ -206,11 +202,11 @@ export default function AIAgentPage() {
     }
   };
 
-  const selectGroup = (jid: string) => {
-    if (currentClientId) {
-      updateClientConfig(currentClientId, { whatsapp_group_id: jid });
-      setIsGroupModalOpen(false);
-    }
+  const copyToClipboard = (jid: string) => {
+    navigator.clipboard.writeText(jid);
+    setCopiedJid(jid);
+    toast.success("JID copiado!");
+    setTimeout(() => setCopiedJid(null), 2000);
   };
 
   const filteredGroups = groups.filter(g => 
@@ -307,11 +303,24 @@ export default function AIAgentPage() {
                         <Badge variant={inst.status === 'open' ? 'default' : 'secondary'} className="text-[10px]">
                           {inst.status === 'open' ? 'Conectado' : 'Aguardando'}
                         </Badge>
+                        
+                        {inst.status === 'open' && (
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => openGroupPicker(inst.id)}
+                            className="h-8 text-xs flex items-center gap-2"
+                          >
+                            <ListFilter className="w-3 h-3" />
+                            Grupos
+                          </Button>
+                        )}
+
                         <Button 
                           variant="ghost" 
                           size="icon" 
                           onClick={() => handleLogout(inst.id)}
-                          className="text-zinc-400 hover:text-red-500"
+                          className="text-zinc-400 hover:text-red-500 ml-2"
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
@@ -357,27 +366,16 @@ export default function AIAgentPage() {
                       </Select>
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Input 
-                          className="h-8 text-xs w-[200px]" 
-                          placeholder="Ex: 5511...-1456@g.us"
-                          value={client.whatsapp_group_id || ""}
-                          onBlur={(e) => updateClientConfig(client.id, { whatsapp_group_id: e.target.value })}
-                          onChange={(e) => {
-                            const newClients = clients.map(c => c.id === client.id ? { ...c, whatsapp_group_id: e.target.value } : c);
-                            setClients(newClients);
-                          }}
-                        />
-                        <Button 
-                          variant="outline" 
-                          size="icon" 
-                          className="h-8 w-8 text-zinc-400"
-                          title="Listar Grupos"
-                          onClick={() => openGroupPicker(client.id, client.whatsapp_instance_id)}
-                        >
-                          <ListFilter className="w-3 h-3" />
-                        </Button>
-                      </div>
+                      <Input 
+                        className="h-8 text-xs w-[250px]" 
+                        placeholder="Ex: 12036302456789@g.us"
+                        value={client.whatsapp_group_id || ""}
+                        onBlur={(e) => updateClientConfig(client.id, { whatsapp_group_id: e.target.value })}
+                        onChange={(e) => {
+                          const newClients = clients.map(c => c.id === client.id ? { ...c, whatsapp_group_id: e.target.value } : c);
+                          setClients(newClients);
+                        }}
+                      />
                     </TableCell>
                     <TableCell className="text-center">
                       <div className="flex justify-center">
@@ -402,12 +400,12 @@ export default function AIAgentPage() {
         </TabsContent>
       </Tabs>
 
-      {/* Modal de Seleção de Grupos */}
+      {/* Modal de Listagem de Grupos */}
       <Dialog open={isGroupModalOpen} onOpenChange={setIsGroupModalOpen}>
         <DialogContent className="max-w-[500px] h-[600px] flex flex-col p-0 overflow-hidden">
           <DialogHeader className="p-6 pb-2">
-            <DialogTitle>Selecione o Grupo do WhatsApp</DialogTitle>
-            <DialogDescription>Listando grupos disponíveis na instância selecionada.</DialogDescription>
+            <DialogTitle>Grupos da Instância</DialogTitle>
+            <DialogDescription>Encontre o grupo e copie o JID para configurar no cliente.</DialogDescription>
           </DialogHeader>
 
           <div className="px-6 pb-4">
@@ -422,27 +420,37 @@ export default function AIAgentPage() {
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto px-6 pb-6">
+          <div className="flex-1 overflow-y-auto px-6 pb-6 text-sm">
             {loadingGroups ? (
               <div className="flex flex-col items-center justify-center h-full gap-2 text-zinc-500">
                 <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
-                <p className="text-sm">Buscando grupos na Evolution API...</p>
+                <p className="text-xs">Buscando grupos na Evolution API...</p>
               </div>
             ) : filteredGroups.length === 0 ? (
               <div className="text-center py-12 text-zinc-400">
                 <p className="text-sm">Nenhum grupo encontrado.</p>
               </div>
             ) : (
-              <div className="grid gap-2">
+              <div className="grid gap-2 text-zinc-700">
                 {filteredGroups.map((group) => (
-                  <button
+                  <div
                     key={group.id}
-                    onClick={() => selectGroup(group.id)}
-                    className="flex flex-col items-start p-3 text-left border rounded-lg hover:bg-zinc-50 hover:border-blue-200 transition-all group"
+                    className="flex flex-col p-3 border rounded-lg bg-zinc-50 hover:bg-zinc-100 transition-all gap-1"
                   >
-                    <span className="font-medium text-sm group-hover:text-blue-600">{group.subject || "Sem Nome"}</span>
-                    <span className="text-[10px] text-zinc-400 font-mono">{group.id}</span>
-                  </button>
+                    <div className="flex justify-between items-start">
+                      <span className="font-semibold text-zinc-900 line-clamp-1">{group.subject || "Sem Nome"}</span>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="h-7 px-2 text-blue-600 hover:text-blue-700"
+                        onClick={() => copyToClipboard(group.id)}
+                      >
+                        {copiedJid === group.id ? <Check className="w-3 h-3 mr-1" /> : <Copy className="w-3 h-3 mr-1" />}
+                        Copiar JID
+                      </Button>
+                    </div>
+                    <span className="text-[10px] text-zinc-400 font-mono break-all">{group.id}</span>
+                  </div>
                 ))}
               </div>
             )}
