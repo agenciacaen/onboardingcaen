@@ -79,7 +79,15 @@ serve(async (req) => {
 
       if (dbError) throw new Error(`DB Error: ${dbError.message}`);
 
-      return new Response(JSON.stringify({ ...successData, instanceId: newInst.id, success: true }), {
+      // Extrair o QR Code de forma robusta (v1 ou v2)
+      const qrCodeBase64 = successData.qrcode?.base64 || successData.base64;
+
+      return new Response(JSON.stringify({ 
+        ...successData, 
+        base64: qrCodeBase64, // Garante que o frontend ache o campo 'base64' no topo
+        instanceId: newInst.id, 
+        success: true 
+      }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" }
       });
     }
