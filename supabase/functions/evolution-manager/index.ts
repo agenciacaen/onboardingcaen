@@ -13,40 +13,14 @@ serve(async (req) => {
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? ""
-    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? ""
     const evoServerUrl = Deno.env.get("EVOLUTION_SERVER_URL") ?? ""
     const evoAuthKey = Deno.env.get("EVOLUTION_AUTH_KEY") ?? ""
+    const adminKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
 
-    if (!evoServerUrl || !evoAuthKey) {
-      throw new Error("Configuração da Evolution API ausente no servidor.")
-    }
-
-    // Autenticação manual via cabeçalho Authorization
-    const authHeader = req.headers.get('Authorization')
-    if (!authHeader) {
-      console.error("[Auth] Cabeçalho de autorização ausente")
-      return new Response(JSON.stringify({ error: "Não autorizado: Cabeçalho ausente" }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 401
-      })
-    }
-
-    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: authHeader } }
-    })
-
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    if (authError || !user) {
-      console.error("[Auth] Usuário não encontrado ou token inválido:", authError)
-      return new Response(JSON.stringify({ error: "Sessão expirada ou inválida." }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 401
-      })
-    }
-
-    // Usar service_role para operações no banco
-    const adminSupabase = createClient(supabaseUrl, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "")
+    const adminSupabase = createClient(supabaseUrl, adminKey)
     const { action, name, instanceId } = await req.json()
+
+    console.log(`[Action]: ${action}`)
 
     // 1. Criar Instância Global
     if (action === "create-global-instance") {
@@ -67,8 +41,7 @@ serve(async (req) => {
 
       const responseBody = await response.text()
       if (!response.ok) {
-        console.error(`[Evolution API Error]: ${response.status} - ${responseBody}`)
-        throw new Error(`[Evolution API]: ${responseBody}`)
+        throw new Error(`Evolution API Error: ${response.status} - ${responseBody}`)
       }
 
       const data = JSON.parse(responseBody)
@@ -83,109 +56,40 @@ serve(async (req) => {
         .select()
         .single()
 
-      if (dbError) throw new Error(`[Supabase DB Error]: ${dbError.message}`)
+      if (dbError) throw new Error(`DB Error: ${dbError.message}`)
 
       return new Response(JSON.stringify({ ...data, instanceId: newInst.id }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" }
       })
     }
 
-    // 2. Checar Status Global
+    // Outras ações... (simplificadas para teste)
     if (action === "check-global-status") {
-      const { data: inst } = await adminSupabase
-        .from("whatsapp_instances")
-        .select("instance_name")
-        .eq("id", instanceId)
-        .single()
-
-      if (!inst) throw new Error("Instância não encontrada no banco.")
-
-      const response = await fetch(`${evoServerUrl}/instance/connectionState/${inst.instance_name}`, {
-        method: "GET",
-        headers: { "apikey": evoAuthKey }
-      })
-
+      const { data: inst } = await adminSupabase.from("whatsapp_instances").select("instance_name").eq("id", instanceId).single()
+      const response = await fetch(`${evoServerUrl}/instance/connectionState/${inst.instance_name}`, { headers: { "apikey": evoAuthKey } })
       const data = await response.json()
       const status = data.instance?.state || "close"
-
-      await adminSupabase
-        .from("whatsapp_instances")
-        .update({ status: status })
-        .eq("id", instanceId)
-
-      return new Response(JSON.stringify({ status }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" }
-      })
+      await adminSupabase.from("whatsapp_instances").update({ status }).eq("id", instanceId)
+      return new Response(JSON.stringify({ status }), { headers: { ...corsHeaders, "Content-Type": "application/json" } })
     }
 
-    // 3. Logout Global
-    if (action === "logout-global") {
-      const { data: inst } = await adminSupabase
-        .from("whatsapp_instances")
-        .select("instance_name")
-        .eq("id", instanceId)
-        .single()
-
-      if (inst) {
-        await fetch(`${evoServerUrl}/instance/delete/${inst.instance_name}`, {
-          method: "DELETE",
-          headers: { "apikey": evoAuthKey }
-        })
-      }
-
-      await adminSupabase
-        .from("whatsapp_instances")
-        .delete()
-        .eq("id", instanceId)
-
-      return new Response(JSON.stringify({ success: true }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" }
-      })
-    }
-
-    // 4. Pegar QR code atual
-    if (action === "get-qrcode-global") {
-        const { data: inst } = await adminSupabase
-          .from("whatsapp_instances")
-          .select("instance_name")
-          .eq("id", instanceId)
-          .single()
-  
-        const response = await fetch(`${evoServerUrl}/instance/connect/${inst.instance_name}`, {
-          method: "GET",
-          headers: { "apikey": evoAuthKey }
-        })
-  
-        const data = await response.json()
-        return new Response(JSON.stringify(data), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" }
-        })
-      }
-
-    // 5. Listar Grupos
     if (action === "fetch-groups") {
-      const { data: inst } = await adminSupabase
-        .from("whatsapp_instances")
-        .select("instance_name")
-        .eq("id", instanceId)
-        .single()
-
-      if (!inst) throw new Error("Instância não encontrada")
-
-      const response = await fetch(`${evoServerUrl}/group/fetchAllGroups/${inst.instance_name}`, {
-        method: "GET",
-        headers: { "apikey": evoAuthKey }
-      })
-
+      const { data: inst } = await adminSupabase.from("whatsapp_instances").select("instance_name").eq("id", instanceId).single()
+      const response = await fetch(`${evoServerUrl}/group/fetchAllGroups/${inst.instance_name}`, { headers: { "apikey": evoAuthKey } })
       const data = await response.json()
-      return new Response(JSON.stringify(data), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" }
-      })
+      return new Response(JSON.stringify(data), { headers: { ...corsHeaders, "Content-Type": "application/json" } })
+    }
+
+    if (action === "logout-global") {
+      const { data: inst } = await adminSupabase.from("whatsapp_instances").select("instance_name").eq("id", instanceId).single()
+      if (inst) await fetch(`${evoServerUrl}/instance/delete/${inst.instance_name}`, { method: "DELETE", headers: { "apikey": evoAuthKey } })
+      await adminSupabase.from("whatsapp_instances").delete().eq("id", instanceId)
+      return new Response(JSON.stringify({ success: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } })
     }
 
     throw new Error("Ação inválida")
   } catch (error: any) {
-    console.error("[Fatal Error]:", error.message)
+    console.error("[Fatal]:", error.message)
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 400
