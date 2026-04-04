@@ -21,10 +21,14 @@ serve(async (req) => {
       throw new Error("Configuração da Evolution API ausente no servidor.")
     }
 
-    // Autenticação manual: Inicializa o Supabase com o token do usuário logado
+    // Autenticação manual via cabeçalho Authorization
     const authHeader = req.headers.get('Authorization')
     if (!authHeader) {
-      throw new Error("Cabeçalho de autorização ausente.")
+      console.error("[Auth] Cabeçalho de autorização ausente")
+      return new Response(JSON.stringify({ error: "Não autorizado: Cabeçalho ausente" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 401
+      })
     }
 
     const supabase = createClient(supabaseUrl, supabaseAnonKey, {
@@ -33,22 +37,20 @@ serve(async (req) => {
 
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user) {
-      console.error("[Auth Debug] Token:", authHeader.substring(0, 20) + "...")
-      console.error("[Auth Debug] Erro ao validar usuário:", authError?.message || "Sessão não encontrada")
-      // Por enquanto, vamos logar mas tentar prosseguir se for apenas erro de getUser
-      // return new Response(JSON.stringify({ error: "Sessão expirada ou não autorizado." }), { ... })
-    } else {
-      console.log("[Auth Success] Usuário logado:", user.email)
+      console.error("[Auth] Usuário não encontrado ou token inválido:", authError)
+      return new Response(JSON.stringify({ error: "Sessão expirada ou inválida." }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 401
+      })
     }
 
-    // Agora que sabemos que o usuário é válido, usamos service_role para operações DB
+    // Usar service_role para operações no banco
     const adminSupabase = createClient(supabaseUrl, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "")
     const { action, name, instanceId } = await req.json()
 
     // 1. Criar Instância Global
     if (action === "create-global-instance") {
       const technicalName = `agency-${Math.random().toString(36).substring(2, 10)}`
-      console.log(`[Evolution] Criando instância: ${technicalName} para ${name}`)
       
       const response = await fetch(`${evoServerUrl}/instance/create`, {
         method: "POST",
@@ -63,16 +65,14 @@ serve(async (req) => {
         })
       })
 
+      const responseBody = await response.text()
       if (!response.ok) {
-        const errorText = await response.text()
-        console.error(`[Evolution] Erro na API: ${response.status} - ${errorText}`)
-        throw new Error(`Erro na Evolution API: ${response.status} - ${errorText}`)
+        console.error(`[Evolution API Error]: ${response.status} - ${responseBody}`)
+        throw new Error(`[Evolution API]: ${responseBody}`)
       }
 
-      const data = await response.json()
-      console.log(`[Evolution] Instância criada com sucesso na API`)
+      const data = JSON.parse(responseBody)
       
-      // Salvar na nova tabela usando adminSupabase
       const { data: newInst, error: dbError } = await adminSupabase
         .from("whatsapp_instances")
         .insert({
@@ -83,10 +83,7 @@ serve(async (req) => {
         .select()
         .single()
 
-      if (dbError) {
-        console.error(`[Supabase] Erro ao salvar instância:`, dbError)
-        throw new Error(`Erro no Banco de Dados: ${dbError.message}`)
-      }
+      if (dbError) throw new Error(`[Supabase DB Error]: ${dbError.message}`)
 
       return new Response(JSON.stringify({ ...data, instanceId: newInst.id }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" }
@@ -188,7 +185,7 @@ serve(async (req) => {
 
     throw new Error("Ação inválida")
   } catch (error: any) {
-    console.error("[Evolution Manager Error]:", error.message)
+    console.error("[Fatal Error]:", error.message)
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 400
