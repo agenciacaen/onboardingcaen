@@ -206,6 +206,12 @@ export default function AIAgentPage() {
 
       if (error) throw error;
       
+      if (data?.success === false) {
+        toast.error(`${data.error || "Erro desconhecido ao carregar grupos"}`);
+        setIsGroupModalOpen(false);
+        return;
+      }
+
       // Normalizar: v2 costuma mandar { groups: [] }
       const groupsArray = Array.isArray(data) ? data : (data?.groups || []);
       setGroups(groupsArray);

@@ -104,11 +104,26 @@ serve(async (req) => {
 
     if (action === "fetch-groups") {
         const { data: inst } = await adminSupabase.from("whatsapp_instances").select("instance_name").eq("id", instanceId).single()
-        const response = await fetch(`${evoServerUrl}/group/fetchAllGroups/${inst.instance_name}`, { headers: { "apikey": evoAuthKey } })
+        if (!inst) throw new Error("Instância não encontrada no banco de dados.");
+
+        const response = await fetch(`${evoServerUrl}/group/fetchAllGroups/${inst.instance_name}`, { 
+          headers: { "apikey": evoAuthKey } 
+        })
+        
         const data = await response.json()
-        // Alguns v2 mandam { groups: [] }, outros array direto
+        
+        // Se a API retornar erro (geralmente tem um campo status >= 400)
+        if (data.status && data.status >= 400) {
+          return new Response(JSON.stringify({ 
+            success: false, 
+            error: `Erro Evolution (${data.status}): ${data.message || JSON.stringify(data)}` 
+          }), { headers: { ...corsHeaders, "Content-Type": "application/json" } })
+        }
+
         const groups = Array.isArray(data) ? data : (data?.groups || [])
-        return new Response(JSON.stringify(groups), { headers: { ...corsHeaders, "Content-Type": "application/json" } })
+        return new Response(JSON.stringify(groups), { 
+          headers: { ...corsHeaders, "Content-Type": "application/json" } 
+        })
     }
 
     if (action === "logout-global") {
