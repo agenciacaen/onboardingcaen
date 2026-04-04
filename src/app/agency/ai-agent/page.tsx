@@ -305,13 +305,13 @@ export default function AIAgentPage() {
               </h3>
               
               <div className="grid gap-4">
-                {instances.length === 0 ? (
+                {(instances || []).length === 0 ? (
                   <div className="text-center py-12 border border-dashed rounded-xl bg-muted/10">
                     <MessageCircle className="w-12 h-12 text-zinc-200 mx-auto mb-2" />
                     <p className="text-zinc-500 text-sm">Nenhuma instância cadastrada ainda.</p>
                   </div>
                 ) : (
-                  instances.map((inst) => (
+                  (instances || []).map((inst) => (
                     <div key={inst.id} className="flex items-center justify-between p-4 bg-white border rounded-xl shadow-sm">
                       <div className="flex items-center gap-4">
                         <div className={`w-3 h-3 rounded-full ${inst.status === 'open' ? 'bg-green-500' : 'bg-zinc-300'} animate-pulse`} />
@@ -368,7 +368,7 @@ export default function AIAgentPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {clients.map((client) => (
+                {(clients || []).map((client) => (
                   <TableRow key={client.id}>
                     <TableCell className="font-medium">{client.name}</TableCell>
                     <TableCell>
@@ -381,7 +381,7 @@ export default function AIAgentPage() {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="none">Nenhum</SelectItem>
-                          {instances.filter(i => i.status === 'open').map(inst => (
+                          {(instances || []).filter(i => i.status === 'open').map(inst => (
                             <SelectItem key={inst.id} value={inst.id}>{inst.name}</SelectItem>
                           ))}
                         </SelectContent>
