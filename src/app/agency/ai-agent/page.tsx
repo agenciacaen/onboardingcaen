@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { 
   Bot, MessageCircle, Zap, Loader2, Plus, RefreshCw, 
-  Trash2, Rocket, Users
+  Trash2, Rocket, Users, ListFilter, Search
 } from "lucide-react";
 import { toast } from "sonner";
 import { 
@@ -23,6 +23,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface WhatsAppInstance {
   id: string;
@@ -40,6 +47,11 @@ interface Client {
   ai_summary_enabled: boolean;
 }
 
+interface WhatsAppGroup {
+  id: string;
+  subject: string;
+}
+
 export default function AIAgentPage() {
   const [instances, setInstances] = useState<WhatsAppInstance[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
@@ -48,6 +60,13 @@ export default function AIAgentPage() {
   const [qrCode, setQrCode] = useState<string | null>(null);
   const [pollingId, setPollingId] = useState<string | null>(null);
   const [newInstanceName, setNewInstanceName] = useState("");
+
+  // Group Selection States
+  const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
+  const [groups, setGroups] = useState<WhatsAppGroup[]>([]);
+  const [loadingGroups, setLoadingGroups] = useState(false);
+  const [groupSearch, setGroupSearch] = useState("");
+  const [currentClientId, setCurrentClientId] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -161,6 +180,43 @@ export default function AIAgentPage() {
       console.error(err);
     }
   };
+
+  const openGroupPicker = async (clientId: string, instanceId: string | null) => {
+    if (!instanceId) {
+      toast.error("Selecione uma instância antes.");
+      return;
+    }
+    setCurrentClientId(clientId);
+    setIsGroupModalOpen(true);
+    setLoadingGroups(true);
+    setGroups([]);
+
+    try {
+      const { data, error } = await supabase.functions.invoke("evolution-manager", {
+        body: { action: "fetch-groups", instanceId }
+      });
+
+      if (error) throw error;
+      setGroups(data);
+    } catch (err) {
+      toast.error("Erro ao carregar grupos. Verifique se o WhatsApp está conectado.");
+      setIsGroupModalOpen(false);
+    } finally {
+      setLoadingGroups(false);
+    }
+  };
+
+  const selectGroup = (jid: string) => {
+    if (currentClientId) {
+      updateClientConfig(currentClientId, { whatsapp_group_id: jid });
+      setIsGroupModalOpen(false);
+    }
+  };
+
+  const filteredGroups = groups.filter(g => 
+    g.subject?.toLowerCase().includes(groupSearch.toLowerCase()) || 
+    g.id?.includes(groupSearch)
+  );
 
   if (loading && instances.length === 0) {
     return (
@@ -301,16 +357,27 @@ export default function AIAgentPage() {
                       </Select>
                     </TableCell>
                     <TableCell>
-                      <Input 
-                        className="h-8 text-xs w-[250px]" 
-                        placeholder="Ex: 5511...-1456@g.us"
-                        value={client.whatsapp_group_id || ""}
-                        onBlur={(e) => updateClientConfig(client.id, { whatsapp_group_id: e.target.value })}
-                        onChange={(e) => {
-                          const newClients = clients.map(c => c.id === client.id ? { ...c, whatsapp_group_id: e.target.value } : c);
-                          setClients(newClients);
-                        }}
-                      />
+                      <div className="flex items-center gap-2">
+                        <Input 
+                          className="h-8 text-xs w-[200px]" 
+                          placeholder="Ex: 5511...-1456@g.us"
+                          value={client.whatsapp_group_id || ""}
+                          onBlur={(e) => updateClientConfig(client.id, { whatsapp_group_id: e.target.value })}
+                          onChange={(e) => {
+                            const newClients = clients.map(c => c.id === client.id ? { ...c, whatsapp_group_id: e.target.value } : c);
+                            setClients(newClients);
+                          }}
+                        />
+                        <Button 
+                          variant="outline" 
+                          size="icon" 
+                          className="h-8 w-8 text-zinc-400"
+                          title="Listar Grupos"
+                          onClick={() => openGroupPicker(client.id, client.whatsapp_instance_id)}
+                        >
+                          <ListFilter className="w-3 h-3" />
+                        </Button>
+                      </div>
                     </TableCell>
                     <TableCell className="text-center">
                       <div className="flex justify-center">
@@ -334,6 +401,54 @@ export default function AIAgentPage() {
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Modal de Seleção de Grupos */}
+      <Dialog open={isGroupModalOpen} onOpenChange={setIsGroupModalOpen}>
+        <DialogContent className="max-w-[500px] h-[600px] flex flex-col p-0 overflow-hidden">
+          <DialogHeader className="p-6 pb-2">
+            <DialogTitle>Selecione o Grupo do WhatsApp</DialogTitle>
+            <DialogDescription>Listando grupos disponíveis na instância selecionada.</DialogDescription>
+          </DialogHeader>
+
+          <div className="px-6 pb-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+              <Input 
+                placeholder="Pesquisar por nome do grupo..." 
+                className="pl-9"
+                value={groupSearch}
+                onChange={(e) => setGroupSearch(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="flex-1 overflow-y-auto px-6 pb-6">
+            {loadingGroups ? (
+              <div className="flex flex-col items-center justify-center h-full gap-2 text-zinc-500">
+                <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+                <p className="text-sm">Buscando grupos na Evolution API...</p>
+              </div>
+            ) : filteredGroups.length === 0 ? (
+              <div className="text-center py-12 text-zinc-400">
+                <p className="text-sm">Nenhum grupo encontrado.</p>
+              </div>
+            ) : (
+              <div className="grid gap-2">
+                {filteredGroups.map((group) => (
+                  <button
+                    key={group.id}
+                    onClick={() => selectGroup(group.id)}
+                    className="flex flex-col items-start p-3 text-left border rounded-lg hover:bg-zinc-50 hover:border-blue-200 transition-all group"
+                  >
+                    <span className="font-medium text-sm group-hover:text-blue-600">{group.subject || "Sem Nome"}</span>
+                    <span className="text-[10px] text-zinc-400 font-mono">{group.id}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

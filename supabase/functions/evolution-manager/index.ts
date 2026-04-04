@@ -133,6 +133,27 @@ serve(async (req) => {
         })
       }
 
+    // 5. Listar Grupos
+    if (action === "fetch-groups") {
+      const { data: inst } = await supabase
+        .from("whatsapp_instances")
+        .select("instance_name")
+        .eq("id", instanceId)
+        .single()
+
+      if (!inst) throw new Error("Instância não encontrada")
+
+      const response = await fetch(`${evoServerUrl}/group/fetchAllGroups/${inst.instance_name}`, {
+        method: "GET",
+        headers: { "apikey": evoAuthKey }
+      })
+
+      const data = await response.json()
+      return new Response(JSON.stringify(data), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      })
+    }
+
     throw new Error("Ação inválida")
   } catch (error) {
     return new Response(JSON.stringify({ error: error.message }), {
