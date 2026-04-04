@@ -20,11 +20,12 @@ serve(async (req) => {
     const adminSupabase = createClient(supabaseUrl, adminKey)
     const { action, name, instanceId } = await req.json()
 
-    console.log(`[Action]: ${action}`)
+    console.log(`[Debug Action]: ${action}`)
 
-    // 1. Criar Instância Global
     if (action === "create-global-instance") {
       const technicalName = `agency-${Math.random().toString(36).substring(2, 10)}`
+      
+      console.log(`[Connecting to Evolution]: ${evoServerUrl}/instance/create`)
       
       const response = await fetch(`${evoServerUrl}/instance/create`, {
         method: "POST",
@@ -41,7 +42,14 @@ serve(async (req) => {
 
       const responseBody = await response.text()
       if (!response.ok) {
-        throw new Error(`Evolution API Error: ${response.status} - ${responseBody}`)
+        console.error(`[Evolution Error]: ${responseBody}`)
+        return new Response(JSON.stringify({ 
+          success: false, 
+          error: `Evolution API Error: ${response.status} - ${responseBody}` 
+        }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200 // Retornamos 200 para o Supabase não travar
+        })
       }
 
       const data = JSON.parse(responseBody)
@@ -56,43 +64,32 @@ serve(async (req) => {
         .select()
         .single()
 
-      if (dbError) throw new Error(`DB Error: ${dbError.message}`)
+      if (dbError) {
+        console.error(`[DB Error]: ${dbError.message}`)
+        return new Response(JSON.stringify({ 
+          success: false, 
+          error: `DB Error: ${dbError.message}` 
+        }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200
+        })
+      }
 
-      return new Response(JSON.stringify({ ...data, instanceId: newInst.id }), {
+      return new Response(JSON.stringify({ ...data, instanceId: newInst.id, success: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" }
       })
     }
 
-    // Outras ações... (simplificadas para teste)
-    if (action === "check-global-status") {
-      const { data: inst } = await adminSupabase.from("whatsapp_instances").select("instance_name").eq("id", instanceId).single()
-      const response = await fetch(`${evoServerUrl}/instance/connectionState/${inst.instance_name}`, { headers: { "apikey": evoAuthKey } })
-      const data = await response.json()
-      const status = data.instance?.state || "close"
-      await adminSupabase.from("whatsapp_instances").update({ status }).eq("id", instanceId)
-      return new Response(JSON.stringify({ status }), { headers: { ...corsHeaders, "Content-Type": "application/json" } })
-    }
+    // Outros casos...
+    return new Response(JSON.stringify({ error: "Ação não implementada no debug" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+    })
 
-    if (action === "fetch-groups") {
-      const { data: inst } = await adminSupabase.from("whatsapp_instances").select("instance_name").eq("id", instanceId).single()
-      const response = await fetch(`${evoServerUrl}/group/fetchAllGroups/${inst.instance_name}`, { headers: { "apikey": evoAuthKey } })
-      const data = await response.json()
-      return new Response(JSON.stringify(data), { headers: { ...corsHeaders, "Content-Type": "application/json" } })
-    }
-
-    if (action === "logout-global") {
-      const { data: inst } = await adminSupabase.from("whatsapp_instances").select("instance_name").eq("id", instanceId).single()
-      if (inst) await fetch(`${evoServerUrl}/instance/delete/${inst.instance_name}`, { method: "DELETE", headers: { "apikey": evoAuthKey } })
-      await adminSupabase.from("whatsapp_instances").delete().eq("id", instanceId)
-      return new Response(JSON.stringify({ success: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } })
-    }
-
-    throw new Error("Ação inválida")
   } catch (error: any) {
-    console.error("[Fatal]:", error.message)
-    return new Response(JSON.stringify({ error: error.message }), {
+    console.error("[Fatal Debug]:", error.message)
+    return new Response(JSON.stringify({ success: false, error: error.message }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 400
+      status: 200 // Forçamos 200 para ver o erro no frontend
     })
   }
 })

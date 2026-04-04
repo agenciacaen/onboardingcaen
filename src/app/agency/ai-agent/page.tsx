@@ -104,6 +104,13 @@ export default function AIAgentPage() {
         toast.error(`Erro: ${error.message || "Erro na Edge Function"}`);
         return;
       }
+
+      if (data?.success === false) {
+        console.error("Erro processado pela Edge Function:", data.error);
+        toast.error(`Erro: ${data.error || "Erro desconhecido"}`);
+        setCreatingInstance(false);
+        return;
+      }
       
       toast.success("Instância criada! Escaneie o QR Code.");
       setQrCode(data.base64 || null);
