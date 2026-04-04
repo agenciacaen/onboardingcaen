@@ -13,7 +13,7 @@ serve(async (req) => {
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? ""
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? ""
     const openaiKey = Deno.env.get("OPENAI_API_KEY") ?? ""
     const evoServerUrl = Deno.env.get("EVOLUTION_SERVER_URL") ?? ""
     const evoAuthKey = Deno.env.get("EVOLUTION_AUTH_KEY") ?? ""
@@ -22,10 +22,29 @@ serve(async (req) => {
       throw new Error("Configuração da OpenAI ou Evolution API ausente")
     }
 
-    const supabase = createClient(supabaseUrl, supabaseKey)
+    // Autenticação manual
+    const authHeader = req.headers.get('Authorization')
+    if (!authHeader) {
+      throw new Error("Cabeçalho de autorização ausente.")
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } }
+    })
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) {
+      return new Response(JSON.stringify({ error: "Sessão expirada ou não autorizado." }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 401
+      })
+    }
+
+    // Usar Admin para buscar dados de todos os clientes
+    const adminSupabase = createClient(supabaseUrl, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "")
 
     // Clientes que têm resumo ativado e uma instância global válida vinculada
-    const { data: clients, error: clientsError } = await supabase
+    const { data: clients, error: clientsError } = await adminSupabase
       .from("clients")
       .select(`
         id, 
@@ -55,14 +74,14 @@ serve(async (req) => {
         continue
       }
 
-      const { data: tasks } = await supabase
+      const { data: tasks } = await adminSupabase
         .from("tasks")
         .select("title, completed_at")
         .eq("client_id", client.id)
         .eq("status", "done")
         .gte("completed_at", dateString)
 
-      const { data: docs } = await supabase
+      const { data: docs } = await adminSupabase
         .from("documents")
         .select("title, created_at")
         .eq("client_id", client.id)
@@ -124,7 +143,7 @@ Gere apenas a mensagem para WhatsApp. Use emojis com moderação. Agradeça a pa
       if (!evoResponse.ok) {
         results.push({ client: client.name, status: "Erro envio WhatsApp", detail: await evoResponse.text() })
       } else {
-        await supabase
+        await adminSupabase
           .from("clients")
           .update({ last_ai_summary_at: new Date().toISOString() })
           .eq("id", client.id)
@@ -136,7 +155,7 @@ Gere apenas a mensagem para WhatsApp. Use emojis com moderação. Agradeça a pa
     return new Response(JSON.stringify({ success: true, results }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" }
     })
-  } catch (error) {
+  } catch (error: any) {
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 400
