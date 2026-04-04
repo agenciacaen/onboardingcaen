@@ -98,15 +98,20 @@ export default function AIAgentPage() {
       const { data, error } = await supabase.functions.invoke("evolution-manager", {
         body: { action: "create-global-instance", name: newInstanceName }
       });
-      if (error) throw error;
+      
+      if (error) {
+        console.error("Erro na Edge Function:", error);
+        toast.error(`Erro: ${error.message || "Erro na Edge Function"}`);
+        return;
+      }
       
       toast.success("Instância criada! Escaneie o QR Code.");
       setQrCode(data.base64 || null);
       setPollingId(data.instanceId);
       setNewInstanceName("");
       fetchData();
-    } catch (err) {
-      toast.error("Erro ao criar instância.");
+    } catch (err: any) {
+      toast.error(`Erro inesperado: ${err.message || "Tente novamente"}`);
       console.error(err);
     } finally {
       setCreatingInstance(false);

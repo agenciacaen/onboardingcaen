@@ -27,6 +27,7 @@ serve(async (req) => {
     // 1. Criar Instância Global
     if (action === "create-global-instance") {
       const technicalName = `agency-${Math.random().toString(36).substring(2, 10)}`
+      console.log(`[Evolution] Criando instância: ${technicalName} para ${name}`)
       
       const response = await fetch(`${evoServerUrl}/instance/create`, {
         method: "POST",
@@ -41,7 +42,14 @@ serve(async (req) => {
         })
       })
 
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error(`[Evolution] Erro na API: ${response.status} - ${errorText}`)
+        throw new Error(`Erro na Evolution API: ${response.status}`)
+      }
+
       const data = await response.json()
+      console.log(`[Evolution] Instância criada com sucesso na API`)
       
       // Salvar na nova tabela
       const { data: newInst, error: dbError } = await supabase
@@ -54,7 +62,10 @@ serve(async (req) => {
         .select()
         .single()
 
-      if (dbError) throw dbError
+      if (dbError) {
+        console.error(`[Supabase] Erro ao salvar instância:`, dbError)
+        throw dbError
+      }
 
       return new Response(JSON.stringify({ ...data, instanceId: newInst.id }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" }
