@@ -106,7 +106,9 @@ serve(async (req) => {
         const { data: inst } = await adminSupabase.from("whatsapp_instances").select("instance_name").eq("id", instanceId).single()
         const response = await fetch(`${evoServerUrl}/group/fetchAllGroups/${inst.instance_name}`, { headers: { "apikey": evoAuthKey } })
         const data = await response.json()
-        return new Response(JSON.stringify(data), { headers: { ...corsHeaders, "Content-Type": "application/json" } })
+        // Alguns v2 mandam { groups: [] }, outros array direto
+        const groups = Array.isArray(data) ? data : (data?.groups || [])
+        return new Response(JSON.stringify(groups), { headers: { ...corsHeaders, "Content-Type": "application/json" } })
     }
 
     if (action === "logout-global") {

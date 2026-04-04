@@ -205,7 +205,10 @@ export default function AIAgentPage() {
       });
 
       if (error) throw error;
-      setGroups(data);
+      
+      // Normalizar: v2 costuma mandar { groups: [] }
+      const groupsArray = Array.isArray(data) ? data : (data?.groups || []);
+      setGroups(groupsArray);
     } catch (err) {
       toast.error("Erro ao carregar grupos. Verifique se o WhatsApp está conectado.");
       setIsGroupModalOpen(false);
@@ -221,9 +224,10 @@ export default function AIAgentPage() {
     setTimeout(() => setCopiedJid(null), 2000);
   };
 
-  const filteredGroups = groups.filter(g => 
-    g.subject?.toLowerCase().includes(groupSearch.toLowerCase()) || 
-    g.id?.includes(groupSearch)
+  const groupsList = Array.isArray(groups) ? groups : [];
+  const filteredGroups = groupsList.filter(g => 
+    (g.subject || g.name || "").toLowerCase().includes(groupSearch.toLowerCase()) || 
+    (g.id || "").includes(groupSearch)
   );
 
   if (loading && instances.length === 0) {
