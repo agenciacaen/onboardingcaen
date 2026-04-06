@@ -16,7 +16,7 @@ export function ClientLayout() {
   };
   
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-slate-50 dark:bg-slate-900 flex-col">
+    <div className="flex h-screen w-full overflow-hidden bg-background flex-col">
       {impersonatedClientId && (
         <div className="bg-amber-600 text-white px-4 py-2 flex items-center justify-between z-50 shadow-md">
           <div className="flex items-center gap-2 text-sm font-medium">
@@ -36,7 +36,7 @@ export function ClientLayout() {
       )}
       <div className="flex flex-1 overflow-hidden">
         <Sidebar />
-        <div className="flex flex-col flex-1 transition-all duration-300 ease-in-out w-full md:ml-16 overflow-hidden">
+        <div className="flex flex-col flex-1 transition-all duration-300 ease-in-out w-full md:ml-16 overflow-hidden bg-background">
           <TopBar />
           <main className="flex-1 overflow-y-auto w-full p-4 md:p-6 lg:p-8">
             <Outlet />

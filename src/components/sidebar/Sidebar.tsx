@@ -110,7 +110,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
         <div className="relative">
           <div className={cn(
             "absolute -top-2 left-8 z-10",
-            "bg-primary text-[9px] font-bold text-white px-1.5 py-0.5 rounded-full shadow-sm uppercase tracking-wider animate-pulse",
+            "bg-primary text-[9px] font-bold text-primary-foreground px-1.5 py-0.5 rounded-full shadow-sm uppercase tracking-wider animate-pulse",
             !isMobile && "hidden group-hover:block"
           )}>
             Em Breve
@@ -129,7 +129,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 
   return (
     <>
-      <div className="flex h-16 items-center border-b px-4 dark:border-slate-800">
+      <div className="flex h-16 items-center border-b px-4 border-border">
         <div className="flex items-center gap-2 overflow-hidden">
           <Hexagon className="h-8 w-8 shrink-0 text-primary" />
           <span className={cn("text-xl font-bold whitespace-nowrap", textClasses)}>CAEN</span>
@@ -140,22 +140,22 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
         {(role === "admin" || role === "member") ? agencyItems : clientItems}
       </nav>
 
-      <div className="border-t p-3 dark:border-slate-800">
+      <div className="border-t p-3 border-border">
         <div className={cn("flex flex-col sm:flex-row items-center", "justify-center group-hover:justify-between")}>
           <div className="flex items-center overflow-hidden">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">
-              <span className="font-semibold text-slate-700 dark:text-slate-300">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-secondary">
+              <span className="font-semibold text-foreground">
                 {profile?.full_name?.charAt(0) || "U"}
               </span>
             </div>
             <div className={cn("ml-3 truncate", textClasses)}>
               <p className="truncate text-sm font-medium">{profile?.full_name}</p>
-              <p className="truncate text-xs text-slate-500">{(role === "admin" || role === "member") ? "Agência" : "Cliente"}</p>
+              <p className="truncate text-xs text-muted-foreground">{(role === "admin" || role === "member") ? "Agência" : "Cliente"}</p>
             </div>
           </div>
           <button
             onClick={handleLogout}
-            className={cn("rounded-md p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 shrink-0", 
+            className={cn("rounded-md p-2 text-muted-foreground hover:bg-secondary shrink-0", 
               isMobile ? "ml-auto" : "mt-2 group-hover:mt-0 group-hover:ml-auto w-full group-hover:w-auto flex justify-center group-hover:justify-start"
             )}
             title="Sair"
@@ -186,7 +186,7 @@ export function Sidebar() {
   if (isMobile) {
     return (
       <Sheet open={isExpanded} onOpenChange={(open) => (open ? expand() : collapse())}>
-        <SheetContent side="left" className="w-64 p-0 flex flex-col">
+        <SheetContent side="left" className="w-64 p-0 flex flex-col bg-card border-r border-border">
           <SheetHeader className="sr-only">
             <SheetTitle>Menu de Navegação</SheetTitle>
           </SheetHeader>
@@ -201,7 +201,7 @@ export function Sidebar() {
   return (
     <aside
       className={cn(
-        "group fixed inset-y-0 left-0 z-50 hidden md:flex flex-col border-r bg-white transition-all duration-300 ease-in-out dark:bg-slate-950 dark:border-slate-800",
+        "group fixed inset-y-0 left-0 z-50 hidden md:flex flex-col border-r bg-card transition-all duration-300 ease-in-out border-border",
         "w-16 hover:w-60"
       )}
     >

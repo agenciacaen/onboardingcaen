@@ -30,7 +30,7 @@ export function SidebarItem({ icon: Icon, label, href, isActive, endDecorator, o
       <div
         className={cn(
           "flex items-center rounded-md px-3 py-2 text-sm font-medium mb-1 whitespace-nowrap overflow-hidden transition-all duration-300",
-          "text-slate-400 opacity-60 cursor-not-allowed select-none",
+          "text-muted-foreground opacity-60 cursor-not-allowed select-none",
           isDesktop && "justify-center px-2 group-hover:justify-start group-hover:px-3"
         )}
         title={isDesktop ? `${label} (Em breve)` : undefined}
@@ -50,8 +50,8 @@ export function SidebarItem({ icon: Icon, label, href, isActive, endDecorator, o
       className={cn(
         "flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors mb-1 whitespace-nowrap overflow-hidden transition-all duration-300",
         isCurrentlyActive 
-          ? "bg-primary/10 text-primary" 
-          : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-50",
+          ? "bg-primary text-primary-foreground shadow-sm" 
+          : "text-muted-foreground hover:bg-secondary hover:text-foreground",
         isDesktop && "justify-center px-2 group-hover:justify-start group-hover:px-3"
       )}
       title={isDesktop ? label : undefined}

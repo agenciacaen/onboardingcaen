@@ -93,17 +93,17 @@ export function TopBar() {
   };
 
   return (
-    <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center justify-between border-b bg-white px-4 dark:bg-slate-950 dark:border-slate-800">
+    <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center justify-between border-b bg-card px-4 border-border">
       <div className="flex items-center gap-4">
         <button
           onClick={toggle}
-          className="text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-50 md:hidden"
+          className="text-muted-foreground hover:text-foreground md:hidden"
           title="Alternar Menu"
         >
           <Menu className="h-6 w-6" />
         </button>
 
-        <nav className="hidden md:flex items-center space-x-1 text-sm font-medium text-slate-500 dark:text-slate-400">
+        <nav className="hidden md:flex items-center space-x-1 text-sm font-medium text-muted-foreground">
           {pathNames.map((value, index) => {
             const isLast = index === pathNames.length - 1;
             const title = breadcrumbMap[value] || value;
@@ -113,7 +113,7 @@ export function TopBar() {
               <Fragment key={value}>
                 {index > 0 && <ChevronRight className="h-4 w-4 mx-1" />}
                 {isLast ? (
-                  <span className="text-slate-900 dark:text-slate-100 font-semibold truncate">
+                  <span className="text-foreground font-semibold truncate">
                     {title.charAt(0).toUpperCase() + title.slice(1)}
                   </span>
                 ) : (
@@ -150,7 +150,7 @@ export function TopBar() {
         )}
 
         {role === "client" && (
-          <div className="hidden sm:block text-sm font-medium text-slate-700 dark:text-slate-300 mr-2">
+          <div className="hidden sm:block text-sm font-medium text-foreground mr-2">
             {profile?.full_name || "Conta Cliente"}
           </div>
         )}
@@ -158,15 +158,15 @@ export function TopBar() {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" className="relative">
-              <Bell className="h-5 w-5 text-slate-600 dark:text-slate-300" />
+              <Bell className="h-5 w-5 text-muted-foreground" />
               {unreadCount > 0 && (
-                <span className="absolute top-1.5 right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                <span className="absolute top-1.5 right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
                   {unreadCount > 9 ? "9+" : unreadCount}
                 </span>
               )}
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-80">
+          <DropdownMenuContent align="end" className="w-80 bg-card border-border">
             <DropdownMenuLabel className="flex items-center justify-between">
               <span>Notificações</span>
               {unreadCount > 0 && (
@@ -181,7 +181,7 @@ export function TopBar() {
                 notifications.slice(0, 5).map((notif) => (
                   <DropdownMenuItem 
                     key={notif.id} 
-                    className={cn("flex flex-col items-start p-3 gap-1 cursor-pointer hover:bg-slate-50", !notif.read_at && "bg-slate-50/50")}
+                    className={cn("flex flex-col items-start p-3 gap-1 cursor-pointer hover:bg-secondary", !notif.read_at && "bg-secondary/50")}
                     onSelect={() => {
                       if (notif.link) navigate(notif.link);
                       if (!notif.read_at) markAsRead(notif.id);
@@ -195,14 +195,14 @@ export function TopBar() {
                         <div className="h-2 w-2 rounded-full bg-primary" />
                       )}
                     </div>
-                    {notif.body && <p className="text-xs text-slate-500 line-clamp-2">{notif.body}</p>}
-                    <span className="text-[10px] text-slate-400 mt-1">
+                    {notif.body && <p className="text-xs text-muted-foreground line-clamp-2">{notif.body}</p>}
+                    <span className="text-[10px] text-muted-foreground/60 mt-1">
                       {new Date(notif.created_at).toLocaleDateString()}
                     </span>
                   </DropdownMenuItem>
                 ))
               ) : (
-                <div className="p-4 text-center text-sm text-slate-500">
+                <div className="p-4 text-center text-sm text-muted-foreground">
                   Nenhuma notificação no momento
                 </div>
               )}
@@ -234,7 +234,7 @@ export function TopBar() {
               <span>Meu Perfil</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleLogout} className="text-red-500 focus:text-red-500">
+            <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive">
               <LogOut className="mr-2 h-4 w-4" />
               <span>Sair da conta</span>
             </DropdownMenuItem>
