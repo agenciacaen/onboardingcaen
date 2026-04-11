@@ -232,7 +232,7 @@ export default function AIAgentPage() {
 
   const groupsList = Array.isArray(groups) ? groups : [];
   const filteredGroups = groupsList.filter(g => 
-    (g.subject || g.name || "").toLowerCase().includes(groupSearch.toLowerCase()) || 
+    (g.subject || "").toLowerCase().includes(groupSearch.toLowerCase()) || 
     (g.id || "").includes(groupSearch)
   );
 

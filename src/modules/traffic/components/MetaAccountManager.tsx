@@ -89,7 +89,7 @@ export function MetaAccountManager({ clientId }: MetaAccountManagerProps) {
   const handleSyncNow = async () => {
     setIsSyncing(true);
     try {
-      const { data, error } = await supabase.functions.invoke("sync-meta-ads", {
+      const { error } = await supabase.functions.invoke("sync-meta-ads", {
         body: { client_id: clientId },
       });
 
