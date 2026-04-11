@@ -37,6 +37,7 @@ export function ClientTrafficPage() {
   const [spendHistory, setSpendHistory] = useState<Array<{ date: string; spend: number }>>([]);
   const [statusCounts, setStatusCounts] = useState({ active: 0, paused: 0, ended: 0, draft: 0 });
   const [bestAds, setBestAds] = useState<Array<{ id: string; name: string; thumbnail_url: string; roas: number; ctr: number; spend: number }>>([]);
+  const [lastSyncDate, setLastSyncDate] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchData() {
@@ -60,6 +61,22 @@ export function ClientTrafficPage() {
             roas: { value: overview.avg_roas || 0, change: 0 },
             spend: { value: overview.total_spend || 0, change: 0 }
           });
+        }
+
+        // Fetch last sync from meta accounts
+        const { data: accounts } = await supabase
+          .from('meta_ad_accounts')
+          .select('last_sync_at')
+          .eq('client_id', clientId)
+          .eq('status', 'active');
+        
+        if (accounts && accounts.length > 0) {
+          const latest = accounts.reduce((acc, curr) => {
+             if (!acc) return curr.last_sync_at;
+             if (!curr.last_sync_at) return acc;
+             return new Date(curr.last_sync_at) > new Date(acc) ? curr.last_sync_at : acc;
+          }, null as string | null);
+          if (latest) setLastSyncDate(latest);
         }
 
         // Fetch campaign status counts
@@ -127,7 +144,24 @@ export function ClientTrafficPage() {
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <PageHeader title="Tráfego Pago" description="Visão geral do desempenho de anúncios e campanhas." />
+        <div>
+          <PageHeader title="Tráfego Pago" description="Visão geral do desempenho de anúncios e campanhas." />
+          {lastSyncDate && (
+            <div className="flex items-center mt-1 text-xs text-muted-foreground">
+              <span className="flex items-center gap-1 bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-medium border border-blue-100">
+                <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M17.525 9.875C17.525 9.875 16.7 10 16.7 10C16.825 8.125 15.65 6.75 14 6.75C12.35 6.75 11.175 8.125 11.3 10C11.3 10 10.475 9.875 10.475 9.875C9.725 9.875 9.4 10.45 9.4 10.875L13.725 16.5C13.825 16.625 14.175 16.625 14.275 16.5L18.6 10.875C18.6 10.45 18.275 9.875 17.525 9.875Z"/>
+                  <path d="M9.4 13.125C9.4 13.125 10.225 13 10.225 13C10.1 14.875 11.275 16.25 12.925 16.25C14.575 16.25 15.75 14.875 15.625 13C15.625 13 16.45 13.125 16.45 13.125C17.2 13.125 17.525 12.55 17.525 12.125L13.2 6.5C13.1 6.375 12.75 6.375 12.65 6.5L8.325 12.125C8.325 12.55 8.65 13.125 9.4 13.125Z"/>
+                  <path d="M12 2C6.477 2 2 6.477 2 12C2 17.523 6.477 22 12 22C17.523 22 22 17.523 22 12C22 6.477 17.523 2 12 2ZM12 20.5C7.306 20.5 3.5 16.694 3.5 12C3.5 7.306 7.306 3.5 12 3.5C16.694 3.5 20.5 7.306 20.5 12C20.5 16.694 16.694 20.5 12 20.5Z"/>
+                </svg>
+                Meta Ads
+              </span>
+              <span className="ml-2">
+                Última sincronização: {format(new Date(lastSyncDate), "dd/MM/yyyy 'às' HH:mm")}
+              </span>
+            </div>
+          )}
+        </div>
         <div className="flex items-center gap-2">
           <DateRangeSelector date={dateRange} setDate={setDateRange} />
           <Button variant="outline" size="icon" title="Gerar Relatório">

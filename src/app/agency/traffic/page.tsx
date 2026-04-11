@@ -5,6 +5,7 @@ import { Plus } from "lucide-react";
 import { ClientFilterBar } from "@/components/calendar/ClientFilterBar";
 import { TaskCreateModal } from "@/components/modals/TaskCreateModal";
 import { KanbanBoard } from "@/components/kanban/KanbanBoard";
+import { MetaAccountManager } from "@/modules/traffic/components/MetaAccountManager";
 
 export default function AgencyTrafficPage() {
   const [clientIdFilter, setClientIdFilter] = useState("all");
@@ -24,6 +25,9 @@ export default function AgencyTrafficPage() {
         />
         <div className="flex space-x-3 items-center">
           <ClientFilterBar value={clientIdFilter} onChange={setClientIdFilter} />
+          {clientIdFilter !== "all" && (
+            <MetaAccountManager clientId={clientIdFilter} />
+          )}
           <Button onClick={() => setCreateModalOpen(true)}>
             <Plus className="mr-2 h-4 w-4" />
             Nova Tarefa
