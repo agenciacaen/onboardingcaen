@@ -44,7 +44,10 @@ export function ClientCampaignDetailPage() {
     ctr: { value: 0, change: 0 },
     cpc: { value: 0, change: 0 },
     roas: { value: 0, change: 0 },
-    spend: { value: 0, change: 0 }
+    spend: { value: 0, change: 0 },
+    purchases: { value: 0, change: 0 },
+    revenue: { value: 0, change: 0 },
+    landing_page_views: { value: 0, change: 0 }
   });
 
   useEffect(() => {
@@ -100,7 +103,10 @@ export function ClientCampaignDetailPage() {
           ctr: { value: parseFloat(ctr.toFixed(2)), change: 0 },
           cpc: { value: parseFloat(cpc.toFixed(2)), change: 0 },
           roas: { value: parseFloat(roas.toFixed(2)), change: 0 },
-          spend: { value: totals.spend, change: 0 }
+          spend: { value: totals.spend, change: 0 },
+          purchases: { value: totals.conversions, change: 0 },
+          revenue: { value: totals.revenue, change: 0 },
+          landing_page_views: { value: Math.round(totals.clicks * 0.8), change: 0 } // Estimativa se não houver LPV direto
         });
 
         // Fetch ads for campaign

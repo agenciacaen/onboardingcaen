@@ -1,6 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Filter, Repeat, MousePointerClick, LayoutGrid } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Filter } from 'lucide-react';
 
 export interface FunnelData {
   impressions: number;
@@ -30,7 +29,6 @@ export function TrafficFunnel({ data }: TrafficFunnelProps) {
 
   const ctr = safeRate(data.clicks, data.impressions);
   const connectRate = safeRate(data.landing_page_views, data.clicks);
-  const checkoutRate = safeRate(253, data.landing_page_views); // Mocked checkouts for visual parity if not available
   const conversionRate = safeRate(data.conversions, data.landing_page_views);
 
   return (

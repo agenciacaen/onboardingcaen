@@ -9,7 +9,7 @@ import { BestAdsDonut, type TopAdData } from '@/modules/traffic/components/BestA
 import { CampaignTable, type CampaignData } from '@/modules/traffic/components/CampaignTable';
 import type { DateRange } from 'react-day-picker';
 import { subDays, format } from 'date-fns';
-import { FileBarChart, Download, HelpCircle, MessageSquare } from 'lucide-react';
+import { Download, HelpCircle, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { trafficService } from '@/modules/traffic/services/traffic.service';
@@ -34,7 +34,6 @@ export function ClientTrafficPage() {
   });
 
   const [isLoading, setIsLoading] = useState(true);
-  const [lastSyncDate, setLastSyncDate] = useState<string | null>(null);
 
   // --- State for dashboard metrics ---
   const [kpis, setKpis] = useState<any>({
@@ -70,7 +69,7 @@ export function ClientTrafficPage() {
         setIsLoading(true);
 
         // 1. Fetch traffic overview
-        const overview = await trafficService.getOverview(clientId, startDate, endDate);
+        await trafficService.getOverview(clientId, startDate, endDate);
 
         // 2. Fetch last sync
         const { data: accounts } = await supabase
@@ -85,7 +84,9 @@ export function ClientTrafficPage() {
             if (!curr.last_sync_at) return acc;
             return new Date(curr.last_sync_at) > new Date(acc) ? curr.last_sync_at : acc;
           }, null as string | null);
-          if (latest) setLastSyncDate(latest);
+          if (latest) {
+             // setLastSyncDate(latest);
+          }
         }
 
         // 3. Fetch daily metrics with raw_actions

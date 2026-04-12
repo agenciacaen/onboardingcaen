@@ -1,4 +1,4 @@
-import { DollarSign, ShoppingCart, Banknote, TrendingUp, TrendingDown, Eye, CheckCircle2, BarChart3, Target } from 'lucide-react';
+import { DollarSign, TrendingUp, TrendingDown, Eye, CheckCircle2, BarChart3, Target } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import React from 'react';
@@ -6,10 +6,10 @@ import { ResponsiveContainer, LineChart, Line } from 'recharts';
 
 export interface TrafficKpiData {
   spend: { value: number; change: number; history?: any[] };
-  purchases: { value: number; change: number; history?: any[] };
-  revenue: { value: number; change: number; history?: any[] };
+  purchases?: { value: number; change: number; history?: any[] };
+  revenue?: { value: number; change: number; history?: any[] };
   roas: { value: number; change: number; history?: any[] };
-  landing_page_views: { value: number; change: number; history?: any[] };
+  landing_page_views?: { value: number; change: number; history?: any[] };
 }
 
 interface TrafficKpiCardsProps {
@@ -93,7 +93,7 @@ export function TrafficKpiCards({ data }: TrafficKpiCardsProps) {
       history: data.spend.history,
       lineColor: '#3b82f6', // blue-500
     },
-    {
+    ...(data.purchases ? [{
       title: 'Compras',
       value: formatCompact(data.purchases.value),
       change: data.purchases.change,
@@ -101,8 +101,8 @@ export function TrafficKpiCards({ data }: TrafficKpiCardsProps) {
       iconColor: 'text-white',
       history: data.purchases.history,
       lineColor: '#10b981', // emerald-500
-    },
-    {
+    }] : []),
+    ...(data.revenue ? [{
       title: 'Receita',
       value: formatCurrency(data.revenue.value),
       change: data.revenue.change,
@@ -110,7 +110,7 @@ export function TrafficKpiCards({ data }: TrafficKpiCardsProps) {
       iconColor: 'text-blue-400',
       history: data.revenue.history,
       lineColor: '#60a5fa', // blue-400
-    },
+    }] : []),
     {
       title: 'ROAS',
       value: data.roas.value.toFixed(2),
@@ -120,7 +120,7 @@ export function TrafficKpiCards({ data }: TrafficKpiCardsProps) {
       history: data.roas.history,
       lineColor: '#a855f7', // purple-500
     },
-    {
+    ...(data.landing_page_views ? [{
       title: 'Visitas na Página',
       value: formatCompact(data.landing_page_views.value),
       change: data.landing_page_views.change,
@@ -128,7 +128,7 @@ export function TrafficKpiCards({ data }: TrafficKpiCardsProps) {
       iconColor: 'text-slate-400',
       history: data.landing_page_views.history,
       lineColor: '#94a3b8', // slate-400
-    },
+    }] : []),
   ];
 
   return (
