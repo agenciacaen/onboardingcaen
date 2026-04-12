@@ -41,23 +41,26 @@ Deno.serve(async (req: Request) => {
     console.log(`[meta-validate-account] Validando conta: ${formattedAccountId}`);
 
     const url = `https://graph.facebook.com/v21.0/${formattedAccountId}?fields=name,account_status&access_token=${token}`;
+    console.log(`[meta-validate-account] Chamando Meta API...`);
+    
     const fbRes = await fetch(url);
     const fbData = await fbRes.json();
 
-    console.log(`[meta-validate-account] Meta API Resposta: ${fbRes.status}`);
+    console.log(`[meta-validate-account] Resposta Meta API (${fbRes.status})`);
 
     if (fbData.error) {
-       console.error('[meta-validate-account] Erro da Meta API:', JSON.stringify(fbData.error));
+       console.error('[meta-validate-account] Erro detalhado da Meta:', JSON.stringify(fbData.error));
        return new Response(JSON.stringify({ 
+         success: false,
          error: fbData.error.message,
-         code: fbData.error.code 
+         meta_error_code: fbData.error.code 
        }), {
-        status: 400,
+        status: 200, // Retornamos 200 para que o frontend receba o JSON e trate a mensagem
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    console.log(`[meta-validate-account] Conta validada: ${fbData.name} (Status: ${fbData.account_status})`);
+    console.log(`[meta-validate-account] Conta encontrada: ${fbData.name}`);
     
     return new Response(JSON.stringify({ 
       success: true, 
@@ -72,10 +75,14 @@ Deno.serve(async (req: Request) => {
     });
 
   } catch (err: any) {
-    console.error('[meta-validate-account] Erro inesperado:', err.message);
-    return new Response(JSON.stringify({ error: err.message }), {
+    console.error('[meta-validate-account] Erro capturado no catch:', err.message);
+    return new Response(JSON.stringify({ 
+      success: false,
+      error: err.message,
+      stack: err.stack
+    }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 400,
+      status: 200, // Retornamos 200 para evitar o erro genérico do Supabase Client
     });
   }
 });

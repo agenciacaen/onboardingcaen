@@ -92,7 +92,22 @@ export function MetaAccountManager({ clientId }: MetaAccountManagerProps) {
 
       if (error) {
         console.error("[MetaAccountManager] Erro na Edge Function:", error);
-        throw new Error(error.message || "Erro ao validar conta com a API do Meta.");
+        
+        // Tentar extrair mensagem detalhada do corpo do erro se disponível
+        let errorMessage = "Erro ao validar conta com a API do Meta.";
+        if (error instanceof Error && error.message.includes("non-2xx")) {
+          try {
+            // Em algumas versões do client, o erro pode conter o corpo da resposta
+            // Se não, a mensagem genérica será usada até que os logs revelem o problema
+            errorMessage = "A API do Meta retornou um erro. Verifique se o ID está correto ou se o Token está configurado.";
+          } catch (e) {
+            console.error("Falha ao parsear erro:", e);
+          }
+        } else {
+          errorMessage = error.message;
+        }
+        
+        throw new Error(errorMessage);
       }
       
       const result = data;

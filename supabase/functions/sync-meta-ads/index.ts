@@ -83,13 +83,14 @@ Deno.serve(async (req: Request) => {
     for (const account of accounts) {
       try {
         const formattedAccountId = account.ad_account_id.startsWith('act_') ? account.ad_account_id : `act_${account.ad_account_id}`;
+        console.log(`[sync-meta-ads] Processando conta: ${formattedAccountId}`);
         
         const campUrl = `https://graph.facebook.com/v21.0/${formattedAccountId}/campaigns?fields=id,name,status,objective,daily_budget,lifetime_budget,start_time,stop_time&access_token=${token}`;
         const campRes = await fetch(campUrl);
         const campData = await campRes.json();
         
         if (campData.error) {
-          console.error(`[sync-meta-ads] Erro ao buscar campanhas para ${formattedAccountId}:`, JSON.stringify(campData.error));
+          console.error(`[sync-meta-ads] Erro Meta API para ${formattedAccountId}:`, JSON.stringify(campData.error));
           continue;
         }
 
@@ -103,12 +104,17 @@ Deno.serve(async (req: Request) => {
             const budget_total = campaign.lifetime_budget ? campaign.lifetime_budget / 100 : null;
             const cStatus = campaign.status === 'ACTIVE' ? 'active' : (campaign.status === 'PAUSED' ? 'paused' : 'ended');
 
-            const { data: existingCamp } = await supabase
+            const { data: existingCamp, error: errFetchCamp } = await supabase
               .from('traffic_campaigns')
               .select('id')
               .eq('client_id', account.client_id)
               .eq('meta_campaign_id', campaign.id)
               .maybeSingle();
+
+            if (errFetchCamp) {
+              console.error(`[sync-meta-ads] Erro ao buscar campanha existente ${campaign.id}:`, errFetchCamp);
+              continue;
+            }
 
             let localCampId: string | undefined;
             const campPayload = {
@@ -125,7 +131,8 @@ Deno.serve(async (req: Request) => {
 
             if (existingCamp) {
               localCampId = existingCamp.id;
-              await supabase.from('traffic_campaigns').update(campPayload).eq('id', localCampId);
+              const { error: errUpdateCamp } = await supabase.from('traffic_campaigns').update(campPayload).eq('id', localCampId);
+              if (errUpdateCamp) console.error(`[sync-meta-ads] Erro ao atualizar campanha ${campaign.id}:`, errUpdateCamp);
             } else {
               const { data: newCamp, error: errInsert } = await supabase.from('traffic_campaigns').insert({
                 ...campPayload,
@@ -138,67 +145,71 @@ Deno.serve(async (req: Request) => {
               if (errInsert) console.error(`[sync-meta-ads] Erro ao inserir campanha ${campaign.id}:`, errInsert);
             }
 
+            // Sync Insights
             if (localCampId) {
-               const insightsUrl = `https://graph.facebook.com/v21.0/${campaign.id}/insights?date_preset=today&fields=impressions,clicks,spend,reach,cpc,cpm,ctr,actions,purchase_roas&access_token=${token}`;
-               const insRes = await fetch(insightsUrl);
-               const insData = await insRes.json();
-               
-               if (!insData.error && insData.data && insData.data.length > 0) {
-                 const metric: MetaMetric = insData.data[0];
-                 let conversions = 0;
-                 let roas = 0;
-                 
-                 if (metric.actions) {
-                    const convObj = metric.actions.find((a) => a.action_type === 'lead' || a.action_type === 'purchase' || a.action_type === 'offsite_conversion.fb_pixel_lead');
-                    if (convObj) conversions = parseInt(convObj.value);
-                 }
-                 if (metric.purchase_roas && metric.purchase_roas.length > 0) {
-                    roas = parseFloat(metric.purchase_roas[0].value);
-                 }
+                const insightsUrl = `https://graph.facebook.com/v21.0/${campaign.id}/insights?date_preset=today&fields=impressions,clicks,spend,reach,cpc,cpm,ctr,actions,purchase_roas&access_token=${token}`;
+                const insRes = await fetch(insightsUrl);
+                const insData = await insRes.json();
+                
+                if (insData.error) {
+                  console.warn(`[sync-meta-ads] Erro insights para campanha ${campaign.id}:`, insData.error.message);
+                } else if (insData.data && insData.data.length > 0) {
+                  const metric: MetaMetric = insData.data[0];
+                  let conversions = 0;
+                  let roas = 0;
+                  
+                  if (metric.actions) {
+                     const convObj = metric.actions.find((a) => a.action_type === 'lead' || a.action_type === 'purchase' || a.action_type === 'offsite_conversion.fb_pixel_lead');
+                     if (convObj) conversions = parseInt(convObj.value);
+                  }
+                  if (metric.purchase_roas && metric.purchase_roas.length > 0) {
+                     roas = parseFloat(metric.purchase_roas[0].value);
+                  }
 
-                 const { data: existingMetric } = await supabase
-                  .from('traffic_metrics')
-                  .select('id')
-                  .eq('campaign_id', localCampId)
-                  .eq('date', today)
-                  .maybeSingle();
+                  const { data: existingMetric } = await supabase
+                   .from('traffic_metrics')
+                   .select('id')
+                   .eq('campaign_id', localCampId)
+                   .eq('date', today)
+                   .maybeSingle();
 
-                 const metricPayload = {
-                    client_id: account.client_id,
-                    campaign_id: localCampId,
-                    date: today,
-                    impressions: parseInt(metric.impressions || '0'),
-                    clicks: parseInt(metric.clicks || '0'),
-                    spend: parseFloat(metric.spend || '0'),
-                    reach: parseInt(metric.reach || '0'),
-                    cpc: parseFloat(metric.cpc || '0'),
-                    cpm: parseFloat(metric.cpm || '0'),
-                    ctr: parseFloat(metric.ctr || '0'),
-                    conversions: conversions,
-                    roas: roas,
-                    updated_at: new Date().toISOString()
-                 };
+                  const metricPayload = {
+                     client_id: account.client_id,
+                     campaign_id: localCampId,
+                     date: today,
+                     impressions: parseInt(metric.impressions || '0'),
+                     clicks: parseInt(metric.clicks || '0'),
+                     spend: parseFloat(metric.spend || '0'),
+                     reach: parseInt(metric.reach || '0'),
+                     cpc: parseFloat(metric.cpc || '0'),
+                     cpm: parseFloat(metric.cpm || '0'),
+                     ctr: parseFloat(metric.ctr || '0'),
+                     conversions: conversions,
+                     roas: roas,
+                     updated_at: new Date().toISOString()
+                  };
 
-                 if (existingMetric) {
-                    await supabase.from('traffic_metrics').update(metricPayload).eq('id', existingMetric.id);
-                 } else {
-                    await supabase.from('traffic_metrics').insert(metricPayload);
-                 }
-               }
+                  if (existingMetric) {
+                     await supabase.from('traffic_metrics').update(metricPayload).eq('id', existingMetric.id);
+                  } else {
+                     await supabase.from('traffic_metrics').insert(metricPayload);
+                  }
+                }
             }
           } catch (campErr: any) {
-            console.error(`[sync-meta-ads] Erro na campanha ${campaign.id}:`, campErr.message);
+            console.error(`[sync-meta-ads] Erro processando campanha ${campaign.id}:`, campErr.message);
           }
         }
 
         await supabase.from('meta_ad_accounts').update({ last_sync_at: new Date().toISOString() }).eq('id', account.id);
         syncedCount++;
+        console.log(`[sync-meta-ads] Conta ${formattedAccountId} processada com sucesso`);
       } catch (accountErr: any) {
-        console.error(`[sync-meta-ads] Erro ao sincronizar conta ${account.ad_account_id}:`, accountErr.message);
+        console.error(`[sync-meta-ads] Falha crítica na conta ${account.ad_account_id}:`, accountErr.message);
       }
     }
 
-    console.log(`[sync-meta-ads] Concluído. Sincronizadas ${syncedCount}/${accounts.length} contas`);
+    console.log(`[sync-meta-ads] Sincronização finalizada. Sucesso: ${syncedCount}/${accounts.length}`);
     return new Response(JSON.stringify({ 
       success: true, 
       message: `Sincronizadas ${syncedCount} contas` 
@@ -208,10 +219,14 @@ Deno.serve(async (req: Request) => {
     });
 
   } catch (err: any) {
-    console.error('[sync-meta-ads] Erro Fatal:', err.message);
-    return new Response(JSON.stringify({ error: err.message }), {
+    console.error('[sync-meta-ads] Erro Fatal Inesperado:', err.message);
+    return new Response(JSON.stringify({ 
+      success: false,
+      error: err.message,
+      stack: err.stack 
+    }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 500,
+      status: 200, // Retornamos 200 para capturar o JSON no front
     });
   }
 });
