@@ -24,6 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./select";
+import { ThemeToggle } from "./ThemeToggle";
 
 export function TopBar() {
   const { toggle } = useSidebarStore();
@@ -154,6 +155,8 @@ export function TopBar() {
             {profile?.full_name || "Conta Cliente"}
           </div>
         )}
+        
+        <ThemeToggle />
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

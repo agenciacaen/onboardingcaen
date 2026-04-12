@@ -8,6 +8,7 @@ import { AuthLayout } from './layouts/AuthLayout';
 import { AgencyLayout } from './layouts/AgencyLayout';
 import { ClientLayout } from './layouts/ClientLayout';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import { ThemeProvider } from './components/ThemeProvider';
 
 import { LoginPage } from './app/login/page';
 import { UnauthorizedPage } from './app/unauthorized/page';
@@ -183,8 +184,9 @@ export default function App() {
   }, [setUser, setProfile, finishLoading, clear]);
 
   return (
-    <BrowserRouter>
-      <Toaster position="top-right" richColors />
+    <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+      <BrowserRouter>
+        <Toaster position="top-right" richColors />
       <ErrorBoundary>
         <Routes>
           <Route path="/" element={<RootRedirect />} />
@@ -242,6 +244,7 @@ export default function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </ErrorBoundary>
-    </BrowserRouter>
+      </BrowserRouter>
+    </ThemeProvider>
   );
 }
