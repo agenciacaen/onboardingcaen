@@ -50,7 +50,8 @@ interface Client {
 
 interface WhatsAppGroup {
   id: string;
-  subject: string;
+  subject?: string;
+  name?: string;
 }
 
 export default function AIAgentPage() {
@@ -231,9 +232,9 @@ export default function AIAgentPage() {
     setTimeout(() => setCopiedJid(null), 2000);
   };
 
-  const groupsList = Array.isArray(groups) ? groups : [];
-  const filteredGroups = groupsList.filter(g => 
-    (g.subject || "").toLowerCase().includes(groupSearch.toLowerCase()) || 
+  const groupsList = (Array.isArray(groups) ? groups : []) as WhatsAppGroup[];
+  const filteredGroups = groupsList.filter((g: WhatsAppGroup) => 
+    (g.subject || g.name || "").toLowerCase().includes(groupSearch.toLowerCase()) || 
     (g.id || "").includes(groupSearch)
   );
 

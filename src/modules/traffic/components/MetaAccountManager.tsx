@@ -84,17 +84,19 @@ export function MetaAccountManager({ clientId }: MetaAccountManagerProps) {
       console.log("[MetaAccountManager] Validando conta:", newAccountId);
       
       // Chamada para a Edge Function de validação
-      const { data: result, error } = await supabase.functions.invoke("meta-validate-account", {
+      const { data, error } = await supabase.functions.invoke("meta-validate-account", {
         body: { ad_account_id: newAccountId },
       });
 
-      console.log("[MetaAccountManager] Resposta da validação:", { result, error });
+      console.log("[MetaAccountManager] Resposta da validação:", { data, error });
 
       if (error) {
         console.error("[MetaAccountManager] Erro na Edge Function:", error);
         throw new Error(error.message || "Erro ao validar conta com a API do Meta.");
       }
       
+      const result = data;
+
       if (result?.error) {
         throw new Error(result.error);
       }
@@ -157,10 +159,13 @@ export function MetaAccountManager({ clientId }: MetaAccountManagerProps) {
         body: { client_id: effectiveClientId },
       });
 
-      console.log("[MetaAccountManager] Resposta do sync:", { data, error });
+      if (error) {
+        console.error("[MetaAccountManager] Erro ao sincronizar:", error);
+        throw error;
+      }
 
-      if (error) throw error;
-      
+      console.log("[MetaAccountManager] Resposta do sync:", data);
+
       toast.success("Sincronização concluída com sucesso!");
       fetchAccounts(); 
     } catch (error: any) {
