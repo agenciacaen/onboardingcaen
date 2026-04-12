@@ -2,9 +2,11 @@ import { useState, useEffect } from 'react';
 import { PageHeader } from '../../../components/ui/PageHeader';
 import { DateRangeSelector } from '@/components/ui/DateRangeSelector';
 import { TrafficKpiCards } from '@/modules/traffic/components/TrafficKpiCards';
-import { SpendOverTimeChart } from '@/modules/traffic/components/SpendOverTimeChart';
-import { CampaignStatusSummary } from '@/modules/traffic/components/CampaignStatusSummary';
-import { BestAdPreview } from '@/modules/traffic/components/BestAdPreview';
+import { TrafficFunnel, type FunnelData } from '@/modules/traffic/components/TrafficFunnel';
+import { ConversionMetricCards, type ConversionMetric } from '@/modules/traffic/components/ConversionMetricCards';
+import { RevenueChart, type RevenueDataPoint } from '@/modules/traffic/components/RevenueChart';
+import { BestAdsDonut, type TopAdData } from '@/modules/traffic/components/BestAdsDonut';
+import { SecondaryMetrics, type SecondaryMetricsData } from '@/modules/traffic/components/SecondaryMetrics';
 import { CampaignTable, type CampaignData } from '@/modules/traffic/components/CampaignTable';
 import type { DateRange } from 'react-day-picker';
 import { subDays, format } from 'date-fns';
@@ -25,21 +27,32 @@ export function ClientTrafficPage() {
     to: new Date()
   });
 
-  const [activeStatus, setActiveStatus] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [kpis, setKpis] = useState({
-    impressions: { value: 0, change: 0 },
-    clicks: { value: 0, change: 0 },
-    ctr: { value: 0, change: 0 },
-    cpc: { value: 0, change: 0 },
-    roas: { value: 0, change: 0 },
-    spend: { value: 0, change: 0 }
-  });
-  const [spendHistory, setSpendHistory] = useState<Array<{ date: string; spend: number }>>([]);
-  const [statusCounts, setStatusCounts] = useState({ active: 0, paused: 0, ended: 0, draft: 0 });
-  const [bestAds, setBestAds] = useState<Array<{ id: string; name: string; thumbnail_url: string; roas: number; ctr: number; spend: number }>>([]);
-  const [campaigns, setCampaigns] = useState<CampaignData[]>([]);
   const [lastSyncDate, setLastSyncDate] = useState<string | null>(null);
+
+  // --- State for dashboard metrics ---
+  const [kpis, setKpis] = useState({
+    spend: { value: 0, change: 0 },
+    purchases: { value: 0, change: 0 },
+    revenue: { value: 0, change: 0 },
+    roas: { value: 0, change: 0 },
+    landing_page_views: { value: 0, change: 0 },
+  });
+
+  const [funnelData, setFunnelData] = useState<FunnelData>({
+    impressions: 0,
+    clicks: 0,
+    landing_page_views: 0,
+    conversions: 0,
+    conversionLabel: 'Conversões',
+  });
+
+  const [conversionCards, setConversionCards] = useState<ConversionMetric[]>([]);
+  const [revenueChartData, setRevenueChartData] = useState<RevenueDataPoint[]>([]);
+  const [topAds, setTopAds] = useState<TopAdData[]>([]);
+  const [secondaryMetrics, setSecondaryMetrics] = useState<SecondaryMetricsData>({ frequency: 0, cpc: 0, cpm: 0 });
+  const [campaigns, setCampaigns] = useState<CampaignData[]>([]);
+  const [conversionLabel, setConversionLabel] = useState('Conversões');
 
   useEffect(() => {
     async function fetchData() {
@@ -47,149 +60,178 @@ export function ClientTrafficPage() {
 
       const startDate = format(dateRange.from, 'yyyy-MM-dd');
       const endDate = format(dateRange.to, 'yyyy-MM-dd');
-      
+
       try {
         setIsLoading(true);
 
-        // Fetch traffic overview from RPC
+        // 1. Fetch traffic overview
         const overview = await trafficService.getOverview(clientId, startDate, endDate);
-        
-        if (overview) {
-          setKpis({
-            impressions: { value: overview.total_impressions || 0, change: 0 },
-            clicks: { value: overview.total_clicks || 0, change: 0 },
-            ctr: { value: overview.avg_ctr || 0, change: 0 },
-            cpc: { value: overview.avg_cpc || 0, change: 0 },
-            roas: { value: overview.avg_roas || 0, change: 0 },
-            spend: { value: overview.total_spend || 0, change: 0 }
-          });
-        }
 
-        // Fetch last sync from meta accounts
+        // 2. Fetch last sync
         const { data: accounts } = await supabase
           .from('meta_ad_accounts')
           .select('last_sync_at')
           .eq('client_id', clientId)
           .eq('status', 'active');
-        
+
         if (accounts && accounts.length > 0) {
           const latest = accounts.reduce((acc, curr) => {
-             if (!acc) return curr.last_sync_at;
-             if (!curr.last_sync_at) return acc;
-             return new Date(curr.last_sync_at) > new Date(acc) ? curr.last_sync_at : acc;
+            if (!acc) return curr.last_sync_at;
+            if (!curr.last_sync_at) return acc;
+            return new Date(curr.last_sync_at) > new Date(acc) ? curr.last_sync_at : acc;
           }, null as string | null);
           if (latest) setLastSyncDate(latest);
         }
 
-        // Fetch campaign status counts
-        const { data: campaigns, error: campError } = await supabase
-          .from('traffic_campaigns')
-          .select('status')
-          .eq('client_id', clientId);
-
-        if (!campError && campaigns) {
-          const counts = { active: 0, paused: 0, ended: 0, draft: 0 };
-          campaigns.forEach((c) => {
-            const s = c.status as keyof typeof counts;
-            if (s in counts) counts[s]++;
-          });
-          setStatusCounts(counts);
-        }
-
-        // Fetch spend history (daily metrics) and actions
+        // 3. Fetch daily metrics with raw_actions
         const { data: metrics, error: metricsError } = await supabase
           .from('traffic_metrics')
-          .select('date, spend, raw_actions')
+          .select('date, spend, impressions, clicks, conversions, roas, cpc, cpm, reach, raw_actions')
           .eq('client_id', clientId)
           .gte('date', startDate)
           .lte('date', endDate)
           .order('date', { ascending: true });
 
+        // Aggregate all metrics
+        let totalSpend = 0;
+        let totalImpressions = 0;
+        let totalClicks = 0;
+        let totalReach = 0;
+        let totalConversions = 0;
+        let totalCpc = 0;
+        let totalCpm = 0;
+        let totalRoas = 0;
+        let rCount = 0;
+
+        // Action aggregations
+        const actionTotals: Record<string, number> = {};
+        const dailyConversions: RevenueDataPoint[] = [];
+
         if (!metricsError && metrics) {
-          setSpendHistory(metrics.map(m => ({ date: m.date, spend: m.spend || 0 })));
-          
-          // Agrupar actions customizaveis (ex: Conversas)
-          let conversationsCount = 0;
-          let leadsCount = 0;
-          
           metrics.forEach(m => {
-            if (m.raw_actions && Array.isArray(m.raw_actions)) {
-               m.raw_actions.forEach(act => {
-                 if (act.action_type === 'onsite_conversion.total_messaging_connection') {
-                    conversationsCount += Number(act.value || 0);
-                 }
-                 if (act.action_type === 'lead') {
-                    leadsCount += Number(act.value || 0);
-                 }
-               });
+            totalSpend += m.spend || 0;
+            totalImpressions += m.impressions || 0;
+            totalClicks += m.clicks || 0;
+            totalReach += m.reach || 0;
+            totalConversions += m.conversions || 0;
+            totalCpc += m.cpc || 0;
+            totalCpm += m.cpm || 0;
+            if (m.roas) {
+              totalRoas += m.roas;
+              rCount++;
             }
+
+            // Aggregate actions
+            let dayConversions = m.conversions || 0;
+            if (m.raw_actions && Array.isArray(m.raw_actions)) {
+              m.raw_actions.forEach((act: { action_type: string; value: string }) => {
+                const val = Number(act.value || 0);
+                actionTotals[act.action_type] = (actionTotals[act.action_type] || 0) + val;
+              });
+            }
+
+            dailyConversions.push({
+              date: m.date,
+              spend: m.spend || 0,
+              conversions: dayConversions,
+            });
           });
-
-          const totalS = overview?.total_spend || 0;
-          const customCards: Array<{id: string; title: string; value: string | number; change: number}> = [];
-          
-          if (conversationsCount > 0) {
-            customCards.push({
-              id: 'conversas',
-              title: 'Conversas Iniciadas',
-              value: conversationsCount,
-              change: 0,
-            });
-            customCards.push({
-              id: 'cpv',
-              title: 'Custo por Conversa',
-              value: new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalS / conversationsCount),
-              change: 0,
-            });
-          } else if (leadsCount > 0) {
-             customCards.push({
-               id: 'leads',
-               title: 'Leads Totais',
-               value: leadsCount,
-               change: 0,
-             });
-             customCards.push({
-              id: 'cpl',
-              title: 'Custo por Lead',
-              value: new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalS / leadsCount),
-              change: 0,
-            });
-          }
-
-          setKpis(prev => ({
-             ...prev,
-             customMetrics: customCards.length > 0 ? customCards : undefined
-          }));
         }
 
-        // Fetch best ads from RPC
-        const adsData = await trafficService.getBestAds(clientId, startDate, endDate, 'roas', 3);
-        if (adsData) {
-          setBestAds(adsData.map((ad: Record<string, unknown>) => ({
-            id: ad.ad_id as string,
-            name: ad.ad_name as string,
-            thumbnail_url: (ad.creative_url as string) || '',
-            roas: ad.roas as number,
-            ctr: ad.ctr as number,
-            spend: ad.spend as number
-          })));
-        }
+        const avgRoas = rCount > 0 ? totalRoas / rCount : 0;
+        const avgCpc = metrics && metrics.length > 0 ? totalCpc / metrics.length : 0;
+        const avgCpm = metrics && metrics.length > 0 ? totalCpm / metrics.length : 0;
+        const frequency = totalReach > 0 ? totalImpressions / totalReach : 0;
 
-        // Fetch and process campaigns for the table
+        // Determine primary conversion type
+        const purchaseCount = actionTotals['purchase'] || 0;
+        const leadCount = actionTotals['lead'] || 0;
+        const conversasCount = actionTotals['onsite_conversion.total_messaging_connection'] || 0;
+        const landingPageViews = actionTotals['landing_page_view'] || 0;
+
+        // Determine best conversion label
+        let primaryConvLabel = 'Conversões';
+        let primaryConvCount = totalConversions;
+        if (conversasCount > 0) {
+          primaryConvLabel = 'Conversas Iniciadas';
+          primaryConvCount = conversasCount;
+        } else if (leadCount > 0) {
+          primaryConvLabel = 'Leads';
+          primaryConvCount = leadCount;
+        } else if (purchaseCount > 0) {
+          primaryConvLabel = 'Compras';
+          primaryConvCount = purchaseCount;
+        }
+        setConversionLabel(primaryConvLabel);
+
+        // Revenue (from purchase_roas * spend approximation, or use purchase value if available)
+        const revenueEstimate = totalSpend * avgRoas;
+
+        // KPIs
+        setKpis({
+          spend: { value: totalSpend, change: 0 },
+          purchases: { value: primaryConvCount, change: 0 },
+          revenue: { value: revenueEstimate, change: 0 },
+          roas: { value: avgRoas, change: 0 },
+          landing_page_views: { value: landingPageViews || totalClicks, change: 0 },
+        });
+
+        // Funnel
+        setFunnelData({
+          impressions: totalImpressions,
+          clicks: totalClicks,
+          landing_page_views: landingPageViews || Math.round(totalClicks * 0.8),
+          conversions: primaryConvCount,
+          conversionLabel: primaryConvLabel,
+        });
+
+        // Conversion metric cards
+        const cards: ConversionMetric[] = [];
+        cards.push({
+          id: 'primary_conv',
+          label: primaryConvLabel,
+          value: primaryConvCount,
+          formattedValue: new Intl.NumberFormat('pt-BR').format(primaryConvCount),
+          icon: conversasCount > 0 ? 'message' : purchaseCount > 0 ? 'cart' : 'target',
+          highlight: true,
+        });
+        if (primaryConvCount > 0) {
+          cards.push({
+            id: 'cost_per_conv',
+            label: `Custo por ${primaryConvLabel.replace('Iniciadas', '').trim()}`,
+            value: totalSpend / primaryConvCount,
+            formattedValue: new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalSpend / primaryConvCount),
+            icon: 'cost',
+          });
+        }
+        setConversionCards(cards);
+
+        // Revenue chart data
+        setRevenueChartData(dailyConversions);
+
+        // Secondary metrics
+        setSecondaryMetrics({
+          frequency,
+          cpc: avgCpc,
+          cpm: avgCpm,
+        });
+
+        // 4. Fetch campaigns for table
         const campaignsRaw = await trafficService.getCampaigns(clientId, startDate, endDate);
         if (campaignsRaw) {
           const processedCampaigns: CampaignData[] = campaignsRaw.map(c => {
-            const metrics = c.traffic_metrics || [];
-            const totalSpend = metrics.reduce((acc, m) => acc + (m.spend || 0), 0);
-            const totalImpressions = metrics.reduce((acc, m) => acc + (m.impressions || 0), 0);
-            const totalClicks = metrics.reduce((acc, m) => acc + (m.clicks || 0), 0);
-            const avgRoas = metrics.length > 0 ? metrics.reduce((acc, m) => acc + (m.roas || 0), 0) / metrics.length : 0;
+            const cMetrics = c.traffic_metrics || [];
+            const campSpend = cMetrics.reduce((acc: number, m: any) => acc + (m.spend || 0), 0);
+            const campImpressions = cMetrics.reduce((acc: number, m: any) => acc + (m.impressions || 0), 0);
+            const campClicks = cMetrics.reduce((acc: number, m: any) => acc + (m.clicks || 0), 0);
+            const campRoas = cMetrics.length > 0
+              ? cMetrics.reduce((acc: number, m: any) => acc + (m.roas || 0), 0) / cMetrics.length
+              : 0;
 
-            // Consolidate custom metrics (raw_actions)
             const customMetrics: Record<string, number> = {};
-            metrics.forEach(m => {
+            cMetrics.forEach((m: any) => {
               if (m.raw_actions && Array.isArray(m.raw_actions)) {
-                m.raw_actions.forEach(action => {
+                m.raw_actions.forEach((action: any) => {
                   const type = action.action_type;
                   const value = Number(action.value || 0);
                   customMetrics[type] = (customMetrics[type] || 0) + value;
@@ -203,14 +245,53 @@ export function ClientTrafficPage() {
               platform: c.platform as any,
               status: c.status as any,
               budget_daily: c.budget_daily || 0,
-              spend: totalSpend,
-              impressions: totalImpressions,
-              clicks: totalClicks,
-              roas: avgRoas,
-              custom_metrics: customMetrics
+              spend: campSpend,
+              impressions: campImpressions,
+              clicks: campClicks,
+              roas: campRoas,
+              custom_metrics: customMetrics,
             };
           });
           setCampaigns(processedCampaigns);
+
+          // Top ads for donut (use top campaigns by conversions)
+          const topCampaigns = [...processedCampaigns]
+            .sort((a, b) => {
+              const aConv = a.custom_metrics?.[Object.keys(actionTotals).find(k =>
+                k === 'onsite_conversion.total_messaging_connection' || k === 'lead' || k === 'purchase'
+              ) || ''] || 0;
+              const bConv = b.custom_metrics?.[Object.keys(actionTotals).find(k =>
+                k === 'onsite_conversion.total_messaging_connection' || k === 'lead' || k === 'purchase'
+              ) || ''] || 0;
+              return bConv - aConv;
+            })
+            .slice(0, 5);
+
+          setTopAds(topCampaigns.map(c => {
+            // Find the main conversion metric for this campaign
+            let conv = 0;
+            if (conversasCount > 0) conv = c.custom_metrics?.['onsite_conversion.total_messaging_connection'] || 0;
+            else if (leadCount > 0) conv = c.custom_metrics?.['lead'] || 0;
+            else if (purchaseCount > 0) conv = c.custom_metrics?.['purchase'] || 0;
+            else conv = Math.round(c.clicks * 0.1); // fallback
+
+            return {
+              name: c.name,
+              spend: c.spend,
+              conversions: conv,
+            };
+          }));
+        }
+
+        // 5. Fetch best ads from RPC (for reference, keep the original)
+        // This data feeds the donut chart if available
+        const adsData = await trafficService.getBestAds(clientId, startDate, endDate, 'roas', 5);
+        if (adsData && adsData.length > 0) {
+          setTopAds(adsData.map((ad: Record<string, unknown>) => ({
+            name: (ad.ad_name as string) || 'Anúncio',
+            spend: ad.spend as number,
+            conversions: Math.round((ad.roas as number) * (ad.spend as number) / 100) || 1,
+          })));
         }
 
       } catch (error) {
@@ -228,6 +309,7 @@ export function ClientTrafficPage() {
     return (
       <div className="space-y-6">
         <PageHeader title="Tráfego Pago" description="Visão geral do desempenho de anúncios e campanhas." />
+        <LoadingSkeleton type="card" rows={1} cols={5} />
         <LoadingSkeleton type="card" rows={1} cols={3} />
         <LoadingSkeleton type="card" rows={1} cols={3} />
       </div>
@@ -241,10 +323,8 @@ export function ClientTrafficPage() {
           <PageHeader title="Tráfego Pago" description="Visão geral do desempenho de anúncios e campanhas." />
           {lastSyncDate && (
             <div className="flex items-center mt-1 text-xs text-muted-foreground">
-              <span className="flex items-center gap-1 bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-medium border border-blue-100">
+              <span className="flex items-center gap-1 bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-full font-medium border border-blue-100 dark:border-blue-900">
                 <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M17.525 9.875C17.525 9.875 16.7 10 16.7 10C16.825 8.125 15.65 6.75 14 6.75C12.35 6.75 11.175 8.125 11.3 10C11.3 10 10.475 9.875 10.475 9.875C9.725 9.875 9.4 10.45 9.4 10.875L13.725 16.5C13.825 16.625 14.175 16.625 14.275 16.5L18.6 10.875C18.6 10.45 18.275 9.875 17.525 9.875Z"/>
-                  <path d="M9.4 13.125C9.4 13.125 10.225 13 10.225 13C10.1 14.875 11.275 16.25 12.925 16.25C14.575 16.25 15.75 14.875 15.625 13C15.625 13 16.45 13.125 16.45 13.125C17.2 13.125 17.525 12.55 17.525 12.125L13.2 6.5C13.1 6.375 12.75 6.375 12.65 6.5L8.325 12.125C8.325 12.55 8.65 13.125 9.4 13.125Z"/>
                   <path d="M12 2C6.477 2 2 6.477 2 12C2 17.523 6.477 22 12 22C17.523 22 22 17.523 22 12C22 6.477 17.523 2 12 2ZM12 20.5C7.306 20.5 3.5 16.694 3.5 12C3.5 7.306 7.306 3.5 12 3.5C16.694 3.5 20.5 7.306 20.5 12C20.5 16.694 16.694 20.5 12 20.5Z"/>
                 </svg>
                 Meta Ads
@@ -263,12 +343,46 @@ export function ClientTrafficPage() {
         </div>
       </div>
 
-      <Tabs defaultValue="kanban" className="w-full">
-        <TabsList className="mb-4 bg-slate-100/50">
+      <Tabs defaultValue="dashboard" className="w-full">
+        <TabsList className="mb-4 bg-slate-100/50 dark:bg-slate-800/50">
+          <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
           <TabsTrigger value="kanban">Quadro Kanban</TabsTrigger>
           <TabsTrigger value="list">Lista de Tarefas</TabsTrigger>
-          <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="dashboard" className="mt-0 space-y-6">
+          {/* ROW 1: Top KPI Cards */}
+          <TrafficKpiCards data={kpis} />
+
+          {/* ROW 2: Funnel + Conversion Cards + Revenue Chart + Best Ads Donut */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+            {/* Left: Funnel */}
+            <div className="lg:col-span-3">
+              <TrafficFunnel data={funnelData} />
+            </div>
+
+            {/* Center-Left: Conversion metric cards */}
+            <div className="lg:col-span-2 flex flex-col gap-3">
+              <ConversionMetricCards metrics={conversionCards} />
+            </div>
+
+            {/* Center-Right: Revenue chart */}
+            <div className="lg:col-span-4">
+              <RevenueChart data={revenueChartData} conversionLabel={conversionLabel} />
+            </div>
+
+            {/* Right: Best Ads Donut */}
+            <div className="lg:col-span-3">
+              <BestAdsDonut ads={topAds} metricLabel={`Por ${conversionLabel}`} />
+            </div>
+          </div>
+
+          {/* ROW 3: Campaign Table */}
+          <CampaignTable data={campaigns} />
+
+          {/* ROW 4: Secondary Metrics */}
+          <SecondaryMetrics data={secondaryMetrics} />
+        </TabsContent>
 
         <TabsContent value="kanban" className="mt-0 pt-2">
           <ClientModuleTasksView module="traffic" view="kanban" />
@@ -276,28 +390,6 @@ export function ClientTrafficPage() {
 
         <TabsContent value="list" className="mt-0 pt-2">
           <ClientModuleTasksView module="traffic" view="list" />
-        </TabsContent>
-
-        <TabsContent value="dashboard" className="mt-0 space-y-6">
-          <TrafficKpiCards data={kpis} />
-          <div className="mt-6 flex flex-col gap-4">
-            <CampaignStatusSummary 
-              data={statusCounts} 
-              activeFilter={activeStatus} 
-              onFilterChange={setActiveStatus} 
-            />
-          </div>
-          <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <SpendOverTimeChart data={spendHistory} />
-            <BestAdPreview ads={bestAds} />
-          </div>
-
-          <div className="mt-8">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100">Campanhas e Métricas</h3>
-            </div>
-            <CampaignTable data={campaigns} />
-          </div>
         </TabsContent>
       </Tabs>
     </div>

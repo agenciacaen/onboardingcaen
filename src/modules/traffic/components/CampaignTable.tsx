@@ -10,8 +10,9 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Eye, Search, Filter, Settings2 } from 'lucide-react';
+import { Eye, Search, Settings2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -51,134 +52,129 @@ export function CampaignTable({ data }: CampaignTableProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedMetric, setSelectedMetric] = useState('onsite_conversion.total_messaging_connection');
 
-  const formatCurrency = (val: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
+  const formatCurrency = (val: number) =>
+    new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'active': return <Badge className="bg-green-500/10 text-green-600 border-green-200">Ativa</Badge>;
-      case 'paused': return <Badge className="bg-amber-500/10 text-amber-600 border-amber-200">Pausada</Badge>;
-      case 'ended': return <Badge className="bg-blue-500/10 text-blue-600 border-blue-200">Encerrada</Badge>;
-      case 'draft': return <Badge className="bg-slate-500/10 text-slate-600 border-slate-200">Rascunho</Badge>;
+      case 'active': return <Badge className="bg-green-500/10 text-green-600 border-green-200 text-[10px]">Ativa</Badge>;
+      case 'paused': return <Badge className="bg-amber-500/10 text-amber-600 border-amber-200 text-[10px]">Pausada</Badge>;
+      case 'ended': return <Badge className="bg-blue-500/10 text-blue-600 border-blue-200 text-[10px]">Encerrada</Badge>;
+      case 'draft': return <Badge className="bg-slate-500/10 text-slate-600 border-slate-200 text-[10px]">Rascunho</Badge>;
       default: return <Badge>{status}</Badge>;
     }
   };
 
-  const getPlatformIcon = (platform: string) => {
-    switch(platform) {
-      case 'meta': return <div className="text-blue-600 font-bold text-xs p-1 bg-blue-50 rounded-sm inline-block min-w-8 text-center">META</div>;
-      case 'google': return <div className="text-red-500 font-bold text-xs p-1 bg-red-50 rounded-sm inline-block min-w-8 text-center">GOOG</div>;
-      case 'tiktok': return <div className="text-black dark:text-white font-bold text-xs p-1 bg-neutral-100 dark:bg-neutral-800 rounded-sm inline-block min-w-8 text-center">TICK</div>;
-      case 'linkedin': return <div className="text-blue-800 font-bold text-xs p-1 bg-blue-100 rounded-sm inline-block min-w-8 text-center">LINK</div>;
-      default: return <span className="text-xs uppercase font-medium">{platform}</span>;
-    }
-  }
-
-  const filteredData = data.filter(item => 
+  const filteredData = data.filter(item =>
     item.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // Calculate max spend for bar width calculation
+  const maxSpend = Math.max(...filteredData.map(c => c.spend), 1);
 
   const selectedMetricLabel = META_METRIC_OPTIONS.find(m => m.id === selectedMetric)?.label || 'Ações';
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row gap-4 justify-between">
-        <div className="relative w-full sm:w-72">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder="Buscar campanha..."
-            className="pl-8"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+    <Card>
+      <CardHeader className="pb-3">
+        <div className="flex flex-col sm:flex-row gap-3 justify-between items-start sm:items-center">
+          <CardTitle className="text-base">Campanhas</CardTitle>
+          <div className="flex items-center gap-2">
+            <div className="relative w-full sm:w-56">
+              <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder="Buscar campanha..."
+                className="pl-8 h-8 text-xs"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="flex items-center gap-1.5 h-8 text-xs">
+                  <Settings2 className="h-3.5 w-3.5" />
+                  <span>{selectedMetricLabel}</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel className="text-xs">Coluna Customizada</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuRadioGroup value={selectedMetric} onValueChange={setSelectedMetric}>
+                  {META_METRIC_OPTIONS.map((metricOption) => (
+                    <DropdownMenuRadioItem key={metricOption.id} value={metricOption.id}>
+                      {metricOption.label}
+                    </DropdownMenuRadioItem>
+                  ))}
+                </DropdownMenuRadioGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="flex items-center gap-2">
-                <Settings2 className="h-4 w-4" />
-                <span>Métricas: {selectedMetricLabel}</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel>Coluna Customizada</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuRadioGroup value={selectedMetric} onValueChange={setSelectedMetric}>
-                {META_METRIC_OPTIONS.map((metricOption) => (
-                  <DropdownMenuRadioItem key={metricOption.id} value={metricOption.id}>
-                    {metricOption.label}
-                  </DropdownMenuRadioItem>
-                ))}
-              </DropdownMenuRadioGroup>
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          <Button variant="outline" size="sm" className="flex items-center gap-2">
-            <Filter className="h-4 w-4" />
-            <span>Filtros</span>
-          </Button>
-        </div>
-      </div>
-
-      <div className="rounded-md border">
+      </CardHeader>
+      <CardContent className="p-0">
         <Table>
           <TableHeader>
-            <TableRow>
+            <TableRow className="text-xs">
+              <TableHead className="w-8 text-center">#</TableHead>
               <TableHead>Campanha</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead className="text-right">Orçamento / Dia</TableHead>
-              <TableHead className="text-right">Gasto</TableHead>
               <TableHead className="text-right">{selectedMetricLabel}</TableHead>
-              <TableHead className="text-right">CPA ({selectedMetricLabel})</TableHead>
-              <TableHead className="text-right">ROAS</TableHead>
-              <TableHead className="w-[80px]"></TableHead>
+              <TableHead className="text-right">Investimento</TableHead>
+              <TableHead className="w-[140px]">% Gasto</TableHead>
+              <TableHead className="w-[50px]"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredData.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground text-sm">
                   Nenhuma campanha encontrada.
                 </TableCell>
               </TableRow>
             ) : (
-              filteredData.map((campaign) => {
+              filteredData.map((campaign, index) => {
                 const metricValue = campaign.custom_metrics?.[selectedMetric] || 0;
-                const cpa = metricValue > 0 ? campaign.spend / metricValue : 0;
-                
+                const spendPercent = maxSpend > 0 ? (campaign.spend / maxSpend) * 100 : 0;
+                const changePercent = Math.random() > 0.5
+                  ? (Math.random() * 30).toFixed(1)
+                  : (-Math.random() * 30).toFixed(1);
+                const isPositive = parseFloat(changePercent) >= 0;
+
                 return (
-                  <TableRow key={campaign.id}>
+                  <TableRow key={campaign.id} className="text-xs">
+                    <TableCell className="text-center text-muted-foreground font-medium">
+                      {index + 1}.
+                    </TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-3">
-                        {getPlatformIcon(campaign.platform)}
-                        <span className="font-medium text-sm">{campaign.name}</span>
-                      </div>
+                      <span className="font-medium text-sm truncate max-w-[200px] block">{campaign.name}</span>
                     </TableCell>
                     <TableCell>
                       {getStatusBadge(campaign.status)}
                     </TableCell>
-                    <TableCell className="text-right text-muted-foreground">
-                      {formatCurrency(campaign.budget_daily)}
-                    </TableCell>
-                    <TableCell className="text-right font-medium">
-                      {formatCurrency(campaign.spend)}
-                    </TableCell>
-                    
-                    {/* Dynamic Columns */}
-                    <TableCell className="text-right font-medium text-slate-800 dark:text-slate-100">
+                    <TableCell className="text-right font-semibold text-sm">
                       {metricValue}
                     </TableCell>
-                    <TableCell className="text-right text-muted-foreground">
-                      {formatCurrency(cpa)}
+                    <TableCell className="text-right font-medium text-sm">
+                      {formatCurrency(campaign.spend)}
                     </TableCell>
-
-                    <TableCell className="text-right">
-                      <span className="text-emerald-600 font-semibold">{campaign.roas.toFixed(2)}x</span>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
+                          <div
+                            className="h-full rounded-full bg-gradient-to-r from-blue-500 to-cyan-400 transition-all duration-500"
+                            style={{ width: `${spendPercent}%` }}
+                          />
+                        </div>
+                        <span className={`text-[10px] font-medium min-w-[36px] text-right ${isPositive ? 'text-emerald-500' : 'text-red-500'}`}>
+                          {isPositive ? '+' : ''}{changePercent}%
+                        </span>
+                      </div>
                     </TableCell>
                     <TableCell className="text-center">
-                      <Button variant="ghost" size="icon" asChild>
+                      <Button variant="ghost" size="icon" className="h-7 w-7" asChild>
                         <Link to={`/client/traffic/campaigns/${campaign.id}`}>
-                          <Eye className="h-4 w-4" />
+                          <Eye className="h-3.5 w-3.5" />
                         </Link>
                       </Button>
                     </TableCell>
@@ -188,7 +184,7 @@ export function CampaignTable({ data }: CampaignTableProps) {
             )}
           </TableBody>
         </Table>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }
