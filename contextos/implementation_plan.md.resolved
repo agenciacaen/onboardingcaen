@@ -1,0 +1,73 @@
+# Integração Meta Ads API — Módulo de Tráfego Pago (Via System User Token)
+
+## Descrição do Objetivo
+
+Integrar a **Meta Marketing API** ao sistema CAEN usando a abordagem de "Serviço Completo" (Server-to-Server com Token Permanente). Dessa forma, o cliente não precisa autenticar via Facebook Login. A agência vincula as contas através do ID da Conta de Anúncios e o sistema faz o tracking das métricas usando o Token do Sistema da Business Manager.
+
+## ⚠️ Necessário Revisão (User Review Required)
+
+> [!IMPORTANT]  
+> **1. Chave Mestra (Token do Usuário do Sistema)**  
+> No passo anterior, informamos como gerar o "Token do Usuário do Sistema" na sua BM. Eu recebi o seu App ID e o App Secret, mas está faltando o Token em si (aquela chave bem grande permanente). Preciso que você me mande esse token para colocar no cofre (.env) do sistema!
+
+> [!IMPORTANT]  
+> **2. Frequência de Sincronização**  
+> Quero a sua aprovação para rodarmos um trabalho nos bastidores (Cron Job) que sincroniza as métricas e os gastos atualizados do Meta Ads **a cada 2 horas**. Está de acordo com esse intervalo?
+
+## Mudanças Propostas
+
+---
+
+### Banco de Dados (Supabase)
+
+Ajustes no modelo de dados para armazenar as contas vinculadas via API.
+
+#### [NEW] `meta_ad_accounts` (Tabela)
+Guarda as Ad Accounts configuradas para os clientes.
+* Campos: `id`, `client_id` (relacionado a profiles), `ad_account_id` (ex: `act_123456`), `ad_account_name`, `status`, `last_sync_at`.
+* *Diferença para o plano anterior:* Não precisamos salvar o `access_token` individual por conta aqui, pois usaremos o Token do Sistema (Chave Mestra) como variável de ambiente no servidor.
+
+#### [MODIFY] `traffic_campaigns` (Tabela)
+* Adicionar os campos: `meta_account_id` (FK) e `meta_campaign_id` para relacionar as tabelas.
+
+---
+
+### Backend (Supabase Edge Functions)
+
+As funções que rodarão em nuvem seguras com a Chave Mestra.
+
+#### [NEW] `meta-validate-account`
+Recebe o ID de uma conta de anúncios que o administrador digitou e verifica via Meta API usando o Token do Sistema se a agência tem acesso a essa conta. Retorna o nome da conta.
+
+#### [NEW] `sync-meta-ads`
+A função principal que faz Fetch das métricas (Cron Job).
+1. Busca na tabela `meta_ad_accounts` todas as contas `active`.
+2. Faz chamada à Meta Marketing API `GET /act_{id}/campaigns` e `GET /act_{id}/insights`. (Usando o System User Token guardado em segredo de ambiente).
+3. Salva/Atualiza tudo (Upsert) em `traffic_campaigns` e `traffic_metrics`.
+
+---
+
+### Frontend — Acesso da Agência e Cliente
+
+Interface do usuário onde você informará a conta do cliente.
+
+#### [MODIFY] `src/app/agency/traffic/page.tsx`
+* Interface para gerenciar as "Contas Conectadas" do cliente selecionado.
+* Em vez de um botão "Login com Facebook", será um campo limpo: **"ID da Conta de Anúncios (ex: act_12345)"** com um botão **"Conectar"**.
+
+#### [MODIFY] `src/app/client/traffic/page.tsx`
+* O dashboard já está pronto. Vamos apenas adicionar tags identificando que as campanhas estão vindo do "Meta Ads", e a data da última sincronização.
+
+## Questões Abertas
+
+Nenhuma além do Token de Usuário do Sistema citado acima.
+
+## Plano de Verificação
+
+### Testes Automatizados
+- Fazer a chamada controlada para a Edge Function de validação da conta com uma id real sua.
+
+### Verificação Manual
+1. Adicionar o secret `META_SYSTEM_USER_TOKEN` no Supabase Edge.
+2. Inserir uma conta de anúncios real pelo painel da Agência no Frontend.
+3. Verificar se as campanhas e métricas brotam no Dashboard do Cliente.

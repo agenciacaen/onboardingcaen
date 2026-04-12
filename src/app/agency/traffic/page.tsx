@@ -25,9 +25,7 @@ export default function AgencyTrafficPage() {
         />
         <div className="flex space-x-3 items-center">
           <ClientFilterBar value={clientIdFilter} onChange={setClientIdFilter} />
-          {clientIdFilter !== "all" && (
-            <MetaAccountManager clientId={clientIdFilter} />
-          )}
+          <MetaAccountManager clientId={clientIdFilter} />
           <Button onClick={() => setCreateModalOpen(true)}>
             <Plus className="mr-2 h-4 w-4" />
             Nova Tarefa
