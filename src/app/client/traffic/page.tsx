@@ -94,10 +94,10 @@ export function ClientTrafficPage() {
           setStatusCounts(counts);
         }
 
-        // Fetch spend history (daily metrics)
+        // Fetch spend history (daily metrics) and actions
         const { data: metrics, error: metricsError } = await supabase
           .from('traffic_metrics')
-          .select('date, spend')
+          .select('date, spend, raw_actions')
           .eq('client_id', clientId)
           .gte('date', startDate)
           .lte('date', endDate)
@@ -105,6 +105,59 @@ export function ClientTrafficPage() {
 
         if (!metricsError && metrics) {
           setSpendHistory(metrics.map(m => ({ date: m.date, spend: m.spend || 0 })));
+          
+          // Agrupar actions customizaveis (ex: Conversas)
+          let conversationsCount = 0;
+          let leadsCount = 0;
+          
+          metrics.forEach(m => {
+            if (m.raw_actions && Array.isArray(m.raw_actions)) {
+               m.raw_actions.forEach(act => {
+                 if (act.action_type === 'onsite_conversion.total_messaging_connection') {
+                    conversationsCount += Number(act.value || 0);
+                 }
+                 if (act.action_type === 'lead') {
+                    leadsCount += Number(act.value || 0);
+                 }
+               });
+            }
+          });
+
+          const totalS = overview?.total_spend || 0;
+          const customCards: Array<{id: string; title: string; value: string | number; change: number}> = [];
+          
+          if (conversationsCount > 0) {
+            customCards.push({
+              id: 'conversas',
+              title: 'Conversas Iniciadas',
+              value: conversationsCount,
+              change: 0,
+            });
+            customCards.push({
+              id: 'cpv',
+              title: 'Custo por Conversa',
+              value: new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalS / conversationsCount),
+              change: 0,
+            });
+          } else if (leadsCount > 0) {
+             customCards.push({
+               id: 'leads',
+               title: 'Leads Totais',
+               value: leadsCount,
+               change: 0,
+             });
+             customCards.push({
+              id: 'cpl',
+              title: 'Custo por Lead',
+              value: new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalS / leadsCount),
+              change: 0,
+            });
+          }
+
+          setKpis(prev => ({
+             ...prev,
+             customMetrics: customCards.length > 0 ? customCards : undefined
+          }));
         }
 
         // Fetch best ads from RPC

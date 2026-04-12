@@ -8,6 +8,13 @@ export interface TrafficKpiData {
   cpc: { value: number; change: number };
   roas: { value: number; change: number };
   spend: { value: number; change: number };
+  customMetrics?: Array<{
+    title: string;
+    value: string | number;
+    change: number;
+    icon?: any;
+    id?: string;
+  }>;
 }
 
 interface TrafficKpiCardsProps {
@@ -24,7 +31,13 @@ export function TrafficKpiCards({ data }: TrafficKpiCardsProps) {
   };
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+    <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      <StatsCard
+        title="Gasto Total"
+        value={formatCurrency(data.spend.value)}
+        change={data.spend.change}
+        icon={DollarSign}
+      />
       <StatsCard
         title="Impressões"
         value={formatCompact(data.impressions.value)}
@@ -43,24 +56,35 @@ export function TrafficKpiCards({ data }: TrafficKpiCardsProps) {
         change={data.ctr.change}
         icon={TrendingUp}
       />
-      <StatsCard
-        title="CPC Médio"
-        value={formatCurrency(data.cpc.value)}
-        change={data.cpc.change}
-        icon={Target}
-      />
-      <StatsCard
-        title="ROAS"
-        value={`${data.roas.value.toFixed(2)}x`}
-        change={data.roas.change}
-        icon={Activity}
-      />
-      <StatsCard
-        title="Gasto Total"
-        value={formatCurrency(data.spend.value)}
-        change={data.spend.change}
-        icon={DollarSign}
-      />
+      
+      {/* Custom Metrics */}
+      {data.customMetrics && data.customMetrics.map((cm, idx) => (
+        <StatsCard
+          key={cm.id || idx}
+          title={cm.title}
+          value={cm.value}
+          change={cm.change}
+          icon={cm.icon || Activity}
+        />
+      ))}
+      
+      {/* Fallback original metrics if no custom metrics provided for those slots */}
+      {(!data.customMetrics || data.customMetrics.length === 0) && (
+        <>
+          <StatsCard
+            title="CPC Médio"
+            value={formatCurrency(data.cpc.value)}
+            change={data.cpc.change}
+            icon={Target}
+          />
+          <StatsCard
+            title="ROAS"
+            value={`${data.roas.value.toFixed(2)}x`}
+            change={data.roas.change}
+            icon={Activity}
+          />
+        </>
+      )}
     </div>
   );
 }

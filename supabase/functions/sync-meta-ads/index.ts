@@ -196,7 +196,8 @@ Deno.serve(async (req: Request) => {
                        ctr: parseFloat(metric.ctr || '0'),
                        conversions: conversions,
                        roas: roas,
-                       updated_at: new Date().toISOString()
+                       updated_at: new Date().toISOString(),
+                       raw_actions: metric.actions || []
                      }, { 
                        onConflict: 'campaign_id,date' 
                      });

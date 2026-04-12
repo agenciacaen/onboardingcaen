@@ -10,8 +10,17 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Eye, Search, Filter } from 'lucide-react';
+import { Eye, Search, Filter, Settings2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 export interface CampaignData {
   id: string;
@@ -23,14 +32,24 @@ export interface CampaignData {
   impressions: number;
   clicks: number;
   roas: number;
+  custom_metrics?: Record<string, number>;
 }
 
 interface CampaignTableProps {
   data: CampaignData[];
 }
 
+export const META_METRIC_OPTIONS = [
+  { id: 'onsite_conversion.total_messaging_connection', label: 'Conversas Iniciadas' },
+  { id: 'lead', label: 'Leads (Cadastros)' },
+  { id: 'purchase', label: 'Compras' },
+  { id: 'landing_page_view', label: 'Visitas na Página' },
+  { id: 'post_engagement', label: 'Engajamento' },
+];
+
 export function CampaignTable({ data }: CampaignTableProps) {
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedMetric, setSelectedMetric] = useState('onsite_conversion.total_messaging_connection');
 
   const formatCurrency = (val: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
 
@@ -58,6 +77,8 @@ export function CampaignTable({ data }: CampaignTableProps) {
     item.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const selectedMetricLabel = META_METRIC_OPTIONS.find(m => m.id === selectedMetric)?.label || 'Ações';
+
   return (
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row gap-4 justify-between">
@@ -72,6 +93,26 @@ export function CampaignTable({ data }: CampaignTableProps) {
           />
         </div>
         <div className="flex items-center gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="flex items-center gap-2">
+                <Settings2 className="h-4 w-4" />
+                <span>Métricas: {selectedMetricLabel}</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel>Coluna Customizada</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuRadioGroup value={selectedMetric} onValueChange={setSelectedMetric}>
+                {META_METRIC_OPTIONS.map((metricOption) => (
+                  <DropdownMenuRadioItem key={metricOption.id} value={metricOption.id}>
+                    {metricOption.label}
+                  </DropdownMenuRadioItem>
+                ))}
+              </DropdownMenuRadioGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
           <Button variant="outline" size="sm" className="flex items-center gap-2">
             <Filter className="h-4 w-4" />
             <span>Filtros</span>
@@ -87,51 +128,63 @@ export function CampaignTable({ data }: CampaignTableProps) {
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Orçamento / Dia</TableHead>
               <TableHead className="text-right">Gasto</TableHead>
+              <TableHead className="text-right">{selectedMetricLabel}</TableHead>
+              <TableHead className="text-right">CPA ({selectedMetricLabel})</TableHead>
               <TableHead className="text-right">ROAS</TableHead>
-              <TableHead className="text-right">CTR</TableHead>
               <TableHead className="w-[80px]"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredData.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                   Nenhuma campanha encontrada.
                 </TableCell>
               </TableRow>
             ) : (
-              filteredData.map((campaign) => (
-                <TableRow key={campaign.id}>
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      {getPlatformIcon(campaign.platform)}
-                      <span className="font-medium text-sm">{campaign.name}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    {getStatusBadge(campaign.status)}
-                  </TableCell>
-                  <TableCell className="text-right text-muted-foreground">
-                    {formatCurrency(campaign.budget_daily)}
-                  </TableCell>
-                  <TableCell className="text-right font-medium">
-                    {formatCurrency(campaign.spend)}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <span className="text-emerald-600 font-semibold">{campaign.roas.toFixed(2)}x</span>
-                  </TableCell>
-                  <TableCell className="text-right text-muted-foreground">
-                    {((campaign.clicks / campaign.impressions) * 100).toFixed(2)}%
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <Button variant="ghost" size="icon" asChild>
-                      <Link to={`/client/traffic/campaigns/${campaign.id}`}>
-                        <Eye className="h-4 w-4" />
-                      </Link>
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))
+              filteredData.map((campaign) => {
+                const metricValue = campaign.custom_metrics?.[selectedMetric] || 0;
+                const cpa = metricValue > 0 ? campaign.spend / metricValue : 0;
+                
+                return (
+                  <TableRow key={campaign.id}>
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        {getPlatformIcon(campaign.platform)}
+                        <span className="font-medium text-sm">{campaign.name}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      {getStatusBadge(campaign.status)}
+                    </TableCell>
+                    <TableCell className="text-right text-muted-foreground">
+                      {formatCurrency(campaign.budget_daily)}
+                    </TableCell>
+                    <TableCell className="text-right font-medium">
+                      {formatCurrency(campaign.spend)}
+                    </TableCell>
+                    
+                    {/* Dynamic Columns */}
+                    <TableCell className="text-right font-medium text-slate-800 dark:text-slate-100">
+                      {metricValue}
+                    </TableCell>
+                    <TableCell className="text-right text-muted-foreground">
+                      {formatCurrency(cpa)}
+                    </TableCell>
+
+                    <TableCell className="text-right">
+                      <span className="text-emerald-600 font-semibold">{campaign.roas.toFixed(2)}x</span>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <Button variant="ghost" size="icon" asChild>
+                        <Link to={`/client/traffic/campaigns/${campaign.id}`}>
+                          <Eye className="h-4 w-4" />
+                        </Link>
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                );
+              })
             )}
           </TableBody>
         </Table>

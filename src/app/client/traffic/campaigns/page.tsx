@@ -1,65 +1,96 @@
-import { useState, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { PageHeader } from '../../../../components/ui/PageHeader';
 import type { CampaignData } from '@/modules/traffic/components/CampaignTable';
 import { CampaignTable } from '@/modules/traffic/components/CampaignTable';
 import { DateRangeSelector } from '@/components/ui/DateRangeSelector';
 import type { DateRange } from 'react-day-picker';
-import { subDays } from 'date-fns';
+import { subDays, parseISO } from 'date-fns';
 import { Button } from '@/components/ui/button';
-import { DownloadCloud } from 'lucide-react';
+import { DownloadCloud, Loader2 } from 'lucide-react';
+import { trafficService } from '@/modules/traffic/services/traffic.service';
+import { useAuth } from '@/hooks/useAuth';
+import { toast } from 'sonner';
 
 export function ClientCampaignsPage() {
+  const { clientId } = useAuth();
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: subDays(new Date(), 30),
     to: new Date()
   });
+  
+  const [campaigns, setCampaigns] = useState<CampaignData[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const mockCampaigns: CampaignData[] = useMemo(() => [
-    {
-      id: "comp_1A2B3D4F5G",
-      name: "[BF] - Lançamento Ofertas",
-      platform: "meta",
-      status: "active",
-      budget_daily: 150.00,
-      spend: 4500.20,
-      impressions: 125430,
-      clicks: 4325,
-      roas: 3.8
-    },
-    {
-      id: "comp_9F8E7D6C5B",
-      name: "Search - Fundo de Funil",
-      platform: "google",
-      status: "active",
-      budget_daily: 80.00,
-      spend: 2150.80,
-      impressions: 15400,
-      clicks: 1205,
-      roas: 5.6
-    },
-    {
-      id: "comp_2X3Y4Z5W6V",
-      name: "[VideoView] Brand Awareness",
-      platform: "tiktok",
-      status: "paused",
-      budget_daily: 40.00,
-      spend: 1200.00,
-      impressions: 250000,
-      clicks: 1400,
-      roas: 0.8
-    },
-    {
-      id: "comp_4C5D6E7F8G",
-      name: "B2B Lead Gen",
-      platform: "linkedin",
-      status: "draft",
-      budget_daily: 200.00,
-      spend: 0.00,
-      impressions: 0,
-      clicks: 0,
-      roas: 0.0
+  useEffect(() => {
+    async function loadCampaigns() {
+      if (!clientId || !dateRange?.from || !dateRange?.to) return;
+      setIsLoading(true);
+      try {
+        const rawCampaigns = await trafficService.getCampaigns(clientId);
+        
+        // Formatar para o componente CampaignTable
+        const formattedCampaigns: CampaignData[] = rawCampaigns.map((camp: any) => {
+          let totalImpressions = 0;
+          let totalClicks = 0;
+          let totalSpend = 0;
+          let totalConversions = 0;
+          
+          const customMetrics: Record<string, number> = {};
+
+          if (camp.traffic_metrics && Array.isArray(camp.traffic_metrics)) {
+            // Filtrar metricas pelo dateRange 
+            const filteredMetrics = camp.traffic_metrics.filter((m: any) => {
+              if (!m.date) return false;
+              const date = parseISO(m.date);
+              return date >= dateRange.from! && date <= dateRange.to!;
+            });
+
+            filteredMetrics.forEach((m: any) => {
+              totalImpressions += Number(m.impressions || 0);
+              totalClicks += Number(m.clicks || 0);
+              totalSpend += Number(m.spend || 0);
+              totalConversions += Number(m.conversions || 0);
+              
+              // Somar raw_actions
+              if (m.raw_actions && Array.isArray(m.raw_actions)) {
+                m.raw_actions.forEach((action: any) => {
+                  const type = action.action_type;
+                  const value = Number(action.value || 0);
+                  if (!customMetrics[type]) customMetrics[type] = 0;
+                  customMetrics[type] += value;
+                });
+              }
+            });
+          }
+
+          const roas = totalSpend > 0 ? totalConversions / totalSpend : 0;
+
+          return {
+            id: camp.id || '',
+            name: camp.name || 'Campanha Desconhecida',
+            platform: camp.platform as any || 'meta',
+            status: camp.status as any || 'draft',
+            budget_daily: Number(camp.budget_daily || 0),
+            spend: totalSpend,
+            impressions: totalImpressions,
+            clicks: totalClicks,
+            roas: roas,
+            custom_metrics: customMetrics
+          };
+        });
+
+        // Ordenar campanhas por gasto
+        setCampaigns(formattedCampaigns.sort((a, b) => b.spend - a.spend));
+      } catch (err) {
+        console.error("Erro ao carregar campanhas", err);
+        toast.error("Erro ao carregar campanhas");
+      } finally {
+        setIsLoading(false);
+      }
     }
-  ], []);
+
+    loadCampaigns();
+  }, [clientId, dateRange]);
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -75,7 +106,13 @@ export function ClientCampaignsPage() {
       
       <div className="bg-card w-full rounded-lg shadow-sm">
         <div className="p-6">
-          <CampaignTable data={mockCampaigns} />
+          {isLoading ? (
+            <div className="flex justify-center py-12">
+              <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+            </div>
+          ) : (
+            <CampaignTable data={campaigns} />
+          )}
         </div>
       </div>
     </div>

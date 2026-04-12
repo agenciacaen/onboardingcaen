@@ -28,7 +28,8 @@ export const trafficService = {
           conversions,
           roas,
           ctr,
-          cpc
+          cpc,
+          raw_actions
         )
       `)
       .eq('client_id', clientId);
