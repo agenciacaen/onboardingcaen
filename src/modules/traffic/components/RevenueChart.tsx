@@ -96,18 +96,20 @@ export function RevenueChart({ data, conversionLabel = 'Conversões' }: RevenueC
               type="monotone"
               dataKey="spend"
               name="Investimento"
-              stroke="hsl(var(--primary))"
+              stroke="#3b82f6"
               fill="url(#colorSpend)"
-              strokeWidth={2}
+              strokeWidth={3}
+              activeDot={{ r: 6, stroke: '#3b82f6', strokeWidth: 2, fill: '#0f172a' }}
             />
             <Area
               yAxisId="right"
               type="monotone"
               dataKey="conversions"
               name={conversionLabel}
-              stroke="#22c55e"
+              stroke="#10b981"
               fill="url(#colorConversions)"
-              strokeWidth={2}
+              strokeWidth={3}
+              activeDot={{ r: 6, stroke: '#10b981', strokeWidth: 2, fill: '#0f172a' }}
             />
           </AreaChart>
         </ResponsiveContainer>

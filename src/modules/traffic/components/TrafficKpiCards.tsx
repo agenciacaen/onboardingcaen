@@ -1,26 +1,15 @@
-import { DollarSign, ShoppingCart, Banknote, TrendingUp, TrendingDown, Eye } from 'lucide-react';
+import { DollarSign, ShoppingCart, Banknote, TrendingUp, TrendingDown, Eye, CheckCircle2, BarChart3, Target } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import React from 'react';
+import { ResponsiveContainer, LineChart, Line } from 'recharts';
 
 export interface TrafficKpiData {
-  spend: { value: number; change: number };
-  purchases: { value: number; change: number };
-  revenue: { value: number; change: number };
-  roas: { value: number; change: number };
-  landing_page_views: { value: number; change: number };
-  // Manter compatibilidade com dados legados
-  impressions?: { value: number; change: number };
-  clicks?: { value: number; change: number };
-  ctr?: { value: number; change: number };
-  cpc?: { value: number; change: number };
-  customMetrics?: Array<{
-    title: string;
-    value: string | number;
-    change: number;
-    icon?: any;
-    id?: string;
-  }>;
+  spend: { value: number; change: number; history?: any[] };
+  purchases: { value: number; change: number; history?: any[] };
+  revenue: { value: number; change: number; history?: any[] };
+  roas: { value: number; change: number; history?: any[] };
+  landing_page_views: { value: number; change: number; history?: any[] };
 }
 
 interface TrafficKpiCardsProps {
@@ -32,40 +21,56 @@ interface KpiItemProps {
   value: string;
   change: number;
   icon: React.ElementType;
-  iconBg: string;
   iconColor: string;
+  history?: any[];
+  lineColor: string;
 }
 
-function KpiItem({ title, value, change, icon: Icon, iconBg, iconColor }: KpiItemProps) {
+function KpiItem({ title, value, change, icon: Icon, iconColor, history, lineColor }: KpiItemProps) {
   return (
-    <Card className="overflow-hidden">
-      <CardContent className="p-4">
-        <div className="flex items-start justify-between">
-          <div className="space-y-1">
-            <p className="text-xs font-medium text-muted-foreground">{title}</p>
-            <p className="text-xl font-bold">{value}</p>
+    <Card className="overflow-hidden bg-slate-900/40 border-slate-800/50 backdrop-blur-sm relative group hover:border-slate-700/50 transition-all duration-300">
+      <CardContent className="p-4 relative z-10">
+        <div className="flex items-start justify-between mb-2">
+          <div className="space-y-0.5">
+            <p className="text-[10px] uppercase tracking-wider font-semibold text-slate-400 group-hover:text-slate-300 transition-colors">{title}</p>
+            <p className="text-xl font-bold text-white tracking-tight">{value}</p>
           </div>
-          <div className={cn('p-2 rounded-lg', iconBg)}>
-            <Icon className={cn('h-4 w-4', iconColor)} />
+          <div className={cn('p-1.5 rounded-full bg-slate-800/80 border border-slate-700/50', iconColor)}>
+            <Icon className="h-3.5 w-3.5" />
           </div>
         </div>
-        {change !== 0 && (
-          <div className="flex items-center mt-2">
-            {change > 0 ? (
-              <TrendingUp className="h-3 w-3 text-emerald-500 mr-1" />
+
+        <div className="flex items-center gap-1.5 mt-1">
+          <div className={cn(
+            "flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold",
+            change >= 0 ? "bg-emerald-500/10 text-emerald-400" : "bg-red-500/10 text-red-400"
+          )}>
+            {change >= 0 ? (
+              <TrendingUp className="h-2.5 w-2.5 mr-0.5" />
             ) : (
-              <TrendingDown className="h-3 w-3 text-red-500 mr-1" />
+              <TrendingDown className="h-2.5 w-2.5 mr-0.5" />
             )}
-            <span
-              className={cn(
-                'text-xs font-medium',
-                change > 0 ? 'text-emerald-500' : 'text-red-500'
-              )}
-            >
-              {change > 0 ? '+' : ''}{change.toFixed(1)}%
-            </span>
+            {change >= 0 ? '+' : ''}{change.toFixed(1)}%
           </div>
-        )}
+        </div>
+
+        {/* Sparkline */}
+        <div className="h-10 w-full mt-2 -mx-4 -mb-4 opacity-50 group-hover:opacity-80 transition-opacity">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={history || [
+              { v: 10 }, { v: 15 }, { v: 8 }, { v: 12 }, { v: 14 }, { v: 10 }, { v: 18 }
+            ]}>
+              <Line 
+                type="monotone" 
+                dataKey={history ? "value" : "v"} 
+                stroke={lineColor} 
+                strokeWidth={2} 
+                dot={false}
+                animationDuration={1500}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
       </CardContent>
     </Card>
   );
@@ -73,7 +78,7 @@ function KpiItem({ title, value, change, icon: Icon, iconBg, iconColor }: KpiIte
 
 export function TrafficKpiCards({ data }: TrafficKpiCardsProps) {
   const formatCurrency = (num: number) =>
-    new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(num);
+    new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(num);
 
   const formatCompact = (num: number) =>
     new Intl.NumberFormat('pt-BR', { notation: 'compact', maximumFractionDigits: 1 }).format(num);
@@ -84,48 +89,54 @@ export function TrafficKpiCards({ data }: TrafficKpiCardsProps) {
       value: formatCurrency(data.spend.value),
       change: data.spend.change,
       icon: DollarSign,
-      iconBg: 'bg-emerald-500/10',
-      iconColor: 'text-emerald-500',
+      iconColor: 'text-blue-400',
+      history: data.spend.history,
+      lineColor: '#3b82f6', // blue-500
     },
     {
       title: 'Compras',
       value: formatCompact(data.purchases.value),
       change: data.purchases.change,
-      icon: ShoppingCart,
-      iconBg: 'bg-violet-500/10',
-      iconColor: 'text-violet-500',
+      icon: CheckCircle2,
+      iconColor: 'text-white',
+      history: data.purchases.history,
+      lineColor: '#10b981', // emerald-500
     },
     {
       title: 'Receita',
       value: formatCurrency(data.revenue.value),
       change: data.revenue.change,
-      icon: Banknote,
-      iconBg: 'bg-blue-500/10',
-      iconColor: 'text-blue-500',
+      icon: BarChart3,
+      iconColor: 'text-blue-400',
+      history: data.revenue.history,
+      lineColor: '#60a5fa', // blue-400
     },
     {
       title: 'ROAS',
-      value: `${data.roas.value.toFixed(2)}x`,
+      value: data.roas.value.toFixed(2),
       change: data.roas.change,
-      icon: TrendingUp,
-      iconBg: 'bg-amber-500/10',
-      iconColor: 'text-amber-500',
+      icon: Target,
+      iconColor: 'text-purple-400',
+      history: data.roas.history,
+      lineColor: '#a855f7', // purple-500
     },
     {
       title: 'Visitas na Página',
       value: formatCompact(data.landing_page_views.value),
       change: data.landing_page_views.change,
       icon: Eye,
-      iconBg: 'bg-cyan-500/10',
-      iconColor: 'text-cyan-500',
+      iconColor: 'text-slate-400',
+      history: data.landing_page_views.history,
+      lineColor: '#94a3b8', // slate-400
     },
   ];
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
       {kpis.map((kpi) => (
         <KpiItem key={kpi.title} {...kpi} />
       ))}
     </div>
   );
 }
+

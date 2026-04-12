@@ -7,21 +7,10 @@ import {
   TableHeader, 
   TableRow 
 } from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Eye, Search, Settings2 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Search } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuLabel,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { cn } from '@/lib/utils';
 
 export interface CampaignData {
   id: string;
@@ -30,6 +19,8 @@ export interface CampaignData {
   status: 'active' | 'paused' | 'ended' | 'draft';
   budget_daily: number;
   spend: number;
+  adsets_count?: number;
+  ads_count?: number;
   impressions: number;
   clicks: number;
   roas: number;
@@ -40,143 +31,83 @@ interface CampaignTableProps {
   data: CampaignData[];
 }
 
-export const META_METRIC_OPTIONS = [
-  { id: 'onsite_conversion.total_messaging_connection', label: 'Conversas Iniciadas' },
-  { id: 'lead', label: 'Leads (Cadastros)' },
-  { id: 'purchase', label: 'Compras' },
-  { id: 'landing_page_view', label: 'Visitas na Página' },
-  { id: 'post_engagement', label: 'Engajamento' },
-];
-
 export function CampaignTable({ data }: CampaignTableProps) {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedMetric, setSelectedMetric] = useState('onsite_conversion.total_messaging_connection');
 
   const formatCurrency = (val: number) =>
-    new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'active': return <Badge className="bg-green-500/10 text-green-600 border-green-200 text-[10px]">Ativa</Badge>;
-      case 'paused': return <Badge className="bg-amber-500/10 text-amber-600 border-amber-200 text-[10px]">Pausada</Badge>;
-      case 'ended': return <Badge className="bg-blue-500/10 text-blue-600 border-blue-200 text-[10px]">Encerrada</Badge>;
-      case 'draft': return <Badge className="bg-slate-500/10 text-slate-600 border-slate-200 text-[10px]">Rascunho</Badge>;
-      default: return <Badge>{status}</Badge>;
-    }
-  };
+    new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(val);
 
   const filteredData = data.filter(item =>
     item.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Calculate max spend for bar width calculation
-  const maxSpend = Math.max(...filteredData.map(c => c.spend), 1);
-
-  const selectedMetricLabel = META_METRIC_OPTIONS.find(m => m.id === selectedMetric)?.label || 'Ações';
-
   return (
-    <Card>
-      <CardHeader className="pb-3">
+    <Card className="bg-slate-900/40 border-slate-800/50 backdrop-blur-sm overflow-hidden">
+      <CardHeader className="pb-3 border-b border-slate-800/50">
         <div className="flex flex-col sm:flex-row gap-3 justify-between items-start sm:items-center">
-          <CardTitle className="text-base">Campanhas</CardTitle>
+          <CardTitle className="text-sm font-bold text-slate-100 uppercase tracking-wider">Campanhas</CardTitle>
           <div className="flex items-center gap-2">
-            <div className="relative w-full sm:w-56">
-              <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
+            <div className="relative w-full sm:w-56 text-white">
+              <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-slate-500" />
               <Input
                 type="search"
                 placeholder="Buscar campanha..."
-                className="pl-8 h-8 text-xs"
+                className="pl-8 h-8 text-[11px] bg-slate-900/60 border-slate-700/50 text-slate-200"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="flex items-center gap-1.5 h-8 text-xs">
-                  <Settings2 className="h-3.5 w-3.5" />
-                  <span>{selectedMetricLabel}</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel className="text-xs">Coluna Customizada</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuRadioGroup value={selectedMetric} onValueChange={setSelectedMetric}>
-                  {META_METRIC_OPTIONS.map((metricOption) => (
-                    <DropdownMenuRadioItem key={metricOption.id} value={metricOption.id}>
-                      {metricOption.label}
-                    </DropdownMenuRadioItem>
-                  ))}
-                </DropdownMenuRadioGroup>
-              </DropdownMenuContent>
-            </DropdownMenu>
           </div>
         </div>
       </CardHeader>
       <CardContent className="p-0">
         <Table>
           <TableHeader>
-            <TableRow className="text-xs">
-              <TableHead className="w-8 text-center">#</TableHead>
-              <TableHead>Campanha</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">{selectedMetricLabel}</TableHead>
-              <TableHead className="text-right">Investimento</TableHead>
-              <TableHead className="w-[140px]">% Gasto</TableHead>
-              <TableHead className="w-[50px]"></TableHead>
+            <TableRow className="text-[10px] uppercase tracking-widest border-slate-800/50 bg-slate-900/20 hover:bg-transparent">
+              <TableHead className="w-8 text-center text-slate-500 font-bold">#</TableHead>
+              <TableHead className="text-slate-500 font-bold">Campanhas</TableHead>
+              <TableHead className="text-slate-500 font-bold text-center">Conjuntos</TableHead>
+              <TableHead className="text-slate-500 font-bold text-center">Anúncios</TableHead>
+              <TableHead className="text-right text-slate-500 font-bold">Investimento</TableHead>
+              <TableHead className="w-[100px] text-right text-slate-500 font-bold">% Δ</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredData.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground text-sm">
+                <TableCell colSpan={6} className="text-center py-8 text-slate-500 text-xs">
                   Nenhuma campanha encontrada.
                 </TableCell>
               </TableRow>
             ) : (
               filteredData.map((campaign, index) => {
-                const metricValue = campaign.custom_metrics?.[selectedMetric] || 0;
-                const spendPercent = maxSpend > 0 ? (campaign.spend / maxSpend) * 100 : 0;
-                const changePercent = Math.random() > 0.5
-                  ? (Math.random() * 30).toFixed(1)
-                  : (-Math.random() * 30).toFixed(1);
+                const changePercent = Math.random() > 0.5 ? (Math.random() * 30).toFixed(1) : (-Math.random() * 30).toFixed(1);
                 const isPositive = parseFloat(changePercent) >= 0;
 
                 return (
-                  <TableRow key={campaign.id} className="text-xs">
-                    <TableCell className="text-center text-muted-foreground font-medium">
+                  <TableRow key={campaign.id} className="text-[11px] border-slate-800/50 hover:bg-slate-800/30 transition-colors">
+                    <TableCell className="text-center text-slate-600 font-medium pb-3 pt-3">
                       {index + 1}.
                     </TableCell>
-                    <TableCell>
-                      <span className="font-medium text-sm truncate max-w-[200px] block">{campaign.name}</span>
+                    <TableCell className="pb-3 pt-3">
+                      <span className="font-bold text-slate-200 truncate max-w-[220px] block">{campaign.name}</span>
                     </TableCell>
-                    <TableCell>
-                      {getStatusBadge(campaign.status)}
+                    <TableCell className="text-center text-slate-400 pb-3 pt-3">
+                      Conjunto 0{Math.floor(Math.random() * 5) + 1}
                     </TableCell>
-                    <TableCell className="text-right font-semibold text-sm">
-                      {metricValue}
+                    <TableCell className="text-center text-slate-400 pb-3 pt-3">
+                      Relatório profissional
                     </TableCell>
-                    <TableCell className="text-right font-medium text-sm">
+                    <TableCell className="text-right font-bold text-blue-400 pb-3 pt-3">
                       {formatCurrency(campaign.spend)}
                     </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
-                          <div
-                            className="h-full rounded-full bg-gradient-to-r from-blue-500 to-cyan-400 transition-all duration-500"
-                            style={{ width: `${spendPercent}%` }}
-                          />
-                        </div>
-                        <span className={`text-[10px] font-medium min-w-[36px] text-right ${isPositive ? 'text-emerald-500' : 'text-red-500'}`}>
-                          {isPositive ? '+' : ''}{changePercent}%
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <Button variant="ghost" size="icon" className="h-7 w-7" asChild>
-                        <Link to={`/client/traffic/campaigns/${campaign.id}`}>
-                          <Eye className="h-3.5 w-3.5" />
-                        </Link>
-                      </Button>
+                    <TableCell className="text-right pb-3 pt-3">
+                      <span className={cn(
+                        "font-bold py-1 px-2 rounded-sm",
+                        isPositive ? "text-emerald-400 bg-emerald-500/10" : "text-red-400 bg-red-500/10"
+                      )}>
+                        {isPositive ? '+' : ''}{changePercent}%
+                      </span>
                     </TableCell>
                   </TableRow>
                 );
