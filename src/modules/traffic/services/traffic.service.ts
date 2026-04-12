@@ -12,8 +12,8 @@ export const trafficService = {
     return data;
   },
 
-  async getCampaigns(clientId: string) {
-    const { data, error } = await supabase
+  async getCampaigns(clientId: string, startDate?: string, endDate?: string) {
+    let query = supabase
       .from('traffic_campaigns')
       .select(`
         id,
@@ -29,10 +29,20 @@ export const trafficService = {
           roas,
           ctr,
           cpc,
-          raw_actions
+          raw_actions,
+          date
         )
       `)
       .eq('client_id', clientId);
+
+    if (startDate) {
+      query = query.gte('traffic_metrics.date', startDate);
+    }
+    if (endDate) {
+      query = query.lte('traffic_metrics.date', endDate);
+    }
+      
+    const { data, error } = await query;
       
     if (error) throw error;
     return data;

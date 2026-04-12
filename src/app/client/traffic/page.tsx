@@ -5,6 +5,7 @@ import { TrafficKpiCards } from '@/modules/traffic/components/TrafficKpiCards';
 import { SpendOverTimeChart } from '@/modules/traffic/components/SpendOverTimeChart';
 import { CampaignStatusSummary } from '@/modules/traffic/components/CampaignStatusSummary';
 import { BestAdPreview } from '@/modules/traffic/components/BestAdPreview';
+import { CampaignTable, type CampaignData } from '@/modules/traffic/components/CampaignTable';
 import type { DateRange } from 'react-day-picker';
 import { subDays, format } from 'date-fns';
 import { FileBarChart } from 'lucide-react';
@@ -37,6 +38,7 @@ export function ClientTrafficPage() {
   const [spendHistory, setSpendHistory] = useState<Array<{ date: string; spend: number }>>([]);
   const [statusCounts, setStatusCounts] = useState({ active: 0, paused: 0, ended: 0, draft: 0 });
   const [bestAds, setBestAds] = useState<Array<{ id: string; name: string; thumbnail_url: string; roas: number; ctr: number; spend: number }>>([]);
+  const [campaigns, setCampaigns] = useState<CampaignData[]>([]);
   const [lastSyncDate, setLastSyncDate] = useState<string | null>(null);
 
   useEffect(() => {
@@ -173,6 +175,44 @@ export function ClientTrafficPage() {
           })));
         }
 
+        // Fetch and process campaigns for the table
+        const campaignsRaw = await trafficService.getCampaigns(clientId, startDate, endDate);
+        if (campaignsRaw) {
+          const processedCampaigns: CampaignData[] = campaignsRaw.map(c => {
+            const metrics = c.traffic_metrics || [];
+            const totalSpend = metrics.reduce((acc, m) => acc + (m.spend || 0), 0);
+            const totalImpressions = metrics.reduce((acc, m) => acc + (m.impressions || 0), 0);
+            const totalClicks = metrics.reduce((acc, m) => acc + (m.clicks || 0), 0);
+            const avgRoas = metrics.length > 0 ? metrics.reduce((acc, m) => acc + (m.roas || 0), 0) / metrics.length : 0;
+
+            // Consolidate custom metrics (raw_actions)
+            const customMetrics: Record<string, number> = {};
+            metrics.forEach(m => {
+              if (m.raw_actions && Array.isArray(m.raw_actions)) {
+                m.raw_actions.forEach(action => {
+                  const type = action.action_type;
+                  const value = Number(action.value || 0);
+                  customMetrics[type] = (customMetrics[type] || 0) + value;
+                });
+              }
+            });
+
+            return {
+              id: c.id,
+              name: c.name,
+              platform: c.platform as any,
+              status: c.status as any,
+              budget_daily: c.budget_daily || 0,
+              spend: totalSpend,
+              impressions: totalImpressions,
+              clicks: totalClicks,
+              roas: avgRoas,
+              custom_metrics: customMetrics
+            };
+          });
+          setCampaigns(processedCampaigns);
+        }
+
       } catch (error) {
         console.error('Erro ao carregar dados de tráfego:', error);
         toast.error('Não foi possível carregar os dados de tráfego.');
@@ -250,6 +290,13 @@ export function ClientTrafficPage() {
           <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
             <SpendOverTimeChart data={spendHistory} />
             <BestAdPreview ads={bestAds} />
+          </div>
+
+          <div className="mt-8">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100">Campanhas e Métricas</h3>
+            </div>
+            <CampaignTable data={campaigns} />
           </div>
         </TabsContent>
       </Tabs>
