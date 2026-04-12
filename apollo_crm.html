@@ -1,0 +1,1164 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Apollo CRM</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0c0c0e;--sf:#141416;--sf2:#1c1c20;--sf3:#242428;
+  --bd:rgba(255,255,255,0.07);--bd2:rgba(255,255,255,0.13);
+  --tx:#f0eeea;--tx2:#8a887f;--tx3:#4a4845;
+  --ac:#e8b86d;--ac2:#c49040;
+  --gr:#4caf7d;--gr2:rgba(76,175,125,0.13);
+  --bl:#5b9cf6;--bl2:rgba(91,156,246,0.13);
+  --am:#f0a843;--am2:rgba(240,168,67,0.13);
+  --rd:#e05c5c;--rd2:rgba(224,92,92,0.13);
+  --pu:#a78bfa;--pu2:rgba(167,139,250,0.13);
+  --r:10px;--rs:6px;
+  --font:'DM Sans',sans-serif;--mono:'DM Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:var(--font);background:var(--bg);color:var(--tx);height:100vh;overflow:hidden;font-size:14px;line-height:1.5;}
+.app{display:flex;height:100vh;}
+/* SIDEBAR */
+.sb{width:224px;flex-shrink:0;background:var(--sf);border-right:1px solid var(--bd);display:flex;flex-direction:column;}
+.main{flex:1;overflow:hidden;display:flex;flex-direction:column;}
+.logo{padding:18px 20px 14px;border-bottom:1px solid var(--bd);}
+.logo-mark{font-size:11px;font-weight:600;letter-spacing:.14em;color:var(--ac);text-transform:uppercase;}
+.logo-name{font-size:15px;font-weight:600;color:var(--tx);margin-top:1px;}
+.nav{flex:1;padding:10px 8px;overflow-y:auto;}
+.ni{display:flex;align-items:center;gap:9px;padding:8px 11px;border-radius:var(--rs);cursor:pointer;color:var(--tx2);font-size:13px;font-weight:500;transition:all .13s;margin-bottom:1px;position:relative;}
+.ni:hover{background:var(--sf2);color:var(--tx);}
+.ni.active{background:var(--sf3);color:var(--tx);}
+.ni svg{opacity:.55;flex-shrink:0;width:14px;height:14px;}
+.ni.active svg{opacity:1;}
+.ns{font-size:10px;font-weight:600;letter-spacing:.1em;color:var(--tx3);text-transform:uppercase;padding:12px 12px 5px;}
+.ni-badge{position:absolute;right:10px;background:var(--rd);color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:99px;min-width:18px;text-align:center;}
+.sb-foot{padding:10px;border-top:1px solid var(--bd);}
+.mm{display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:var(--sf2);border-radius:var(--rs);margin-bottom:5px;}
+.mm-l{font-size:11px;color:var(--tx2);}
+.mm-v{font-size:13px;font-weight:600;color:var(--ac);font-family:var(--mono);}
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:var(--rs);font-size:13px;font-weight:500;cursor:pointer;border:none;transition:all .13s;font-family:var(--font);}
+.bp{background:var(--ac);color:#000;}.bp:hover{background:var(--ac2);}
+.bg{background:transparent;color:var(--tx2);border:1px solid var(--bd2);}.bg:hover{background:var(--sf3);color:var(--tx);}
+.brd{background:var(--rd2);color:var(--rd);border:1px solid rgba(224,92,92,.2);}.brd:hover{background:rgba(224,92,92,.22);}
+.bsm{padding:4px 10px;font-size:11px;}
+/* VIEWS */
+.view{display:none;flex:1;overflow:hidden;flex-direction:column;}
+.view.active{display:flex;}
+.view-scroll{flex:1;overflow:auto;padding:20px 24px;}
+/* TOPBAR */
+.tb{display:flex;align-items:center;gap:10px;padding:12px 22px;border-bottom:1px solid var(--bd);background:var(--sf);flex-shrink:0;}
+.tb-title{font-size:15px;font-weight:600;flex:1;}
+/* STATS BAR */
+.sbar{display:flex;gap:1px;background:var(--bd);border-bottom:1px solid var(--bd);flex-shrink:0;}
+.sbox{flex:1;background:var(--sf);padding:12px 16px;}
+.sbox-l{font-size:10px;color:var(--tx2);margin-bottom:3px;font-weight:500;letter-spacing:.03em;}
+.sbox-v{font-size:19px;font-weight:600;font-family:var(--mono);}
+.sbox-s{font-size:10px;color:var(--tx3);margin-top:1px;}
+.cg{color:var(--gr);}.ca{color:var(--am);}.cc{color:var(--ac);}.cr{color:var(--rd);}
+/* KANBAN */
+.kw{flex:1;overflow-x:auto;padding:18px 22px;}
+.kb{display:flex;gap:14px;min-width:max-content;align-items:flex-start;}
+.col{width:268px;flex-shrink:0;}
+.ch{display:flex;align-items:center;gap:7px;margin-bottom:10px;}
+.cdot{width:7px;height:7px;border-radius:50%;}
+.ct{font-size:12px;font-weight:600;flex:1;}
+.ccount{font-size:11px;font-weight:600;padding:2px 7px;border-radius:99px;background:var(--sf3);color:var(--tx2);font-family:var(--mono);}
+.cb{display:flex;flex-direction:column;gap:7px;min-height:60px;}
+/* LEAD CARD */
+.lc{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:12px;cursor:pointer;transition:all .13s;position:relative;}
+.lc:hover{border-color:var(--bd2);background:var(--sf2);transform:translateY(-1px);}
+.lc.alert-stale{border-left:3px solid var(--am);}
+.lc.alert-late{border-left:3px solid var(--rd);}
+.lc-name{font-size:13px;font-weight:600;margin-bottom:2px;padding-right:20px;}
+.lc-co{font-size:11px;color:var(--tx2);margin-bottom:8px;}
+.lc-foot{display:flex;align-items:center;gap:7px;}
+.tag{font-size:10px;padding:2px 7px;border-radius:99px;font-weight:500;}
+.th{background:var(--rd2);color:var(--rd);}
+.tw{background:var(--am2);color:var(--am);}
+.tc{background:var(--bl2);color:var(--bl);}
+.lc-val{font-size:11px;font-family:var(--mono);color:var(--ac);font-weight:500;margin-left:auto;}
+.lc-bot{font-size:10px;color:var(--tx3);margin-top:6px;display:flex;justify-content:space-between;align-items:center;}
+.lc-followup{font-size:10px;padding:1px 7px;border-radius:99px;background:var(--gr2);color:var(--gr);}
+.lc-followup.late{background:var(--rd2);color:var(--rd);}
+.lc-followup.today{background:var(--am2);color:var(--am);}
+.lc-pin{position:absolute;top:10px;right:10px;font-size:10px;opacity:.5;}
+.ec{background:var(--sf2);border:1px dashed var(--bd2);border-radius:var(--r);padding:16px;text-align:center;color:var(--tx3);font-size:12px;}
+/* TABLE */
+select.fl{background:var(--sf2);border:1px solid var(--bd);border-radius:var(--rs);padding:7px 11px;color:var(--tx2);font-size:12px;outline:none;font-family:var(--font);cursor:pointer;}
+select.fl option{background:var(--sf2);}
+.sr{display:flex;align-items:center;gap:7px;background:var(--sf2);border:1px solid var(--bd);border-radius:var(--rs);padding:7px 11px;flex:1;min-width:160px;max-width:260px;}
+.sr input{background:transparent;border:none;outline:none;color:var(--tx);font-size:13px;width:100%;font-family:var(--font);}
+.sr input::placeholder{color:var(--tx3);}
+table{width:100%;border-collapse:collapse;}
+th{text-align:left;font-size:10px;font-weight:600;color:var(--tx3);padding:9px 13px;border-bottom:1px solid var(--bd);text-transform:uppercase;letter-spacing:.07em;white-space:nowrap;}
+td{padding:10px 13px;border-bottom:1px solid var(--bd);font-size:12px;vertical-align:middle;}
+tr:hover td{background:var(--sf2);cursor:pointer;}
+.sp{display:inline-flex;padding:2px 9px;border-radius:99px;font-size:10px;font-weight:600;}
+/* MODAL */
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;display:none;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px);}
+.ov.open{display:flex;}
+.modal{background:var(--sf);border:1px solid var(--bd2);border-radius:14px;width:100%;max-width:600px;max-height:92vh;overflow-y:auto;}
+.mh{display:flex;align-items:center;gap:12px;padding:18px 22px 14px;border-bottom:1px solid var(--bd);position:sticky;top:0;background:var(--sf);z-index:1;border-radius:14px 14px 0 0;}
+.mh h2{flex:1;font-size:15px;font-weight:600;}
+.mb{padding:18px 22px;}
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.fi{display:flex;flex-direction:column;gap:5px;}
+.fi.s2{grid-column:span 2;}
+label{font-size:11px;font-weight:500;color:var(--tx2);letter-spacing:.03em;}
+input,select,textarea{background:var(--sf2);border:1px solid var(--bd);border-radius:var(--rs);padding:8px 11px;color:var(--tx);font-size:13px;outline:none;font-family:var(--font);width:100%;transition:border .13s;}
+input:focus,select:focus,textarea:focus{border-color:var(--ac);}
+select option{background:var(--sf2);}
+textarea{resize:vertical;min-height:72px;}
+.mf{padding:14px 22px;border-top:1px solid var(--bd);display:flex;gap:8px;justify-content:flex-end;}
+/* DETAIL */
+.ds{margin-bottom:18px;}
+.dl{font-size:10px;font-weight:600;color:var(--tx3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:7px;}
+.dg{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.di{background:var(--sf2);border-radius:var(--rs);padding:9px 11px;}
+.dil{font-size:10px;color:var(--tx2);margin-bottom:2px;}
+.div2{font-size:13px;font-weight:500;}
+.tl{display:flex;flex-direction:column;}
+.tli{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid var(--bd);}
+.tli:last-child{border-bottom:none;}
+.tld{width:7px;height:7px;border-radius:50%;background:var(--ac);margin-top:5px;flex-shrink:0;}
+.tlc{flex:1;}
+.tlt{font-size:12px;}
+.tls{font-size:10px;color:var(--tx3);margin-top:1px;}
+.act-in{display:flex;gap:7px;margin-top:10px;}
+.act-in input{flex:1;}
+.ss{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:12px;}
+.sstep{flex:1;min-width:55px;padding:5px 3px;text-align:center;font-size:9px;font-weight:600;border-radius:var(--rs);cursor:pointer;border:1px solid transparent;transition:all .13s;color:var(--tx3);background:var(--sf2);}
+.sstep.s-active{border-color:var(--ac);color:var(--ac);background:rgba(232,184,109,.1);}
+.sstep.s-done{color:var(--gr);background:var(--gr2);}
+/* RANKING */
+.rk-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;}
+.rk-card{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);overflow:hidden;}
+.rk-head{display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid var(--bd);}
+.rk-title{font-size:13px;font-weight:600;flex:1;}
+.rk-table{width:100%;border-collapse:collapse;}
+.rk-table td{padding:9px 14px;border-bottom:1px solid var(--bd);font-size:12px;vertical-align:middle;}
+.rk-table tr:last-child td{border-bottom:none;}
+.rb{height:3px;background:var(--sf3);border-radius:2px;margin-top:3px;}
+.rbf{height:100%;border-radius:2px;background:var(--ac);}
+/* METAS */
+.vrow{display:flex;align-items:center;gap:10px;padding:11px 13px;background:var(--sf2);border-radius:var(--rs);margin-bottom:7px;border:1px solid var(--bd);}
+.vav{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;}
+.vinfo{flex:1;}
+.vname{font-size:13px;font-weight:600;}
+.vsub{font-size:11px;color:var(--tx2);}
+.vprog{height:4px;background:var(--sf3);border-radius:2px;overflow:hidden;margin-top:5px;}
+.vprogb{height:100%;border-radius:2px;background:var(--ac);transition:width .4s;}
+.vval{text-align:right;}
+.vval-n{font-size:13px;font-family:var(--mono);font-weight:600;color:var(--ac);}
+.vval-s{font-size:10px;color:var(--tx3);}
+.bbadge{font-size:10px;padding:1px 7px;border-radius:99px;background:var(--am2);color:var(--am);font-weight:600;}
+/* ALERTAS */
+.alert-box{display:flex;align-items:flex-start;gap:10px;padding:11px 14px;border-radius:var(--rs);margin-bottom:8px;border:1px solid;}
+.alert-rd{background:var(--rd2);border-color:rgba(224,92,92,.25);}
+.alert-am{background:var(--am2);border-color:rgba(240,168,67,.25);}
+.alert-gr{background:var(--gr2);border-color:rgba(76,175,125,.25);}
+.alert-bl{background:var(--bl2);border-color:rgba(91,156,246,.25);}
+.alert-icon{font-size:16px;flex-shrink:0;margin-top:1px;}
+.alert-text{font-size:12px;flex:1;}
+.alert-title{font-weight:600;margin-bottom:2px;}
+/* CONFIG */
+.cfg-sec{margin-bottom:22px;}
+.cfg-sec-title{font-size:13px;font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:7px;color:var(--tx);}
+.cfg-sec-title svg{opacity:.5;}
+.colab-item{display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--sf2);border-radius:var(--rs);border:1px solid var(--bd);margin-bottom:7px;}
+.cav{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;}
+.cinfo{flex:1;}
+.cname{font-size:13px;font-weight:600;}
+.ccargo{font-size:11px;color:var(--tx2);}
+.cfg-row{display:flex;align-items:center;gap:12px;padding:10px 13px;background:var(--sf2);border-radius:var(--rs);border:1px solid var(--bd);margin-bottom:7px;}
+.cfg-row-info{flex:1;}
+.cfg-row-label{font-size:13px;}
+.cfg-row-sub{font-size:11px;color:var(--tx2);margin-top:2px;}
+.cfg-row input{width:130px;}
+.add-row{display:flex;gap:8px;margin-top:2px;}
+.add-row .fi{flex:1;}
+/* ANALYTICS */
+.an-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px;}
+.an-card{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:14px;}
+.an-title{font-size:11px;color:var(--tx2);margin-bottom:10px;font-weight:500;}
+.an-bar-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+.an-bar-label{font-size:11px;color:var(--tx2);width:80px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.an-bar{flex:1;height:5px;background:var(--sf3);border-radius:3px;overflow:hidden;}
+.an-bar-fill{height:100%;border-radius:3px;}
+.an-bar-val{font-size:11px;font-family:var(--mono);color:var(--tx2);width:24px;text-align:right;flex-shrink:0;}
+/* AVATAR COLORS */
+.av0{background:rgba(91,156,246,.18);color:var(--bl);}
+.av1{background:rgba(76,175,125,.18);color:var(--gr);}
+.av2{background:rgba(240,168,67,.18);color:var(--am);}
+.av3{background:rgba(167,139,250,.18);color:var(--pu);}
+.av4{background:rgba(224,92,92,.18);color:var(--rd);}
+.av5{background:rgba(232,184,109,.18);color:var(--ac);}
+/* SEGUIR UP TAG */
+.fu-tag{display:inline-flex;align-items:center;gap:4px;font-size:10px;padding:2px 7px;border-radius:99px;font-weight:500;}
+/* RITMO */
+.ritmo-box{background:var(--sf2);border-radius:var(--rs);padding:11px 13px;margin-top:8px;border:1px solid var(--bd);}
+.ritmo-title{font-size:11px;color:var(--tx2);margin-bottom:4px;}
+.ritmo-val{font-size:14px;font-weight:600;}
+/* SAVED */
+#cfg-saved{display:none;color:var(--gr);font-size:12px;text-align:center;padding:8px;}
+/* SCROLLBAR */
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--sf3);border-radius:3px;}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- SIDEBAR -->
+<div class="sb">
+  <div class="logo">
+    <div class="logo-mark">Apollo</div>
+    <div class="logo-name" id="logo-name">CRM</div>
+  </div>
+  <nav class="nav">
+    <div class="ns">Operações</div>
+    <div class="ni active" onclick="setView('kanban',this)">
+      <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="18" rx="1"/><rect x="14" y="3" width="7" height="11" rx="1"/><rect x="14" y="18" width="7" height="3" rx="1"/></svg>
+      <span>Pipeline</span>
+    </div>
+    <div class="ni" onclick="setView('tabela',this)">
+      <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+      <span>Todos os leads</span>
+    </div>
+    <div class="ni" onclick="setView('alertas',this)" id="nav-alertas">
+      <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      <span>Alertas</span>
+      <span class="ni-badge" id="alertas-badge" style="display:none">0</span>
+    </div>
+    <div class="ns">Equipe</div>
+    <div class="ni" onclick="setView('ranking',this)">
+      <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+      <span>Ranking</span>
+    </div>
+    <div class="ni" onclick="setView('metas',this)">
+      <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><line x1="12" y1="3" x2="12" y2="7"/></svg>
+      <span>Metas</span>
+    </div>
+    <div class="ni" onclick="setView('analytics',this)">
+      <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      <span>Analytics</span>
+    </div>
+    <div class="ns">Sistema</div>
+    <div class="ni" onclick="setView('config',this)">
+      <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      <span>Configurações</span>
+    </div>
+  </nav>
+  <div class="sb-foot">
+    <div class="mm"><span class="mm-l">Receita mês</span><span class="mm-v" id="sb-rec">R$0</span></div>
+    <div class="mm"><span class="mm-l">Fechamentos</span><span class="mm-v" id="sb-fech">0</span></div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+<!-- ===== KANBAN ===== -->
+<div id="view-kanban" class="view active">
+  <div class="sbar" id="sbar"></div>
+  <div class="tb">
+    <span class="tb-title">Pipeline de Vendas</span>
+    <select class="fl" id="kfv" onchange="renderKanban()"><option value="">Todos os vendedores</option></select>
+    <button class="btn bp" onclick="openNewLead()">+ Novo Lead</button>
+  </div>
+  <div class="kw"><div class="kb" id="kb"></div></div>
+</div>
+
+<!-- ===== TABELA ===== -->
+<div id="view-tabela" class="view">
+  <div class="tb">
+    <span class="tb-title">Todos os Leads</span>
+    <button class="btn bp" onclick="openNewLead()">+ Novo Lead</button>
+  </div>
+  <div class="view-scroll">
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">
+      <div class="sr"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input id="t-search" placeholder="Buscar..." oninput="renderTabela()"></div>
+      <select class="fl" id="t-stage" onchange="renderTabela()"><option value="">Todas as etapas</option></select>
+      <select class="fl" id="t-vend" onchange="renderTabela()"><option value="">Todos</option></select>
+      <select class="fl" id="t-temp" onchange="renderTabela()"><option value="">Todos os perfis</option><option value="hot">Quente</option><option value="warm">Morno</option><option value="cold">Frio</option></select>
+      <select class="fl" id="t-orig" onchange="renderTabela()"><option value="">Todas as origens</option><option value="instagram">Instagram</option><option value="indicacao">Indicação</option><option value="trafego">Tráfego pago</option><option value="outbound">Outbound</option><option value="outro">Outro</option></select>
+    </div>
+    <table>
+      <thead><tr><th>Lead</th><th>Empresa</th><th>Etapa</th><th>Perfil</th><th>Vendedor</th><th>Próx. Contato</th><th>Parado</th><th>Entrada</th><th></th></tr></thead>
+      <tbody id="t-body"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ===== ALERTAS ===== -->
+<div id="view-alertas" class="view">
+  <div class="tb"><span class="tb-title">Central de Alertas</span></div>
+  <div class="view-scroll" id="alertas-body"></div>
+</div>
+
+<!-- ===== RANKING ===== -->
+<div id="view-ranking" class="view">
+  <div class="tb">
+    <span class="tb-title">Ranking da Equipe</span>
+  </div>
+  <div class="view-scroll">
+    <div class="rk-grid" id="rk-grid"></div>
+    <div id="rk-detail"></div>
+  </div>
+</div>
+
+<!-- ===== METAS ===== -->
+<div id="view-metas" class="view">
+  <div class="tb"><span class="tb-title">Metas — Mês Atual</span></div>
+  <div class="view-scroll">
+    <div id="metas-body"></div>
+    <div style="background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:14px 18px;margin-top:14px;">
+      <div class="dl">Programa de Bonificação</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:8px;" id="bonus-cards"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ANALYTICS ===== -->
+<div id="view-analytics" class="view">
+  <div class="tb"><span class="tb-title">Analytics</span></div>
+  <div class="view-scroll" id="analytics-body"></div>
+</div>
+
+<!-- ===== CONFIG ===== -->
+<div id="view-config" class="view">
+  <div class="tb">
+    <span class="tb-title">Configurações</span>
+    <button class="btn bp" onclick="saveConfig()">Salvar alterações</button>
+  </div>
+  <div class="view-scroll">
+    <!-- Colaboradores -->
+    <div class="cfg-sec">
+      <div class="cfg-sec-title">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Equipe Comercial
+      </div>
+      <div id="colab-list"></div>
+      <div class="add-row">
+        <div class="fi"><label>Nome</label><input id="nc-nome" placeholder="Ex: João"></div>
+        <div class="fi"><label>Cargo</label><input id="nc-cargo" placeholder="Ex: Closer"></div>
+        <div style="align-self:flex-end;"><button class="btn bp" onclick="addColab()">+ Adicionar</button></div>
+      </div>
+    </div>
+    <!-- Financeiro -->
+    <div class="cfg-sec">
+      <div class="cfg-sec-title">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        Parâmetros Financeiros
+      </div>
+      <div class="cfg-row"><div class="cfg-row-info"><div class="cfg-row-label">Ticket do produto (R$)</div><div class="cfg-row-sub">Valor por contrato fechado</div></div><input type="number" id="cfg-ticket" min="1"></div>
+      <div class="cfg-row"><div class="cfg-row-info"><div class="cfg-row-label">Comissão por venda (%)</div><div class="cfg-row-sub">Percentual sobre o ticket</div></div><input type="number" id="cfg-com" min="1" max="100"></div>
+      <div class="cfg-row"><div class="cfg-row-info"><div class="cfg-row-label">Salário fixo (R$)</div><div class="cfg-row-sub">Base mensal do comercial</div></div><input type="number" id="cfg-fixo" min="0"></div>
+    </div>
+    <!-- Metas e alertas -->
+    <div class="cfg-sec">
+      <div class="cfg-sec-title">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        Metas e Alertas
+      </div>
+      <div class="cfg-row"><div class="cfg-row-info"><div class="cfg-row-label">Meta mensal (vendas)</div></div><input type="number" id="cfg-meta" min="1"></div>
+      <div class="cfg-row"><div class="cfg-row-info"><div class="cfg-row-label">📱 iPhone — vendas para ganhar</div><div class="cfg-row-sub">Por 2 meses seguidos</div></div><input type="number" id="cfg-bi" min="1"></div>
+      <div class="cfg-row"><div class="cfg-row-info"><div class="cfg-row-label">💻 MacBook — vendas no mês</div></div><input type="number" id="cfg-bm" min="1"></div>
+      <div class="cfg-row"><div class="cfg-row-info"><div class="cfg-row-label">✈️ Viagem — vendas no mês</div></div><input type="number" id="cfg-bv" min="1"></div>
+      <div class="cfg-row"><div class="cfg-row-info"><div class="cfg-row-label">Alerta lead parado (dias)</div><div class="cfg-row-sub">Amarelo: lead sem movimento</div></div><input type="number" id="cfg-stale" min="1"></div>
+      <div class="cfg-row"><div class="cfg-row-info"><div class="cfg-row-label">Alerta lead crítico (dias)</div><div class="cfg-row-sub">Vermelho: abandono provável</div></div><input type="number" id="cfg-late" min="1"></div>
+      <div class="cfg-row"><div class="cfg-row-info"><div class="cfg-row-label">Alerta vendedor sem vender (dias)</div><div class="cfg-row-sub">Dias sem fechamento para disparar alerta</div></div><input type="number" id="cfg-vsem" min="1"></div>
+    </div>
+    <!-- Empresa -->
+    <div class="cfg-sec">
+      <div class="cfg-sec-title">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+        Empresa
+      </div>
+      <div class="cfg-row"><div class="cfg-row-info"><div class="cfg-row-label">Nome da empresa</div></div><input type="text" id="cfg-empresa" placeholder="Grupo Apollo"></div>
+    </div>
+    <div id="cfg-saved">✓ Configurações salvas</div>
+  </div>
+</div>
+
+</div><!-- /main -->
+</div><!-- /app -->
+
+<!-- MODAL: Novo/Editar Lead -->
+<div class="ov" id="modal-lead">
+  <div class="modal">
+    <div class="mh"><h2 id="ml-title">Novo Lead</h2><button class="btn bg" style="padding:5px 9px" onclick="closeModal('modal-lead')">✕</button></div>
+    <div class="mb">
+      <div class="fg">
+        <div class="fi"><label>Nome completo *</label><input id="f-nome" placeholder="João Silva"></div>
+        <div class="fi"><label>Empresa</label><input id="f-empresa" placeholder="Empresa Ltda"></div>
+        <div class="fi"><label>WhatsApp</label><input id="f-wa" placeholder="(67) 99999-0000"></div>
+        <div class="fi"><label>E-mail</label><input id="f-email" type="email" placeholder="joao@empresa.com"></div>
+        <div class="fi"><label>Etapa</label><select id="f-stage"></select></div>
+        <div class="fi"><label>Perfil</label>
+          <select id="f-temp"><option value="hot">🔥 Quente</option><option value="warm">☀️ Morno</option><option value="cold">❄️ Frio</option></select>
+        </div>
+        <div class="fi"><label>Vendedor</label><select id="f-vend"></select></div>
+        <div class="fi"><label>Origem</label>
+          <select id="f-orig"><option value="instagram">Instagram</option><option value="indicacao">Indicação</option><option value="trafego">Tráfego pago</option><option value="outbound">Outbound</option><option value="outro">Outro</option></select>
+        </div>
+        <div class="fi"><label>Próximo contato (data)</label><input id="f-followup" type="date"></div>
+        <div class="fi"><label>Prioridade</label>
+          <select id="f-prio"><option value="normal">Normal</option><option value="alta">Alta</option><option value="urgente">Urgente</option></select>
+        </div>
+        <div class="fi s2"><label>Observações</label><textarea id="f-obs" placeholder="Contexto, objeções, próximos passos..."></textarea></div>
+      </div>
+    </div>
+    <div class="mf">
+      <button class="btn bg" onclick="closeModal('modal-lead')">Cancelar</button>
+      <button class="btn brd" id="btn-del" onclick="deleteLead()" style="display:none">Excluir</button>
+      <button class="btn bp" onclick="saveLead()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Detalhe -->
+<div class="ov" id="modal-det">
+  <div class="modal" style="max-width:640px">
+    <div class="mh">
+      <div style="flex:1"><div style="font-size:10px;color:var(--tx3);margin-bottom:1px" id="det-co"></div><h2 id="det-nome">—</h2></div>
+      <div id="det-prio-badge" style="margin-right:8px"></div>
+      <button class="btn bg" style="padding:5px 9px" onclick="closeModal('modal-det')">✕</button>
+    </div>
+    <div class="mb">
+      <div class="ds"><div class="dl">Etapa atual</div><div class="ss" id="det-stages"></div></div>
+      <div class="ds"><div class="dl">Informações</div><div class="dg" id="det-info"></div></div>
+      <div class="ds">
+        <div class="dl">Histórico de atividades</div>
+        <div class="tl" id="det-tl"></div>
+        <div class="act-in">
+          <input id="act-txt" placeholder="Registrar atividade (ligação, proposta, reunião...)" onkeydown="if(event.key==='Enter')addActivity()">
+          <button class="btn bp" onclick="addActivity()">+</button>
+        </div>
+      </div>
+    </div>
+    <div class="mf">
+      <button class="btn bg" onclick="editFromDet()">Editar dados</button>
+      <button class="btn bp" onclick="closeModal('modal-det')">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===================== STAGES =====================
+const STAGES=[
+  {id:'prospeccao',label:'Prospecção',color:'#5b9cf6'},
+  {id:'qualificacao',label:'Qualificação',color:'#a78bfa'},
+  {id:'apresentacao',label:'Apresentação',color:'#f0a843'},
+  {id:'proposta',label:'Proposta',color:'#e8b86d'},
+  {id:'negociacao',label:'Negociação',color:'#ff8c42'},
+  {id:'fechado',label:'Fechado ✓',color:'#4caf7d'},
+  {id:'perdido',label:'Perdido ✗',color:'#e05c5c'},
+];
+
+// ===================== DEFAULT CONFIG =====================
+const DCFG={
+  empresa:'Grupo Apollo',ticket:12997,com:20,fixo:1500,meta:3,
+  bi:3,bm:6,bv:10,stale:7,late:14,vsem:15,
+  colabs:[
+    {nome:'Lucas',cargo:'Closer'},{nome:'Carla',cargo:'Closer'},
+    {nome:'Rafael',cargo:'Closer'},{nome:'Ana',cargo:'Closer'}
+  ]
+};
+
+// ===================== STATE =====================
+let leads=JSON.parse(localStorage.getItem('acrm_leads')||'[]');
+let cfg=JSON.parse(localStorage.getItem('acrm_cfg')||'null')||JSON.parse(JSON.stringify(DCFG));
+let editId=null,detId=null;
+
+const SL=()=>localStorage.setItem('acrm_leads',JSON.stringify(leads));
+const SC=()=>localStorage.setItem('acrm_cfg',JSON.stringify(cfg));
+const nid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+const today=()=>new Date().toLocaleDateString('pt-BR');
+const todayISO=()=>new Date().toISOString().slice(0,10);
+const fmt=v=>'R$ '+Math.round(v).toLocaleString('pt-BR');
+const vends=()=>cfg.colabs.map(c=>c.nome);
+const inits=n=>n.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+const avCls=i=>'av'+(i%6);
+const stageInfo=id=>STAGES.find(s=>s.id===id)||STAGES[0];
+
+function daysSince(dateStr){
+  if(!dateStr) return 0;
+  // handle dd/mm/yyyy
+  const p=dateStr.split('/');
+  let d;
+  if(p.length===3) d=new Date(p[2],p[1]-1,p[0]);
+  else d=new Date(dateStr);
+  if(isNaN(d)) return 0;
+  return Math.max(0,Math.floor((Date.now()-d)/86400000));
+}
+
+function daysUntil(isoDate){
+  if(!isoDate) return null;
+  const d=new Date(isoDate);
+  if(isNaN(d)) return null;
+  const now=new Date(); now.setHours(0,0,0,0);
+  return Math.floor((d-now)/86400000);
+}
+
+function lastActivity(lead){
+  const acts=lead.activities||[];
+  if(!acts.length) return daysSince(lead.createdAt);
+  const last=acts[acts.length-1];
+  return daysSince(last.date);
+}
+
+function lastSale(vendedor){
+  const fech=leads.filter(l=>l.vendedor===vendedor&&l.stage==='fechado');
+  if(!fech.length) return null;
+  // find most recent by createdAt
+  let maxD=0;
+  fech.forEach(l=>{
+    const d=daysSince(l.createdAt);
+    if(d<maxD||maxD===0) maxD=d===0?0:d;
+  });
+  // actually find minimum daysSince (most recent)
+  let min=9999;
+  fech.forEach(l=>{ const d=daysSince(l.createdAt); if(d<min) min=d; });
+  return min;
+}
+
+// ===================== SEED =====================
+(function seed(){
+  if(leads.length) return;
+  const v=vends();
+  const s=[
+    {n:'Marina Costa',e:'Costa Mkt',st:'apresentacao',t:'hot',o:'instagram',fu:''},
+    {n:'Paulo Drummond',e:'Drummond Soluções',st:'proposta',t:'hot',o:'indicacao',fu:''},
+    {n:'Fernanda Lima',e:'Lima Group',st:'qualificacao',t:'warm',o:'trafego',fu:''},
+    {n:'Ricardo Alves',e:'Alves & Filhos',st:'prospeccao',t:'cold',o:'outbound',fu:''},
+    {n:'Juliana Mendes',e:'Mendes Tech',st:'negociacao',t:'hot',o:'instagram',fu:''},
+    {n:'Bruno Rocha',e:'Rocha Adv',st:'fechado',t:'hot',o:'indicacao',fu:''},
+    {n:'Camila Santos',e:'Santos Ind',st:'fechado',t:'warm',o:'trafego',fu:''},
+    {n:'Thiago Neves',e:'Neves Corp',st:'perdido',t:'cold',o:'outbound',fu:''},
+    {n:'Larissa Pereira',e:'Pereira Saúde',st:'qualificacao',t:'warm',o:'instagram',fu:''},
+    {n:'Diego Fonseca',e:'Fonseca Digital',st:'proposta',t:'hot',o:'indicacao',fu:''},
+  ];
+  s.forEach((d,i)=>{
+    leads.push({id:nid(),nome:d.n,empresa:d.e,whatsapp:'(67) 9'+Math.floor(8e3+Math.random()*999)+'-'+Math.floor(1e3+Math.random()*8999),
+      email:d.n.split(' ')[0].toLowerCase()+'@empresa.com',stage:d.st,temp:d.t,
+      vendedor:v[i%v.length],origem:d.o,obs:'',followup:'',prio:'normal',
+      activities:[{text:'Lead adicionado ao CRM',date:today()}],createdAt:today()});
+  });
+  SL();
+})();
+
+// ===================== HELPERS =====================
+function tempTag(t){
+  return {hot:['🔥 Quente','th'],warm:['☀️ Morno','tw'],cold:['❄️ Frio','tc']}[t]||['❄️ Frio','tc'];
+}
+function prioBadge(p){
+  if(p==='urgente') return `<span style="background:var(--rd2);color:var(--rd);font-size:10px;padding:2px 8px;border-radius:99px;font-weight:600">⚡ Urgente</span>`;
+  if(p==='alta') return `<span style="background:var(--am2);color:var(--am);font-size:10px;padding:2px 8px;border-radius:99px;font-weight:600">↑ Alta</span>`;
+  return '';
+}
+function followupLabel(isoDate){
+  if(!isoDate) return '';
+  const d=daysUntil(isoDate);
+  if(d===null) return '';
+  if(d<0) return `<span class="lc-followup late">⚠ Atrasado ${Math.abs(d)}d</span>`;
+  if(d===0) return `<span class="lc-followup today">📞 Hoje</span>`;
+  if(d<=3) return `<span class="lc-followup">${d}d</span>`;
+  return `<span style="font-size:10px;color:var(--tx3)">${d}d</span>`;
+}
+function daysLabel(n){
+  if(n>=cfg.late) return `<span style="color:var(--rd);font-weight:600">${n}d ⚠</span>`;
+  if(n>=cfg.stale) return `<span style="color:var(--am)">${n}d</span>`;
+  return `<span style="color:var(--tx3)">${n}d</span>`;
+}
+
+// ===================== SELECTS =====================
+function initSelects(){
+  const v=vends();
+  ['kfv','t-vend'].forEach(id=>{
+    const el=document.getElementById(id); if(!el) return;
+    const cur=el.value;
+    el.innerHTML='<option value="">Todos</option>'+v.map(x=>`<option value="${x}">${x}</option>`).join('');
+    el.value=cur;
+  });
+  const fv=document.getElementById('f-vend');
+  if(fv) fv.innerHTML=v.map(x=>`<option value="${x}">${x}</option>`).join('');
+  const fs=document.getElementById('f-stage');
+  if(fs) fs.innerHTML=STAGES.map(s=>`<option value="${s.id}">${s.label}</option>`).join('');
+  const ts=document.getElementById('t-stage');
+  if(ts) ts.innerHTML='<option value="">Todas as etapas</option>'+STAGES.map(s=>`<option value="${s.id}">${s.label}</option>`).join('');
+  document.getElementById('logo-name').textContent=cfg.empresa||'CRM';
+}
+
+// ===================== STATS BAR =====================
+function updateStats(){
+  const fech=leads.filter(l=>l.stage==='fechado');
+  const rec=fech.length*cfg.ticket;
+  const ativos=leads.filter(l=>!['fechado','perdido'].includes(l.stage));
+  const pot=ativos.length*cfg.ticket;
+  document.getElementById('sb-rec').textContent=fmt(rec);
+  document.getElementById('sb-fech').textContent=fech.length;
+  document.getElementById('sbar').innerHTML=`
+    <div class="sbox"><div class="sbox-l">Total de Leads</div><div class="sbox-v">${leads.length}</div><div class="sbox-s">no pipeline</div></div>
+    <div class="sbox"><div class="sbox-l">Em Andamento</div><div class="sbox-v ca">${ativos.length}</div><div class="sbox-s">oportunidades</div></div>
+    <div class="sbox"><div class="sbox-l">Fechamentos</div><div class="sbox-v cg">${fech.length}</div><div class="sbox-s">${fmt(rec)}</div></div>
+    <div class="sbox"><div class="sbox-l">Potencial</div><div class="sbox-v cc">${fmt(pot)}</div><div class="sbox-s">${ativos.length} ativos</div></div>
+    <div class="sbox"><div class="sbox-l">Ticket</div><div class="sbox-v">${fmt(cfg.ticket)}</div><div class="sbox-s">por contrato</div></div>
+  `;
+}
+
+// ===================== ALERTAS =====================
+function computeAlertas(){
+  const alerts=[];
+  // Leads parados
+  leads.filter(l=>!['fechado','perdido'].includes(l.stage)).forEach(l=>{
+    const d=lastActivity(l);
+    if(d>=cfg.late) alerts.push({type:'rd',icon:'🔴',title:`Lead crítico: ${l.nome}`,text:`${d} dias sem nenhuma atividade. Risco alto de perda.`,lid:l.id});
+    else if(d>=cfg.stale) alerts.push({type:'am',icon:'🟡',title:`Lead parado: ${l.nome}`,text:`${d} dias sem movimentação. Vendedor: ${l.vendedor}.`,lid:l.id});
+  });
+  // Follow-ups atrasados
+  leads.filter(l=>l.followup&&!['fechado','perdido'].includes(l.stage)).forEach(l=>{
+    const d=daysUntil(l.followup);
+    if(d!==null&&d<0) alerts.push({type:'rd',icon:'📞',title:`Follow-up atrasado: ${l.nome}`,text:`Contato deveria ter sido feito há ${Math.abs(d)} dia(s). Responsável: ${l.vendedor}.`,lid:l.id});
+    else if(d===0) alerts.push({type:'am',icon:'📞',title:`Follow-up hoje: ${l.nome}`,text:`Contato agendado para hoje. Responsável: ${l.vendedor}.`,lid:l.id});
+  });
+  // Vendedores sem vender
+  vends().forEach(v=>{
+    const ms=lastSale(v);
+    if(ms===null) alerts.push({type:'am',icon:'⚡',title:`${v} ainda não fechou nenhuma venda`,text:`Nenhum fechamento registrado. Verifique o funil deste vendedor.`});
+    else if(ms>=cfg.vsem) alerts.push({type:'rd',icon:'🚨',title:`${v} sem fechar há ${ms} dias`,text:`Último fechamento foi há ${ms} dias. Meta de alerta: ${cfg.vsem} dias. Atenção imediata necessária.`});
+  });
+  // Leads urgentes
+  leads.filter(l=>l.prio==='urgente'&&!['fechado','perdido'].includes(l.stage)).forEach(l=>{
+    alerts.push({type:'bl',icon:'⚡',title:`Urgente: ${l.nome}`,text:`Lead marcado como urgente na etapa ${stageInfo(l.stage).label}. Vendedor: ${l.vendedor}.`,lid:l.id});
+  });
+  return alerts;
+}
+
+function renderAlertas(){
+  const alerts=computeAlertas();
+  const badge=document.getElementById('alertas-badge');
+  const crit=alerts.filter(a=>a.type==='rd').length;
+  if(alerts.length>0){badge.style.display='';badge.textContent=alerts.length;}
+  else{badge.style.display='none';}
+  const body=document.getElementById('alertas-body');
+  if(!body) return;
+  if(!alerts.length){
+    body.innerHTML=`<div style="text-align:center;padding:40px;color:var(--tx3)"><div style="font-size:32px;margin-bottom:8px">✅</div><div style="font-size:14px">Nenhum alerta no momento</div></div>`;
+    return;
+  }
+  body.innerHTML=alerts.map(a=>`
+    <div class="alert-box alert-${a.type}" style="cursor:${a.lid?'pointer':''}" onclick="${a.lid?`openDetail('${a.lid}')`:''}">
+      <div class="alert-icon">${a.icon}</div>
+      <div class="alert-text"><div class="alert-title">${a.title}</div><div>${a.text}</div></div>
+    </div>
+  `).join('');
+}
+
+// ===================== KANBAN =====================
+function renderKanban(){
+  const fv=document.getElementById('kfv')?.value||'';
+  const board=document.getElementById('kb');
+  board.innerHTML='';
+  STAGES.forEach(stage=>{
+    let sl=leads.filter(l=>l.stage===stage.id);
+    if(fv) sl=sl.filter(l=>l.vendedor===fv);
+    const col=document.createElement('div');
+    col.className='col';
+    col.innerHTML=`<div class="ch"><div class="cdot" style="background:${stage.color}"></div><div class="ct">${stage.label}</div><div class="ccount">${sl.length}</div></div><div class="cb" id="col-${stage.id}"></div>`;
+    board.appendChild(col);
+    const body=col.querySelector(`#col-${stage.id}`);
+    if(!sl.length){body.innerHTML=`<div class="ec">Nenhum lead</div>`;return;}
+    sl.forEach(lead=>{
+      const [tagTxt,tagCls]=tempTag(lead.temp);
+      const d=lastActivity(lead);
+      const isActive=!['fechado','perdido'].includes(lead.stage);
+      const alertCls=isActive?(d>=cfg.late?'alert-late':d>=cfg.stale?'alert-stale':''):'';
+      const fuLabel=followupLabel(lead.followup);
+      const card=document.createElement('div');
+      card.className=`lc ${alertCls}`;
+      card.onclick=()=>openDetail(lead.id);
+      card.innerHTML=`
+        ${lead.prio!=='normal'?`<div class="lc-pin">${lead.prio==='urgente'?'⚡':'↑'}</div>`:''}
+        <div class="lc-name">${lead.nome}</div>
+        <div class="lc-co">${lead.empresa||'—'}</div>
+        <div class="lc-foot"><span class="tag ${tagCls}">${tagTxt}</span><span class="lc-val">${fmt(cfg.ticket)}</span></div>
+        <div class="lc-bot"><span>${lead.vendedor}</span>${fuLabel||daysLabel(d)}</div>
+      `;
+      body.appendChild(card);
+    });
+  });
+  updateStats();
+  renderAlertas();
+}
+
+// ===================== TABELA =====================
+function renderTabela(){
+  const s=(document.getElementById('t-search')?.value||'').toLowerCase();
+  const fSt=document.getElementById('t-stage')?.value||'';
+  const fV=document.getElementById('t-vend')?.value||'';
+  const fT=document.getElementById('t-temp')?.value||'';
+  const fO=document.getElementById('t-orig')?.value||'';
+  let f=leads.filter(l=>{
+    if(s&&!l.nome.toLowerCase().includes(s)&&!(l.empresa||'').toLowerCase().includes(s)) return false;
+    if(fSt&&l.stage!==fSt) return false;
+    if(fV&&l.vendedor!==fV) return false;
+    if(fT&&l.temp!==fT) return false;
+    if(fO&&l.origem!==fO) return false;
+    return true;
+  });
+  const body=document.getElementById('t-body');
+  if(!body) return;
+  if(!f.length){body.innerHTML=`<tr><td colspan="9" style="text-align:center;color:var(--tx3);padding:28px">Nenhum lead encontrado</td></tr>`;return;}
+  body.innerHTML=f.map(l=>{
+    const si=stageInfo(l.stage);
+    const [tT,tC]=tempTag(l.temp);
+    const d=lastActivity(l);
+    const fuD=daysUntil(l.followup);
+    const fuStr=fuD===null?'—':fuD<0?`<span style="color:var(--rd)">Atrasado</span>`:fuD===0?`<span style="color:var(--am)">Hoje</span>`:`${fuD}d`;
+    return `<tr onclick="openDetail('${l.id}')">
+      <td><span style="font-weight:600">${l.nome}</span>${l.prio==='urgente'?' ⚡':l.prio==='alta'?' ↑':''}</td>
+      <td style="color:var(--tx2)">${l.empresa||'—'}</td>
+      <td><span class="sp" style="background:${si.color}22;color:${si.color}">${si.label}</span></td>
+      <td><span class="tag ${tC}">${tT}</span></td>
+      <td>${l.vendedor}</td>
+      <td>${fuStr}</td>
+      <td>${daysLabel(d)}</td>
+      <td style="color:var(--tx3)">${l.createdAt}</td>
+      <td><button class="btn bg bsm" onclick="event.stopPropagation();openEdit('${l.id}')">Editar</button></td>
+    </tr>`;
+  }).join('');
+}
+
+// ===================== RANKING =====================
+function renderRanking(){
+  const v=vends();
+  const data=v.map((name,i)=>{
+    const ml=leads.filter(l=>l.vendedor===name);
+    const fech=ml.filter(l=>l.stage==='fechado').length;
+    const total=ml.length;
+    const perd=ml.filter(l=>l.stage==='perdido').length;
+    const rec=fech*cfg.ticket;
+    const com=rec*(cfg.com/100);
+    const conv=total>0?Math.round(fech/total*100):0;
+    const ms=lastSale(name);
+    return {name,i,fech,total,perd,rec,com,conv,ms};
+  });
+  const byF=[...data].sort((a,b)=>b.fech-a.fech);
+  const byA=[...data].sort((a,b)=>b.total-a.total);
+  const mxF=Math.max(1,...data.map(d=>d.fech));
+  const mxA=Math.max(1,...data.map(d=>d.total));
+  const medal=p=>['🥇','🥈','🥉',''][Math.min(p,3)];
+  function rtable(sorted,valFn,mx,lbl){
+    return `<table class="rk-table">${sorted.map((d,p)=>`<tr>
+      <td style="width:36px;text-align:center;font-size:16px">${medal(p)}</td>
+      <td><div style="font-weight:600;font-size:12px">${d.name}</div><div class="rb"><div class="rbf" style="width:${Math.round(valFn(d)/mx*100)}%"></div></div></td>
+      <td style="font-family:var(--mono);font-weight:600;color:var(--ac);text-align:right">${valFn(d)} ${lbl}</td>
+    </tr>`).join('')}</table>`;
+  }
+  document.getElementById('rk-grid').innerHTML=`
+    <div class="rk-card">
+      <div class="rk-head"><svg width="14" height="14" fill="none" stroke="var(--gr)" stroke-width="2" viewBox="0 0 24 24"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg><div class="rk-title">Ranking de Fechamento</div></div>
+      ${rtable(byF,d=>d.fech,mxF,'vendas')}
+    </div>
+    <div class="rk-card">
+      <div class="rk-head"><svg width="14" height="14" fill="none" stroke="var(--bl)" stroke-width="2" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.4 2 2 0 0 1 3.6 1.24h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.82a16 16 0 0 0 6.29 6.29l.95-.95a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg><div class="rk-title">Ranking de Abordagem</div></div>
+      ${rtable(byA,d=>d.total,mxA,'leads')}
+    </div>
+  `;
+  document.getElementById('rk-detail').innerHTML=`
+    <div class="rk-card">
+      <div class="rk-head"><svg width="14" height="14" fill="none" stroke="var(--am)" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg><div class="rk-title">Painel completo por vendedor</div></div>
+      <table class="rk-table" style="width:100%">
+        <thead><tr>
+          <th style="font-size:10px;color:var(--tx3);padding:8px 14px;border-bottom:1px solid var(--bd);text-transform:uppercase;letter-spacing:.06em">Vendedor</th>
+          <th style="font-size:10px;color:var(--tx3);padding:8px 14px;border-bottom:1px solid var(--bd);text-align:center;letter-spacing:.06em;text-transform:uppercase">Leads</th>
+          <th style="font-size:10px;color:var(--tx3);padding:8px 14px;border-bottom:1px solid var(--bd);text-align:center;letter-spacing:.06em;text-transform:uppercase">Fechados</th>
+          <th style="font-size:10px;color:var(--tx3);padding:8px 14px;border-bottom:1px solid var(--bd);text-align:center;letter-spacing:.06em;text-transform:uppercase">Perdidos</th>
+          <th style="font-size:10px;color:var(--tx3);padding:8px 14px;border-bottom:1px solid var(--bd);text-align:center;letter-spacing:.06em;text-transform:uppercase">Conversão</th>
+          <th style="font-size:10px;color:var(--tx3);padding:8px 14px;border-bottom:1px solid var(--bd);text-align:center;letter-spacing:.06em;text-transform:uppercase">Últ. venda</th>
+          <th style="font-size:10px;color:var(--tx3);padding:8px 14px;border-bottom:1px solid var(--bd);text-align:right;letter-spacing:.06em;text-transform:uppercase">Comissão</th>
+        </tr></thead>
+        <tbody>${byF.map((d,p)=>`<tr>
+          <td style="font-weight:600">${medal(p)} ${d.name}</td>
+          <td style="text-align:center;color:var(--tx2)">${d.total}</td>
+          <td style="text-align:center;color:var(--gr);font-weight:600">${d.fech}</td>
+          <td style="text-align:center;color:var(--rd)">${d.perd}</td>
+          <td style="text-align:center"><span style="background:${d.conv>=50?'var(--gr2)':d.conv>=25?'var(--am2)':'var(--rd2)'};color:${d.conv>=50?'var(--gr)':d.conv>=25?'var(--am)':'var(--rd)'};padding:2px 9px;border-radius:99px;font-size:10px;font-weight:600">${d.conv}%</span></td>
+          <td style="text-align:center">${d.ms===null?`<span style="color:var(--rd);font-size:11px">Nunca</span>`:d.ms>=cfg.vsem?`<span style="color:var(--rd);font-size:11px">${d.ms}d ⚠</span>`:`<span style="color:var(--tx2);font-size:11px">${d.ms}d</span>`}</td>
+          <td style="text-align:right;font-family:var(--mono);color:var(--ac);font-weight:600">${fmt(d.com)}</td>
+        </tr>`).join('')}</tbody>
+      </table>
+    </div>
+  `;
+}
+
+// ===================== METAS =====================
+function renderMetas(){
+  const body=document.getElementById('metas-body'); if(!body) return;
+  const v=vends();
+  const now=new Date();
+  const lastDay=new Date(now.getFullYear(),now.getMonth()+1,0).getDate();
+  const todayDay=now.getDate();
+  const diasRestantes=lastDay-todayDay;
+  body.innerHTML=v.map((name,i)=>{
+    const fech=leads.filter(l=>l.vendedor===name&&l.stage==='fechado').length;
+    const ativos=leads.filter(l=>l.vendedor===name&&!['fechado','perdido'].includes(l.stage)).length;
+    const com=fech*cfg.ticket*(cfg.com/100);
+    const pct=Math.min(100,Math.round(fech/cfg.meta*100));
+    const barC=pct>=100?'background:var(--gr)':pct>=60?'background:var(--ac)':'background:var(--rd)';
+    let bonus='';
+    if(fech>=cfg.bv) bonus='✈️ Viagem';
+    else if(fech>=cfg.bm) bonus='💻 MacBook';
+    else if(fech>=cfg.bi) bonus='📱 iPhone';
+    const faltam=Math.max(0,cfg.meta-fech);
+    const ritmo=diasRestantes>0?(faltam/diasRestantes).toFixed(1):faltam;
+    const ms=lastSale(name);
+    const semVender=ms===null?`<span style="font-size:10px;color:var(--rd)">⚠ Nunca vendeu</span>`:ms>=cfg.vsem?`<span style="font-size:10px;color:var(--rd)">⚠ Sem fechar há ${ms}d</span>`:'';
+    return `<div class="vrow">
+      <div class="vav ${avCls(i)}">${inits(name)}</div>
+      <div class="vinfo">
+        <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">
+          <div class="vname">${name}</div>
+          ${bonus?`<span class="bbadge">${bonus}</span>`:''}
+          ${semVender}
+        </div>
+        <div class="vsub">${fech} fechamentos · ${ativos} ativos · Meta: ${cfg.meta}/mês · ${diasRestantes}d restantes</div>
+        <div class="vprog"><div class="vprogb" style="width:${pct}%;${barC}"></div></div>
+        <div style="margin-top:4px;font-size:10px;color:var(--tx3)">Ritmo necessário: <b style="color:var(--tx2)">${ritmo} venda/dia</b> para bater a meta</div>
+      </div>
+      <div class="vval">
+        <div class="vval-n">${fmt(com)}</div>
+        <div class="vval-s">${pct}% da meta</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Bonus cards
+  document.getElementById('bonus-cards').innerHTML=`
+    <div style="background:var(--sf2);border-radius:var(--rs);padding:12px;text-align:center">
+      <div style="font-size:24px;margin-bottom:4px">📱</div>
+      <div style="font-size:12px;font-weight:600">iPhone</div>
+      <div style="font-size:10px;color:var(--tx2);margin-top:3px">${cfg.bi} vendas por 2 meses seguidos</div>
+    </div>
+    <div style="background:var(--sf2);border:1px solid rgba(91,156,246,.3);border-radius:var(--rs);padding:12px;text-align:center">
+      <div style="font-size:24px;margin-bottom:4px">💻</div>
+      <div style="font-size:12px;font-weight:600">MacBook</div>
+      <div style="font-size:10px;color:var(--tx2);margin-top:3px">${cfg.bm} vendas em um mês</div>
+    </div>
+    <div style="background:var(--sf2);border-radius:var(--rs);padding:12px;text-align:center">
+      <div style="font-size:24px;margin-bottom:4px">✈️</div>
+      <div style="font-size:12px;font-weight:600">Viagem</div>
+      <div style="font-size:10px;color:var(--tx2);margin-top:3px">${cfg.bv} vendas em um mês</div>
+    </div>
+  `;
+}
+
+// ===================== ANALYTICS =====================
+function renderAnalytics(){
+  const body=document.getElementById('analytics-body'); if(!body) return;
+  const ativos=leads.filter(l=>!['fechado','perdido'].includes(l.stage));
+  const fech=leads.filter(l=>l.stage==='fechado');
+  const perd=leads.filter(l=>l.stage==='perdido');
+
+  // Por origem
+  const origens=['instagram','indicacao','trafego','outbound','outro'];
+  const origLabels={'instagram':'Instagram','indicacao':'Indicação','trafego':'Tráfego pago','outbound':'Outbound','outro':'Outro'};
+  const origData=origens.map(o=>({
+    label:origLabels[o],
+    total:leads.filter(l=>l.origem===o).length,
+    fech:leads.filter(l=>l.origem===o&&l.stage==='fechado').length,
+    color:'#5b9cf6'
+  })).filter(d=>d.total>0).sort((a,b)=>b.fech-a.fech);
+  const maxOrig=Math.max(1,...origData.map(d=>d.fech));
+
+  // Por vendedor conversão
+  const vendData=vends().map((v,i)=>{
+    const ml=leads.filter(l=>l.vendedor===v);
+    const f=ml.filter(l=>l.stage==='fechado').length;
+    const t=ml.length;
+    return {v,conv:t>0?Math.round(f/t*100):0,f,t,color:'#e8b86d'};
+  }).sort((a,b)=>b.conv-a.conv);
+  const maxConv=Math.max(1,...vendData.map(d=>d.conv));
+
+  // Por etapa
+  const stageData=STAGES.filter(s=>!['fechado','perdido'].includes(s.id)).map(s=>({
+    label:s.label,count:leads.filter(l=>l.stage===s.id).length,color:s.color
+  })).filter(d=>d.count>0);
+  const maxStage=Math.max(1,...stageData.map(d=>d.count));
+
+  function barRows(data,valFn,maxV,fmtFn){
+    return data.map(d=>`<div class="an-bar-row">
+      <div class="an-bar-label" title="${d.label||d.v}">${d.label||d.v}</div>
+      <div class="an-bar"><div class="an-bar-fill" style="width:${Math.round(valFn(d)/maxV*100)}%;background:${d.color}"></div></div>
+      <div class="an-bar-val">${fmtFn?fmtFn(d):valFn(d)}</div>
+    </div>`).join('');
+  }
+
+  const conv=leads.length>0?Math.round(fech.length/leads.length*100):0;
+  const avgDays=ativos.length>0?Math.round(ativos.reduce((s,l)=>s+daysSince(l.createdAt),0)/ativos.length):0;
+
+  body.innerHTML=`
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px">
+      <div style="background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:13px">
+        <div style="font-size:10px;color:var(--tx2);margin-bottom:4px">Taxa de conversão</div>
+        <div style="font-size:22px;font-weight:600;font-family:var(--mono);color:${conv>=30?'var(--gr)':conv>=15?'var(--am)':'var(--rd)'}">${conv}%</div>
+        <div style="font-size:10px;color:var(--tx3)">${fech.length} de ${leads.length} leads</div>
+      </div>
+      <div style="background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:13px">
+        <div style="font-size:10px;color:var(--tx2);margin-bottom:4px">Leads perdidos</div>
+        <div style="font-size:22px;font-weight:600;font-family:var(--mono);color:var(--rd)">${perd.length}</div>
+        <div style="font-size:10px;color:var(--tx3)">${leads.length>0?Math.round(perd.length/leads.length*100):0}% do total</div>
+      </div>
+      <div style="background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:13px">
+        <div style="font-size:10px;color:var(--tx2);margin-bottom:4px">Tempo médio no funil</div>
+        <div style="font-size:22px;font-weight:600;font-family:var(--mono);color:var(--am)">${avgDays}d</div>
+        <div style="font-size:10px;color:var(--tx3)">leads ativos</div>
+      </div>
+      <div style="background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:13px">
+        <div style="font-size:10px;color:var(--tx2);margin-bottom:4px">Receita gerada</div>
+        <div style="font-size:22px;font-weight:600;font-family:var(--mono);color:var(--ac)">${fmt(fech.length*cfg.ticket)}</div>
+        <div style="font-size:10px;color:var(--tx3)">${fech.length} contratos</div>
+      </div>
+    </div>
+    <div class="an-grid">
+      <div class="an-card">
+        <div class="an-title">Fechamentos por origem</div>
+        ${origData.length?barRows(origData,d=>d.fech,maxOrig):('<div style="color:var(--tx3);font-size:12px">Sem dados</div>')}
+      </div>
+      <div class="an-card">
+        <div class="an-title">Taxa de conversão por vendedor</div>
+        ${barRows(vendData,d=>d.conv,maxConv,d=>d.conv+'%')}
+      </div>
+      <div class="an-card">
+        <div class="an-title">Leads por etapa</div>
+        ${stageData.length?barRows(stageData,d=>d.count,maxStage):('<div style="color:var(--tx3);font-size:12px">Sem dados</div>')}
+      </div>
+    </div>
+    <div style="background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:14px;margin-top:0">
+      <div class="dl" style="margin-bottom:10px">Melhor canal de conversão</div>
+      ${origData.length?origData.map(d=>`<div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--bd)">
+        <div style="font-size:12px;flex:1;font-weight:500">${d.label}</div>
+        <div style="font-size:11px;color:var(--tx2)">${d.total} leads</div>
+        <div style="font-size:11px;color:var(--gr)">${d.fech} fechados</div>
+        <div style="font-size:11px;font-family:var(--mono);color:var(--ac)">${d.total>0?Math.round(d.fech/d.total*100):0}%</div>
+      </div>`).join(''):'<div style="color:var(--tx3);font-size:12px">Sem dados suficientes</div>'}
+    </div>
+  `;
+}
+
+// ===================== CONFIG =====================
+function renderConfig(){
+  document.getElementById('colab-list').innerHTML=cfg.colabs.map((c,i)=>`
+    <div class="colab-item">
+      <div class="cav ${avCls(i)}">${inits(c.nome)}</div>
+      <div class="cinfo"><div class="cname">${c.nome}</div><div class="ccargo">${c.cargo||'—'}</div></div>
+      <button class="btn brd bsm" onclick="removeColab(${i})">Remover</button>
+    </div>
+  `).join('');
+  const g=id=>document.getElementById(id);
+  g('cfg-ticket').value=cfg.ticket;
+  g('cfg-com').value=cfg.com;
+  g('cfg-fixo').value=cfg.fixo;
+  g('cfg-meta').value=cfg.meta;
+  g('cfg-bi').value=cfg.bi;
+  g('cfg-bm').value=cfg.bm;
+  g('cfg-bv').value=cfg.bv;
+  g('cfg-stale').value=cfg.stale;
+  g('cfg-late').value=cfg.late;
+  g('cfg-vsem').value=cfg.vsem;
+  g('cfg-empresa').value=cfg.empresa||'Grupo Apollo';
+}
+
+function addColab(){
+  const nome=document.getElementById('nc-nome').value.trim();
+  const cargo=document.getElementById('nc-cargo').value.trim();
+  if(!nome){alert('Informe o nome');return;}
+  cfg.colabs.push({nome,cargo});
+  document.getElementById('nc-nome').value='';
+  document.getElementById('nc-cargo').value='';
+  renderConfig();
+}
+
+function removeColab(i){
+  if(!confirm(`Remover "${cfg.colabs[i]?.nome}"?`)) return;
+  cfg.colabs.splice(i,1);
+  renderConfig();
+}
+
+function saveConfig(){
+  const g=id=>parseFloat(document.getElementById(id).value)||0;
+  cfg.ticket=g('cfg-ticket')||cfg.ticket;
+  cfg.com=g('cfg-com')||cfg.com;
+  cfg.fixo=g('cfg-fixo');
+  cfg.meta=g('cfg-meta')||cfg.meta;
+  cfg.bi=g('cfg-bi')||cfg.bi;
+  cfg.bm=g('cfg-bm')||cfg.bm;
+  cfg.bv=g('cfg-bv')||cfg.bv;
+  cfg.stale=g('cfg-stale')||cfg.stale;
+  cfg.late=g('cfg-late')||cfg.late;
+  cfg.vsem=g('cfg-vsem')||cfg.vsem;
+  cfg.empresa=document.getElementById('cfg-empresa').value.trim()||'Grupo Apollo';
+  SC(); initSelects(); renderAll();
+  const m=document.getElementById('cfg-saved');
+  m.style.display='block';
+  setTimeout(()=>m.style.display='none',2200);
+}
+
+// ===================== MODAL LEAD =====================
+function openNewLead(){
+  editId=null;
+  document.getElementById('ml-title').textContent='Novo Lead';
+  document.getElementById('btn-del').style.display='none';
+  ['f-nome','f-empresa','f-wa','f-email','f-obs'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('f-stage').value='prospeccao';
+  document.getElementById('f-temp').value='warm';
+  document.getElementById('f-vend').value=vends()[0]||'';
+  document.getElementById('f-orig').value='instagram';
+  document.getElementById('f-followup').value='';
+  document.getElementById('f-prio').value='normal';
+  document.getElementById('modal-lead').classList.add('open');
+}
+
+function openEdit(id){
+  const l=leads.find(x=>x.id===id); if(!l) return;
+  editId=id;
+  document.getElementById('ml-title').textContent='Editar Lead';
+  document.getElementById('btn-del').style.display='';
+  document.getElementById('f-nome').value=l.nome;
+  document.getElementById('f-empresa').value=l.empresa||'';
+  document.getElementById('f-wa').value=l.whatsapp||'';
+  document.getElementById('f-email').value=l.email||'';
+  document.getElementById('f-stage').value=l.stage;
+  document.getElementById('f-temp').value=l.temp;
+  document.getElementById('f-vend').value=l.vendedor;
+  document.getElementById('f-orig').value=l.origem||'outro';
+  document.getElementById('f-obs').value=l.obs||'';
+  document.getElementById('f-followup').value=l.followup||'';
+  document.getElementById('f-prio').value=l.prio||'normal';
+  document.getElementById('modal-lead').classList.add('open');
+}
+
+function saveLead(){
+  const nome=document.getElementById('f-nome').value.trim();
+  if(!nome){alert('Nome obrigatório');return;}
+  const data={
+    nome,empresa:document.getElementById('f-empresa').value.trim(),
+    whatsapp:document.getElementById('f-wa').value.trim(),
+    email:document.getElementById('f-email').value.trim(),
+    stage:document.getElementById('f-stage').value,
+    temp:document.getElementById('f-temp').value,
+    vendedor:document.getElementById('f-vend').value,
+    origem:document.getElementById('f-orig').value,
+    obs:document.getElementById('f-obs').value.trim(),
+    followup:document.getElementById('f-followup').value,
+    prio:document.getElementById('f-prio').value,
+  };
+  if(editId){
+    const idx=leads.findIndex(l=>l.id===editId);
+    const old=leads[idx];
+    if(old.stage!==data.stage) old.activities.push({text:`Etapa: ${stageInfo(data.stage).label}`,date:today()});
+    if(old.followup!==data.followup&&data.followup) old.activities.push({text:`Follow-up agendado: ${new Date(data.followup).toLocaleDateString('pt-BR')}`,date:today()});
+    leads[idx]={...old,...data};
+  } else {
+    leads.push({...data,id:nid(),activities:[{text:'Lead adicionado',date:today()}],createdAt:today()});
+  }
+  SL(); closeModal('modal-lead'); renderAll();
+}
+
+function deleteLead(){
+  if(!editId) return;
+  if(!confirm('Excluir este lead permanentemente?')) return;
+  leads=leads.filter(l=>l.id!==editId);
+  SL(); closeModal('modal-lead'); renderAll();
+}
+
+// ===================== DETAIL =====================
+function openDetail(id){
+  const l=leads.find(x=>x.id===id); if(!l) return;
+  detId=id;
+  document.getElementById('det-nome').textContent=l.nome;
+  document.getElementById('det-co').textContent=l.empresa||'';
+  document.getElementById('det-prio-badge').innerHTML=prioBadge(l.prio);
+  const si=STAGES.findIndex(s=>s.id===l.stage);
+  document.getElementById('det-stages').innerHTML=STAGES.map((s,i)=>{
+    const cls=i<si?'sstep s-done':i===si?'sstep s-active':'sstep';
+    return `<div class="${cls}" onclick="changeStage('${s.id}')">${s.label}</div>`;
+  }).join('');
+  const [tT]=tempTag(l.temp);
+  const fuD=daysUntil(l.followup);
+  const fuStr=l.followup?(fuD<0?`<span style="color:var(--rd)">Atrasado ${Math.abs(fuD)}d</span>`:fuD===0?`<span style="color:var(--am)">Hoje</span>`:`${new Date(l.followup).toLocaleDateString('pt-BR')}`):('—');
+  document.getElementById('det-info').innerHTML=`
+    <div class="di"><div class="dil">WhatsApp</div><div class="div2">${l.whatsapp||'—'}</div></div>
+    <div class="di"><div class="dil">E-mail</div><div class="div2" style="font-size:12px">${l.email||'—'}</div></div>
+    <div class="di"><div class="dil">Vendedor</div><div class="div2">${l.vendedor}</div></div>
+    <div class="di"><div class="dil">Temperatura</div><div class="div2">${tT}</div></div>
+    <div class="di"><div class="dil">Origem</div><div class="div2">${l.origem||'—'}</div></div>
+    <div class="di"><div class="dil">Próx. contato</div><div class="div2">${fuStr}</div></div>
+    <div class="di"><div class="dil">Parado há</div><div class="div2">${lastActivity(l)} dias</div></div>
+    <div class="di"><div class="dil">Valor</div><div class="div2" style="color:var(--ac)">${fmt(cfg.ticket)}</div></div>
+    ${l.obs?`<div class="di" style="grid-column:span 2"><div class="dil">Obs.</div><div class="div2" style="font-size:12px">${l.obs}</div></div>`:''}
+  `;
+  const acts=(l.activities||[]).slice().reverse();
+  document.getElementById('det-tl').innerHTML=acts.map(a=>`
+    <div class="tli"><div class="tld"></div><div class="tlc"><div class="tlt">${a.text}</div><div class="tls">${a.date}</div></div></div>
+  `).join('')||'<div style="color:var(--tx3);font-size:12px;padding:8px 0">Nenhuma atividade</div>';
+  document.getElementById('act-txt').value='';
+  document.getElementById('modal-det').classList.add('open');
+}
+
+function changeStage(stageId){
+  if(!detId) return;
+  const l=leads.find(x=>x.id===detId); if(!l||l.stage===stageId) return;
+  l.activities.push({text:`Movido para: ${stageInfo(stageId).label}`,date:today()});
+  l.stage=stageId; SL(); openDetail(detId); renderAll();
+}
+
+function addActivity(){
+  if(!detId) return;
+  const inp=document.getElementById('act-txt');
+  const txt=inp.value.trim(); if(!txt) return;
+  const l=leads.find(x=>x.id===detId); if(!l) return;
+  l.activities.push({text:txt,date:today()});
+  SL(); inp.value=''; openDetail(detId); renderAll();
+}
+
+function editFromDet(){closeModal('modal-det');setTimeout(()=>openEdit(detId),80);}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+
+// ===================== NAVIGATION =====================
+function setView(name,el){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
+  document.getElementById('view-'+name).classList.add('active');
+  el.classList.add('active');
+  if(name==='tabela') renderTabela();
+  if(name==='ranking') renderRanking();
+  if(name==='metas') renderMetas();
+  if(name==='analytics') renderAnalytics();
+  if(name==='config') renderConfig();
+}
+
+// ===================== RENDER ALL =====================
+function renderAll(){
+  initSelects();
+  renderKanban();
+  renderTabela();
+  renderRanking();
+  renderMetas();
+  renderAnalytics();
+  renderAlertas();
+  updateStats();
+}
+
+initSelects();
+renderAll();
+</script>
+</body>
+</html>

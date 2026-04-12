@@ -171,7 +171,10 @@ export function MetaAccountManager({ clientId }: MetaAccountManagerProps) {
     setIsSyncing(true);
     try {
       const { data, error } = await supabase.functions.invoke("sync-meta-ads", {
-        body: { client_id: effectiveClientId },
+        body: { 
+          client_id: effectiveClientId,
+          lookback_days: 30 
+        },
       });
 
       if (error) {
