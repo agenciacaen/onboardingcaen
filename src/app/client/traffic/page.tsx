@@ -446,19 +446,19 @@ export function ClientTrafficPage() {
   }
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 min-h-screen bg-[#0a0c10] -m-6 p-6 pb-12 overflow-x-hidden">
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 min-h-screen bg-background p-6 pb-12 overflow-x-hidden">
       {/* HEADER SECTION (DashCortex Style) */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-2">
         <div className="flex items-center gap-4">
           <div className="p-2 transition-transform hover:scale-105 duration-300">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 2C6.477 2 2 6.477 2 12C2 17.523 6.477 22 12 22C17.523 22 22 17.523 22 12C22 6.477 17.523 2 12 2Z" fill="#3b82f6" fillOpacity="0.2"/>
-              <circle cx="12" cy="12" r="4" fill="#3b82f6"/>
+              <path d="M12 2C6.477 2 2 6.477 2 12C2 17.523 6.477 22 12 22C17.523 22 22 17.523 22 12C22 6.477 17.523 2 12 2Z" fill="hsl(var(--primary))" fillOpacity="0.2"/>
+              <circle cx="12" cy="12" r="4" fill="hsl(var(--primary))"/>
             </svg>
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
-              Overview <span className="flex items-center gap-1.5 text-[#3b82f6]"><svg className="inline h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.477 2 12C2 17.523 6.477 22 12 22C17.523 22 22 17.523 22 12C22 6.477 17.523 2 12 2ZM17.2 13.5C16.8 15.5 15.2 17.1 13.2 17.5C11.2 17.9 9.1 17.1 7.8 15.6C6.5 14.1 6.1 12 6.9 10.1C7.7 8.2 9.6 7 11.6 7C12.3 7 13.1 7.1 13.8 7.4C14.5 7.7 15.1 8.2 15.6 8.7C16.1 9.2 16.5 9.8 16.7 10.5C16.9 11.2 17 11.9 17 12.6C17 12.9 16.8 13.2 16.5 13.2C16.2 13.2 15.9 12.9 15.9 12.6C15.9 10.5 14.1 8.7 12 8.7C9.9 8.7 8.1 10.5 8.1 12.6C8.1 14.7 9.9 16.5 12 16.5C13.2 16.5 14.2 15.9 14.8 15C15.4 14.1 15.5 13.1 15.2 12.1C15.1 11.8 15.3 11.5 15.6 11.4C15.9 11.3 16.2 11.5 16.3 11.8C16.7 13.3 16.6 14.9 15.8 16.1C14.9 17.3 13.5 18 12 18C10.5 18 9.1 17.3 8.1 16.1C7.1 14.9 6.8 13.3 7.2 11.8C7.6 10.3 8.7 9.1 10.2 8.4C11.7 7.7 13.4 7.7 14.8 8.4C15.5 8.8 16.1 9.3 16.5 10C17 10.7 17.2 11.4 17.2 12.2V13.5Z"/></svg> Meta</span>
+            <h1 className="text-2xl font-bold text-foreground tracking-tight flex items-center gap-2">
+              Overview <span className="flex items-center gap-1.5 text-primary"><svg className="inline h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.477 2 12C2 17.523 6.477 22 12 22C17.523 22 22 17.523 22 12C22 6.477 17.523 2 12 2ZM17.2 13.5C16.8 15.5 15.2 17.1 13.2 17.5C11.2 17.9 9.1 17.1 7.8 15.6C6.5 14.1 6.1 12 6.9 10.1C7.7 8.2 9.6 7 11.6 7C12.3 7 13.1 7.1 13.8 7.4C14.5 7.7 15.1 8.2 15.6 8.7C16.1 9.2 16.5 9.8 16.7 10.5C16.9 11.2 17 11.9 17 12.6C17 12.9 16.8 13.2 16.5 13.2C16.2 13.2 15.9 12.9 15.9 12.6C15.9 10.5 14.1 8.7 12 8.7C9.9 8.7 8.1 10.5 8.1 12.6C8.1 14.7 9.9 16.5 12 16.5C13.2 16.5 14.2 15.9 14.8 15C15.4 14.1 15.5 13.1 15.2 12.1C15.1 11.8 15.3 11.5 15.6 11.4C15.9 11.3 16.2 11.5 16.3 11.8C16.7 13.3 16.6 14.9 15.8 16.1C14.9 17.3 13.5 18 12 18C10.5 18 9.1 17.3 8.1 16.1C7.1 14.9 6.8 13.3 7.2 11.8C7.6 10.3 8.7 9.1 10.2 8.4C11.7 7.7 13.4 7.7 14.8 8.4C15.5 8.8 16.1 9.3 16.5 10C17 10.7 17.2 11.4 17.2 12.2V13.5Z"/></svg> Meta</span>
             </h1>
             <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mt-1">
               Relatório Meta Ads | <span className="text-slate-300">Agência CAEN</span>
@@ -467,13 +467,13 @@ export function ClientTrafficPage() {
         </div>
         
         <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-1 bg-slate-900/60 p-1 rounded-lg border border-slate-800/50">
+          <div className="flex items-center gap-1 bg-muted/60 p-1 rounded-lg border border-border">
              <Button 
                 onClick={handleSync} 
                 disabled={isSyncing}
                 variant="ghost" 
                 size="icon" 
-                className={cn("h-8 w-8 text-blue-400", isSyncing && "animate-spin")}
+                className={cn("h-8 w-8 text-primary", isSyncing && "animate-spin")}
                 title="Sincronizar dados agora"
              >
                 <RefreshCw className="h-4 w-4" />
@@ -487,33 +487,33 @@ export function ClientTrafficPage() {
           </div>
 
           <Select defaultValue="all">
-            <SelectTrigger className="w-[140px] h-9 bg-slate-900 text-[11px] border-slate-800 text-slate-300">
+            <SelectTrigger className="w-[140px] h-9 bg-muted text-[11px] border-border text-foreground">
               <SelectValue placeholder="Campanhas" />
             </SelectTrigger>
-            <SelectContent className="bg-slate-900 border-slate-800 text-white">
+            <SelectContent>
               <SelectItem value="all">Todas Campanhas</SelectItem>
               <SelectItem value="active">Campanhas Ativas</SelectItem>
             </SelectContent>
           </Select>
 
           <Select defaultValue="all">
-            <SelectTrigger className="w-[140px] h-9 bg-slate-900 text-[11px] border-slate-800 text-slate-300">
+            <SelectTrigger className="w-[140px] h-9 bg-muted text-[11px] border-border text-foreground">
               <SelectValue placeholder="Anúncios" />
             </SelectTrigger>
-            <SelectContent className="bg-slate-900 border-slate-800 text-white">
+            <SelectContent>
               <SelectItem value="all">Todos Anúncios</SelectItem>
             </SelectContent>
           </Select>
 
-          <div className="bg-slate-900/80 border border-slate-800 rounded-lg">
+          <div className="bg-muted border border-border rounded-lg">
             <DateRangeSelector date={dateRange} setDate={setDateRange} />
           </div>
         </div>
       </div>
 
       <Tabs defaultValue="dashboard" className="w-full">
-        <TabsList className="mb-4 bg-slate-900/50 border border-slate-800/50 p-1 h-11">
-          <TabsTrigger value="dashboard" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white transition-all duration-300">Dashboard</TabsTrigger>
+        <TabsList className="mb-4 bg-muted/50 border border-border p-1 h-11">
+          <TabsTrigger value="dashboard" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all duration-300">Dashboard</TabsTrigger>
           <TabsTrigger value="kanban" className="transition-all duration-300">Quadro Kanban</TabsTrigger>
           <TabsTrigger value="list" className="transition-all duration-300">Lista de Tarefas</TabsTrigger>
           <TabsTrigger value="settings" className="flex items-center gap-2 transition-all duration-300">
@@ -577,12 +577,12 @@ export function ClientTrafficPage() {
       </Tabs>
       
       {/* BRANDING FOOTER */}
-      <div className="pt-8 border-t border-slate-800/50 flex justify-between items-center opacity-30 hover:opacity-100 transition-opacity">
+      <div className="pt-8 border-t border-border flex justify-between items-center opacity-30 hover:opacity-100 transition-opacity">
         <div className="flex items-center gap-2">
-          <div className="w-5 h-5 bg-blue-600 rounded-sm"></div>
-          <span className="text-xs font-bold text-white tracking-widest uppercase">DashCortex</span>
+          <div className="w-5 h-5 bg-primary rounded-sm"></div>
+          <span className="text-xs font-bold text-foreground tracking-widest uppercase">DashCortex</span>
         </div>
-        <p className="text-[10px] text-slate-500">
+        <p className="text-[10px] text-muted-foreground">
            © 2026 Agência CAEN | Monitoramento de Tráfego em Tempo Real
         </p>
       </div>

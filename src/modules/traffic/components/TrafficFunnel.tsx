@@ -32,10 +32,10 @@ export function TrafficFunnel({ data }: TrafficFunnelProps) {
   const conversionRate = safeRate(data.conversions, data.landing_page_views);
 
   return (
-    <Card className="h-full bg-slate-900/40 border-slate-800/50 backdrop-blur-sm">
+    <Card className="h-full bg-card border-border backdrop-blur-sm">
       <CardHeader className="pb-2 pt-4">
-        <CardTitle className="text-sm font-bold flex items-center gap-2 text-slate-100">
-          <Filter className="h-4 w-4 text-slate-400" />
+        <CardTitle className="text-sm font-bold flex items-center gap-2 text-foreground">
+          <Filter className="h-4 w-4 text-muted-foreground" />
           Funil de Tráfego
         </CardTitle>
       </CardHeader>
@@ -65,20 +65,20 @@ export function TrafficFunnel({ data }: TrafficFunnelProps) {
 
             <defs>
               <linearGradient id="funnelGradient1" x1="110" y1="10" x2="110" y2="90" gradientUnits="userSpaceOnUse">
-                <stop stopColor="#3b82f6" />
-                <stop offset="1" stopColor="#2563eb" />
+                <stop stopColor="hsl(var(--primary))" />
+                <stop offset="1" stopColor="hsl(var(--primary))" stopOpacity="0.8" />
               </linearGradient>
               <linearGradient id="funnelGradient2" x1="110" y1="92" x2="110" y2="160" gradientUnits="userSpaceOnUse">
-                <stop stopColor="#2563eb" />
-                <stop offset="1" stopColor="#1d4ed8" />
+                <stop stopColor="hsl(var(--primary))" stopOpacity="0.8" />
+                <stop offset="1" stopColor="hsl(var(--primary))" stopOpacity="0.6" />
               </linearGradient>
               <linearGradient id="funnelGradient3" x1="110" y1="162" x2="110" y2="220" gradientUnits="userSpaceOnUse">
-                <stop stopColor="#1d4ed8" />
-                <stop offset="1" stopColor="#1e40af" />
+                <stop stopColor="hsl(var(--primary))" stopOpacity="0.6" />
+                <stop offset="1" stopColor="hsl(var(--primary))" stopOpacity="0.4" />
               </linearGradient>
               <linearGradient id="funnelGradient4" x1="110" y1="222" x2="110" y2="270" gradientUnits="userSpaceOnUse">
-                <stop stopColor="#1e40af" />
-                <stop offset="1" stopColor="#1e3a8a" />
+                <stop stopColor="hsl(var(--primary))" stopOpacity="0.4" />
+                <stop offset="1" stopColor="hsl(var(--primary))" stopOpacity="0.2" />
               </linearGradient>
             </defs>
           </svg>
@@ -86,20 +86,20 @@ export function TrafficFunnel({ data }: TrafficFunnelProps) {
           {/* Rates Labels (Absolute Positioned) */}
           <div className="absolute right-[-10px] top-0 h-full flex flex-col justify-around py-4 text-right">
             <div className="mb-8">
-              <p className="text-[10px] text-slate-400">Taxa de Cliques</p>
-              <p className="text-xs font-bold text-slate-200">{ctr}%</p>
+              <p className="text-[10px] text-muted-foreground">Taxa de Cliques</p>
+              <p className="text-xs font-bold text-foreground">{ctr}%</p>
             </div>
             <div className="mb-4">
-              <p className="text-[10px] text-slate-400">Connect Rate</p>
-              <p className="text-xs font-bold text-slate-200">{connectRate}%</p>
+              <p className="text-[10px] text-muted-foreground">Connect Rate</p>
+              <p className="text-xs font-bold text-foreground">{connectRate}%</p>
             </div>
             <div className="mt-4">
-              <p className="text-[10px] text-slate-400">Taxa de Checkout</p>
-              <p className="text-xs font-bold text-slate-200">19,86%</p>
+              <p className="text-[10px] text-muted-foreground">Taxa de Checkout</p>
+              <p className="text-xs font-bold text-foreground">19,86%</p>
             </div>
             <div className="mt-8">
-              <p className="text-[10px] text-slate-400">Taxa de Compras</p>
-              <p className="text-xs font-bold text-slate-200">{conversionRate}%</p>
+              <p className="text-[10px] text-muted-foreground">Taxa de Compras</p>
+              <p className="text-xs font-bold text-foreground">{conversionRate}%</p>
             </div>
           </div>
         </div>
@@ -107,17 +107,17 @@ export function TrafficFunnel({ data }: TrafficFunnelProps) {
         {/* Secondary Metrics Integration */}
         {data.secondaryMetrics && (
           <div className="grid grid-cols-3 gap-2 mt-6">
-            <div className="bg-slate-800/50 p-2 rounded-lg border border-slate-700/30 text-center">
-              <p className="text-[9px] uppercase text-slate-500 font-bold mb-1">Frequency</p>
-              <p className="text-sm font-bold text-white">{data.secondaryMetrics.frequency.toFixed(2).replace('.', ',')}</p>
+            <div className="bg-muted p-2 rounded-lg border border-border text-center">
+              <p className="text-[9px] uppercase text-muted-foreground font-bold mb-1">Frequency</p>
+              <p className="text-sm font-bold text-foreground">{data.secondaryMetrics.frequency.toFixed(2).replace('.', ',')}</p>
             </div>
-            <div className="bg-slate-800/50 p-2 rounded-lg border border-slate-700/30 text-center">
-              <p className="text-[9px] uppercase text-slate-500 font-bold mb-1">CPC</p>
-              <p className="text-sm font-bold text-white">{formatCurrency(data.secondaryMetrics.cpc)}</p>
+            <div className="bg-muted p-2 rounded-lg border border-border text-center">
+              <p className="text-[9px] uppercase text-muted-foreground font-bold mb-1">CPC</p>
+              <p className="text-sm font-bold text-foreground">{formatCurrency(data.secondaryMetrics.cpc)}</p>
             </div>
-            <div className="bg-slate-800/50 p-2 rounded-lg border border-slate-700/30 text-center">
-              <p className="text-[9px] uppercase text-slate-500 font-bold mb-1">CPM</p>
-              <p className="text-sm font-bold text-white">{formatCurrency(data.secondaryMetrics.cpm).replace('R$', '').trim()}</p>
+            <div className="bg-muted p-2 rounded-lg border border-border text-center">
+              <p className="text-[9px] uppercase text-muted-foreground font-bold mb-1">CPM</p>
+              <p className="text-sm font-bold text-foreground">{formatCurrency(data.secondaryMetrics.cpm).replace('R$', '').trim()}</p>
             </div>
           </div>
         )}

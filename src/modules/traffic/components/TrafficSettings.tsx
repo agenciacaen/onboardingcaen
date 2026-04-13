@@ -141,21 +141,21 @@ export function TrafficSettings({ clientId, onSettingsUpdated }: TrafficSettings
   };
 
   return (
-    <Card className="bg-slate-900/40 border-slate-800/50 backdrop-blur-sm shadow-2xl">
+    <Card className="bg-card border-border backdrop-blur-sm shadow-2xl">
       <CardHeader className="flex flex-col sm:flex-row items-center justify-between space-y-4 sm:space-y-0 pb-7">
         <div className="space-y-1 text-center sm:text-left">
-          <CardTitle className="text-xl font-bold text-white flex items-center justify-center sm:justify-start gap-2">
-            <LayoutGrid className="h-5 w-5 text-blue-400" />
+          <CardTitle className="text-xl font-bold text-foreground flex items-center justify-center sm:justify-start gap-2">
+            <LayoutGrid className="h-5 w-5 text-primary" />
             Configuração do Dashboard
           </CardTitle>
-          <CardDescription className="text-slate-400 text-sm">
+          <CardDescription className="text-muted-foreground text-sm">
             Personalize métricas e o funil de vendas com dados nativos do Meta Ads.
           </CardDescription>
         </div>
         <Button 
           onClick={saveSettings} 
           disabled={isSaving}
-          className="bg-blue-600 hover:bg-blue-500 text-white font-semibold transition-all duration-300 w-full sm:w-auto"
+          className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold transition-all duration-300 w-full sm:w-auto"
         >
           {isSaving ? 'Salvando...' : (
             <>
@@ -168,19 +168,19 @@ export function TrafficSettings({ clientId, onSettingsUpdated }: TrafficSettings
       <CardContent className="space-y-8">
         {/* FUNNEL CONFIGURATION */}
         <div className="space-y-4">
-          <div className="flex flex-col sm:flex-row items-center gap-4 p-4 rounded-xl bg-blue-500/5 border border-blue-500/20 shadow-inner">
+          <div className="flex flex-col sm:flex-row items-center gap-4 p-4 rounded-xl bg-primary/5 border border-primary/20 shadow-inner">
             <div className="flex-1 space-y-1 text-center sm:text-left">
-              <Label className="text-white font-bold text-base flex items-center justify-center sm:justify-start gap-2">
-                <Target className="h-4 w-4 text-blue-400" />
+              <Label className="text-foreground font-bold text-base flex items-center justify-center sm:justify-start gap-2">
+                <Target className="h-4 w-4 text-primary" />
                 Métrica Final do Funil
               </Label>
-              <p className="text-xs text-slate-500">Define qual evento encerra o fluxo do funil de tráfego.</p>
+              <p className="text-xs text-muted-foreground">Define qual evento encerra o fluxo do funil de tráfego.</p>
             </div>
             <Select value={funnelMetric} onValueChange={setFunnelMetric}>
-              <SelectTrigger className="w-full sm:w-[240px] bg-slate-900/80 border-slate-700 text-slate-200">
+              <SelectTrigger className="w-full sm:w-[240px] bg-muted border-border text-foreground">
                 <SelectValue placeholder="Selecione o objetivo" />
               </SelectTrigger>
-              <SelectContent className="bg-slate-900 border-slate-700 text-slate-200">
+              <SelectContent>
                 <SelectItem value="conversions">Conversões (Nativo Meta)</SelectItem>
                 <SelectItem value="purchases">Compras (E-commerce)</SelectItem>
                 <SelectItem value="leads">Leads (Cadastros)</SelectItem>
@@ -195,12 +195,12 @@ export function TrafficSettings({ clientId, onSettingsUpdated }: TrafficSettings
 
         {/* METRICS CATEGORIES */}
         <Tabs defaultValue="performance" className="w-full">
-          <TabsList className="bg-slate-800/50 p-1 mb-6 flex flex-wrap h-auto gap-1 justify-center sm:justify-start">
+          <TabsList className="bg-muted p-1 mb-6 flex flex-wrap h-auto gap-1 justify-center sm:justify-start">
             {METRIC_CATEGORIES.map(cat => (
               <TabsTrigger 
                 key={cat.id} 
                 value={cat.id}
-                className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-[11px] py-1.5 px-3 transition-all duration-300 flex items-center"
+                className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-[11px] py-1.5 px-3 transition-all duration-300 flex items-center"
               >
                 <cat.icon className="h-3.5 w-3.5 mr-2 hidden sm:inline" />
                 {cat.label}
@@ -216,15 +216,15 @@ export function TrafficSettings({ clientId, onSettingsUpdated }: TrafficSettings
                     key={metric.id}
                     className={`flex items-center justify-between p-4 rounded-xl border transition-all duration-200 group ${
                       selectedMetrics.includes(metric.id) 
-                        ? 'bg-blue-500/10 border-blue-500/30' 
-                        : 'bg-slate-800/20 border-slate-800/50 hover:border-slate-700/50'
+                        ? 'bg-primary/10 border-primary/30' 
+                        : 'bg-muted/20 border-border hover:border-primary/50'
                     }`}
                   >
                     <div className="space-y-0.5">
                       <Label
                         htmlFor={`metric-${metric.id}`}
                         className={`text-sm font-medium cursor-pointer transition-colors ${
-                          selectedMetrics.includes(metric.id) ? 'text-blue-200' : 'text-slate-300 group-hover:text-white'
+                          selectedMetrics.includes(metric.id) ? 'text-primary' : 'text-muted-foreground group-hover:text-foreground'
                         }`}
                       >
                         {metric.label}
@@ -234,7 +234,7 @@ export function TrafficSettings({ clientId, onSettingsUpdated }: TrafficSettings
                       id={`metric-${metric.id}`}
                       checked={selectedMetrics.includes(metric.id)}
                       onCheckedChange={() => toggleMetric(metric.id)}
-                      className="data-[state=checked]:bg-blue-600 shadow-lg"
+                      className="data-[state=checked]:bg-primary shadow-lg"
                     />
                   </div>
                 ))}

@@ -37,14 +37,14 @@ interface KpiItemProps {
 
 function KpiItem({ title, value, change, icon: Icon, iconColor, history, lineColor }: KpiItemProps) {
   return (
-    <Card className="overflow-hidden bg-slate-900/40 border-slate-800/50 backdrop-blur-sm relative group hover:border-slate-700/50 transition-all duration-300">
+    <Card className="overflow-hidden bg-card border-border backdrop-blur-sm relative group hover:border-primary/50 transition-all duration-300">
       <CardContent className="p-4 relative z-10">
         <div className="flex items-start justify-between mb-2">
           <div className="space-y-0.5">
-            <p className="text-[10px] uppercase tracking-wider font-semibold text-slate-400 group-hover:text-slate-300 transition-colors">{title}</p>
-            <p className="text-xl font-bold text-white tracking-tight">{value}</p>
+            <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground group-hover:text-foreground transition-colors">{title}</p>
+            <p className="text-xl font-bold text-foreground tracking-tight">{value}</p>
           </div>
-          <div className={cn('p-1.5 rounded-full bg-slate-800/80 border border-slate-700/50', iconColor)}>
+          <div className={cn('p-1.5 rounded-full bg-muted border border-border', iconColor)}>
             <Icon className="h-3.5 w-3.5" />
           </div>
         </div>
@@ -101,9 +101,9 @@ export function TrafficKpiCards({ data, selectedMetrics }: TrafficKpiCardsProps)
       value: formatCurrency(getMetric('spend').value),
       change: getMetric('spend').change,
       icon: DollarSign,
-      iconColor: 'text-blue-400',
+      iconColor: 'text-primary',
       history: getMetric('spend').history,
-      lineColor: '#3b82f6',
+      lineColor: 'hsl(var(--primary))',
     },
     impressions: {
       title: 'Impressões',
@@ -147,36 +147,36 @@ export function TrafficKpiCards({ data, selectedMetrics }: TrafficKpiCardsProps)
       value: formatCompact(getMetric('clicks').value),
       change: getMetric('clicks').change,
       icon: MousePointer2,
-      iconColor: 'text-blue-300',
+      iconColor: 'text-primary/70',
       history: getMetric('clicks').history,
-      lineColor: '#60a5fa',
+      lineColor: 'hsl(var(--primary)/0.7)',
     },
     link_clicks: {
       title: 'Cliques no Link',
       value: formatCompact(getMetric('link_clicks').value),
       change: getMetric('link_clicks').change,
       icon: MousePointer2,
-      iconColor: 'text-blue-400',
+      iconColor: 'text-primary',
       history: getMetric('link_clicks').history,
-      lineColor: '#3b82f6',
+      lineColor: 'hsl(var(--primary))',
     },
     cpc: {
       title: 'CPC (Todos)',
       value: formatCurrency(getMetric('cpc').value),
       change: getMetric('cpc').change,
       icon: DollarSign,
-      iconColor: 'text-blue-300',
+      iconColor: 'text-primary/70',
       history: getMetric('cpc').history,
-      lineColor: '#60a5fa',
+      lineColor: 'hsl(var(--primary)/0.7)',
     },
     cpc_link: {
       title: 'CPC (Link)',
       value: formatCurrency(getMetric('cpc_link').value),
       change: getMetric('cpc_link').change,
       icon: DollarSign,
-      iconColor: 'text-blue-500',
+      iconColor: 'text-primary',
       history: getMetric('cpc_link').history,
-      lineColor: '#2563eb',
+      lineColor: 'hsl(var(--primary))',
     },
     ctr: {
       title: 'CTR (Todos)',
@@ -202,7 +202,7 @@ export function TrafficKpiCards({ data, selectedMetrics }: TrafficKpiCardsProps)
       value: formatCompact(getMetric('purchases').value),
       change: getMetric('purchases').change,
       icon: CheckCircle2,
-      iconColor: 'text-white',
+      iconColor: 'text-emerald-500',
       history: getMetric('purchases').history,
       lineColor: '#10b981',
     },
@@ -211,9 +211,9 @@ export function TrafficKpiCards({ data, selectedMetrics }: TrafficKpiCardsProps)
       value: formatCurrency(getMetric('revenue').value),
       change: getMetric('revenue').change,
       icon: BarChart3,
-      iconColor: 'text-blue-400',
+      iconColor: 'text-primary',
       history: getMetric('revenue').history,
-      lineColor: '#60a5fa',
+      lineColor: 'hsl(var(--primary))',
     },
     roas: {
       title: 'ROAS',
@@ -238,18 +238,18 @@ export function TrafficKpiCards({ data, selectedMetrics }: TrafficKpiCardsProps)
       value: formatCompact(getMetric('add_to_cart').value),
       change: getMetric('add_to_cart').change,
       icon: ShoppingCartIcon,
-      iconColor: 'text-blue-300',
+      iconColor: 'text-primary/70',
       history: getMetric('add_to_cart').history,
-      lineColor: '#60a5fa',
+      lineColor: 'hsl(var(--primary)/0.7)',
     },
     view_content: {
       title: 'Vizu. Conteúdo',
       value: formatCompact(getMetric('view_content').value),
       change: getMetric('view_content').change,
       icon: Eye,
-      iconColor: 'text-slate-300',
+      iconColor: 'text-muted-foreground',
       history: getMetric('view_content').history,
-      lineColor: '#cbd5e1',
+      lineColor: 'hsl(var(--muted-foreground))',
     },
     // messaging
     conversations: {
@@ -266,9 +266,9 @@ export function TrafficKpiCards({ data, selectedMetrics }: TrafficKpiCardsProps)
       value: formatCompact(getMetric('leads').value),
       change: getMetric('leads').change,
       icon: Briefcase,
-      iconColor: 'text-blue-400',
+      iconColor: 'text-primary',
       history: getMetric('leads').history,
-      lineColor: '#3b82f6',
+      lineColor: 'hsl(var(--primary))',
     },
     landing_page_views: {
       title: 'Visitas',
@@ -303,9 +303,9 @@ export function TrafficKpiCards({ data, selectedMetrics }: TrafficKpiCardsProps)
       value: formatCompact(getMetric('comment').value),
       change: getMetric('comment').change,
       icon: MessageCircle,
-      iconColor: 'text-blue-400',
+      iconColor: 'text-primary',
       history: getMetric('comment').history,
-      lineColor: '#3b82f6',
+      lineColor: 'hsl(var(--primary))',
     },
     shared: {
       title: 'Compartilhamentos',
@@ -317,11 +317,11 @@ export function TrafficKpiCards({ data, selectedMetrics }: TrafficKpiCardsProps)
       lineColor: '#10b981',
     },
     // video
-    video_p25: { title: 'Vídeo 25%', value: formatCompact(getMetric('video_p25').value), change: getMetric('video_p25').change, icon: Video, iconColor: 'text-slate-500', history: getMetric('video_p25').history, lineColor: '#64748b' },
-    video_p50: { title: 'Vídeo 50%', value: formatCompact(getMetric('video_p50').value), change: getMetric('video_p50').change, icon: Video, iconColor: 'text-slate-400', history: getMetric('video_p50').history, lineColor: '#94a3b8' },
-    video_p75: { title: 'Vídeo 75%', value: formatCompact(getMetric('video_p75').value), change: getMetric('video_p75').change, icon: Video, iconColor: 'text-slate-300', history: getMetric('video_p75').history, lineColor: '#cbd5e1' },
-    video_p95: { title: 'Vídeo 95%', value: formatCompact(getMetric('video_p95').value), change: getMetric('video_p95').change, icon: Video, iconColor: 'text-blue-300', history: getMetric('video_p95').history, lineColor: '#60a5fa' },
-    video_p100: { title: 'Vídeo 100%', value: formatCompact(getMetric('video_p100').value), change: getMetric('video_p100').change, icon: Video, iconColor: 'text-blue-500', history: getMetric('video_p100').history, lineColor: '#3b82f6' },
+    video_p25: { title: 'Vídeo 25%', value: formatCompact(getMetric('video_p25').value), change: getMetric('video_p25').change, icon: Video, iconColor: 'text-muted-foreground', history: getMetric('video_p25').history, lineColor: 'hsl(var(--muted-foreground))' },
+    video_p50: { title: 'Vídeo 50%', value: formatCompact(getMetric('video_p50').value), change: getMetric('video_p50').change, icon: Video, iconColor: 'text-muted-foreground', history: getMetric('video_p50').history, lineColor: 'hsl(var(--muted-foreground))' },
+    video_p75: { title: 'Vídeo 75%', value: formatCompact(getMetric('video_p75').value), change: getMetric('video_p75').change, icon: Video, iconColor: 'text-muted-foreground', history: getMetric('video_p75').history, lineColor: 'hsl(var(--muted-foreground))' },
+    video_p95: { title: 'Vídeo 95%', value: formatCompact(getMetric('video_p95').value), change: getMetric('video_p95').change, icon: Video, iconColor: 'text-primary/70', history: getMetric('video_p95').history, lineColor: 'hsl(var(--primary)/0.7)' },
+    video_p100: { title: 'Vídeo 100%', value: formatCompact(getMetric('video_p100').value), change: getMetric('video_p100').change, icon: Video, iconColor: 'text-primary', history: getMetric('video_p100').history, lineColor: 'hsl(var(--primary))' },
   };
 
   const metricsToShow = selectedMetrics && selectedMetrics.length > 0

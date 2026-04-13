@@ -14,7 +14,7 @@ interface BestAdsDonutProps {
   metricLabel?: string;
 }
 
-const COLORS = ['#3b82f6', '#06b6d4', '#8b5cf6', '#f59e0b', '#10b981', '#f43f5e', '#6366f1'];
+const COLORS = ['hsl(var(--primary))', '#10b981', '#f59e0b', '#8b5cf6', '#f43f5e', '#06b6d4', '#6366f1'];
 
 const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: any[] }) => {
   if (active && payload && payload.length) {
