@@ -95,9 +95,9 @@ export function ClientTrafficPage() {
 
   const [conversionCards, setConversionCards] = useState<ConversionMetric[]>([]);
   const [revenueChartData, setRevenueChartData] = useState<any[]>([]);
-  const [campaigns, setCampaigns] = useState<CampaignData[]>([]);
-  const [adSets, setAdSets] = useState<any[]>([]);
-  const [ads, setAds] = useState<any[]>([]);
+  const [, setCampaigns] = useState<CampaignData[]>([]);
+  const [, setAdSets] = useState<any[]>([]);
+  const [, setAds] = useState<any[]>([]);
   const [topAds, setTopAds] = useState<any[]>([]);
   
   // Raw data for hierarchy filtering
