@@ -20,7 +20,7 @@ interface TrafficSettingsProps {
   onSettingsUpdated?: () => void;
 }
 
-const METRIC_CATEGORIES = [
+export const METRIC_CATEGORIES = [
   {
     id: 'performance',
     label: 'Performance',
@@ -523,61 +523,3 @@ export function TrafficSettings({ clientId, onSettingsUpdated }: TrafficSettings
     </Card>
   );
 }
-
-
-          <TabsContent value="metrics" className="space-y-6">
-            <Tabs defaultValue="performance" className="w-full">
-              <TabsList className="bg-muted p-1 mb-6 flex flex-wrap h-auto gap-1 justify-center sm:justify-start">
-                {METRIC_CATEGORIES.map(cat => (
-                  <TabsTrigger 
-                    key={cat.id} 
-                    value={cat.id}
-                    className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-[11px] py-1.5 px-3 transition-all duration-300 flex items-center"
-                  >
-                    <cat.icon className="h-3.5 w-3.5 mr-2 hidden sm:inline" />
-                    {cat.label}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-
-              {METRIC_CATEGORIES.map(category => (
-                <TabsContent key={category.id} value={category.id} className="mt-0 animate-in fade-in zoom-in-95 duration-300">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {category.metrics.map((metric) => (
-                      <div
-                        key={metric.id}
-                        className={`flex items-center justify-between p-4 rounded-xl border transition-all duration-200 group ${
-                          selectedMetrics.includes(metric.id) 
-                            ? 'bg-primary/10 border-primary/30' 
-                            : 'bg-muted/20 border-border hover:border-primary/50'
-                        }`}
-                      >
-                        <div className="space-y-0.5">
-                          <Label
-                            htmlFor={`metric-${metric.id}`}
-                            className={`text-sm font-medium cursor-pointer transition-colors ${
-                              selectedMetrics.includes(metric.id) ? 'text-primary' : 'text-muted-foreground group-hover:text-foreground'
-                            }`}
-                          >
-                            {metric.label}
-                          </Label>
-                        </div>
-                        <Switch
-                          id={`metric-${metric.id}`}
-                          checked={selectedMetrics.includes(metric.id)}
-                          onCheckedChange={() => toggleMetric(metric.id)}
-                          className="data-[state=checked]:bg-primary shadow-lg"
-                        />
-                      </div>
-                    ))}
-                  </div>
-                </TabsContent>
-              ))}
-            </Tabs>
-          </TabsContent>
-        </Tabs>
-      </CardContent>
-    </Card>
-  );
-}
-

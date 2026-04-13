@@ -15,7 +15,7 @@ interface RevenueChartProps {
   metric2?: { id: string; label: string };
 }
 
-const CustomTooltip = ({ active, payload, label, metric1Label, metric2Label, metric1Id, metric2Id }: any) => {
+const CustomTooltip = ({ active, payload, label, metric1Id, metric2Id }: any) => {
   if (active && payload && payload.length && label) {
     const formatCurrency = (val: number) =>
       new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
@@ -30,7 +30,7 @@ const CustomTooltip = ({ active, payload, label, metric1Label, metric2Label, met
           const isCurr = isCurrency(mId);
           return (
             <p key={i} style={{ color: entry.color }} className="text-xs">
-              {entry.name}: {isCurr ? formatCurrency(entry.value) : entry.value.toFixed(id === 'roas' || id === 'ctr' ? 2 : 0)}
+              {entry.name}: {isCurr ? formatCurrency(entry.value) : entry.value.toFixed(mId === 'roas' || mId === 'ctr' ? 2 : 0)}
             </p>
           );
         })}

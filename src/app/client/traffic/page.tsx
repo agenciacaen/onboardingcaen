@@ -4,8 +4,8 @@ import { DateRangeSelector } from '@/components/ui/DateRangeSelector';
 import { TrafficKpiCards } from '@/modules/traffic/components/TrafficKpiCards';
 import { TrafficFunnel, type FunnelData } from '@/modules/traffic/components/TrafficFunnel';
 import { ConversionMetricCards, type ConversionMetric } from '@/modules/traffic/components/ConversionMetricCards';
-import { RevenueChart, type RevenueDataPoint } from '@/modules/traffic/components/RevenueChart';
-import { BestAdsDonut, type TopAdData } from '@/modules/traffic/components/BestAdsDonut';
+import { RevenueChart } from '@/modules/traffic/components/RevenueChart';
+import { BestAdsDonut } from '@/modules/traffic/components/BestAdsDonut';
 import { CampaignTable, type CampaignData } from '@/modules/traffic/components/CampaignTable';
 import type { DateRange } from 'react-day-picker';
 import { subDays, format } from 'date-fns';
@@ -13,7 +13,7 @@ import { Download, HelpCircle, RefreshCw, Settings2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
-import { TrafficSettings } from '@/modules/traffic/components/TrafficSettings';
+import { TrafficSettings, METRIC_CATEGORIES } from '@/modules/traffic/components/TrafficSettings';
 import { trafficService } from '@/modules/traffic/services/traffic.service';
 import { supabase } from '@/services/supabase';
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
@@ -58,6 +58,13 @@ export function ClientTrafficPage() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [, setLastSyncDate] = useState<string | null>(null);
   const [settingsVersion, setSettingsVersion] = useState(0);
+
+  const [conversionCards, setConversionCards] = useState<ConversionMetric[]>([]);
+  const [revenueChartData, setRevenueChartData] = useState<any[]>([]);
+  const [campaigns, setCampaigns] = useState<CampaignData[]>([]);
+  const [topAds, setTopAds] = useState<any[]>([]);
+  
+  const ALL_METRICS = METRIC_CATEGORIES.flatMap(c => c.metrics);
 
   const [funnelData, setFunnelData] = useState<FunnelData>({
     steps: [],
