@@ -69,5 +69,35 @@ export const trafficService = {
 
     if (error) throw error;
     return data;
+  },
+
+  async syncData(clientId: string) {
+    const { data, error } = await supabase.functions.invoke('sync-meta-ads', {
+      body: { client_id: clientId, lookback_days: 1 }
+    });
+
+    if (error) throw error;
+    return data;
+  },
+
+  async getSettings(clientId: string) {
+    const { data, error } = await supabase
+      .from('clients')
+      .select('traffic_config')
+      .eq('id', clientId)
+      .single();
+
+    if (error) throw error;
+    return data.traffic_config;
+  },
+
+  async updateSettings(clientId: string, settings: any) {
+    const { error } = await supabase
+      .from('clients')
+      .update({ traffic_config: settings })
+      .eq('id', clientId);
+
+    if (error) throw error;
+    return true;
   }
 };

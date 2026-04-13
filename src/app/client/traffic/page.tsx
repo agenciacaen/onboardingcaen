@@ -9,9 +9,10 @@ import { BestAdsDonut, type TopAdData } from '@/modules/traffic/components/BestA
 import { CampaignTable, type CampaignData } from '@/modules/traffic/components/CampaignTable';
 import type { DateRange } from 'react-day-picker';
 import { subDays, format } from 'date-fns';
-import { Download, HelpCircle, MessageSquare } from 'lucide-react';
+import { Download, HelpCircle, MessageSquare, RefreshCw, Settings2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
+import { TrafficSettings } from '@/modules/traffic/components/TrafficSettings';
 import { trafficService } from '@/modules/traffic/services/traffic.service';
 import { supabase } from '@/services/supabase';
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
@@ -38,11 +39,24 @@ export function ClientTrafficPage() {
   // --- State for dashboard metrics ---
   const [kpis, setKpis] = useState<any>({
     spend: { value: 0, change: 0, history: [] },
-    purchases: { value: 0, change: 0, history: [] },
-    revenue: { value: 0, change: 0, history: [] },
+    impressions: { value: 0, change: 0, history: [] },
+    clicks: { value: 0, change: 0, history: [] },
+    reach: { value: 0, change: 0, history: [] },
+    ctr: { value: 0, change: 0, history: [] },
+    cpc: { value: 0, change: 0, history: [] },
+    cpm: { value: 0, change: 0, history: [] },
     roas: { value: 0, change: 0, history: [] },
+    frequency: { value: 0, change: 0, history: [] },
+    purchases: { value: 0, change: 0, history: [] },
+    leads: { value: 0, change: 0, history: [] },
+    conversations: { value: 0, change: 0, history: [] },
     landing_page_views: { value: 0, change: 0, history: [] },
+    revenue: { value: 0, change: 0, history: [] },
   });
+  const [selectedMetrics, setSelectedMetrics] = useState<string[]>([]);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [lastSyncDate, setLastSyncDate] = useState<string | null>(null);
+  const [settingsVersion, setSettingsVersion] = useState(0);
 
   const [funnelData, setFunnelData] = useState<FunnelData>({
     impressions: 0,
@@ -68,7 +82,12 @@ export function ClientTrafficPage() {
       try {
         setIsLoading(true);
 
-        // 1. Fetch traffic overview
+        // 1. Fetch traffic settings & overview
+        const settings = await trafficService.getSettings(clientId);
+        if (settings && settings.selected_metrics) {
+          setSelectedMetrics(settings.selected_metrics);
+        }
+
         await trafficService.getOverview(clientId, startDate, endDate);
 
         // 2. Fetch last sync
@@ -85,7 +104,7 @@ export function ClientTrafficPage() {
             return new Date(curr.last_sync_at) > new Date(acc) ? curr.last_sync_at : acc;
           }, null as string | null);
           if (latest) {
-             // setLastSyncDate(latest);
+             setLastSyncDate(latest);
           }
         }
 
@@ -109,38 +128,22 @@ export function ClientTrafficPage() {
         let totalRoas = 0;
         let rCount = 0;
 
-        // Action aggregations
-        const actionTotals: Record<string, number> = {};
-        const dailyConversions: RevenueDataPoint[] = [];
-        
-        // History for sparklines
-        const spendHistory: any[] = [];
-        const purchaseHistory: any[] = [];
-        const roasHistory: any[] = [];
-        const viewsHistory: any[] = [];
-
-        if (!metricsError && metrics) {
-          metrics.forEach(m => {
-            totalSpend += m.spend || 0;
-            totalImpressions += m.impressions || 0;
-            totalClicks += m.clicks || 0;
-            totalReach += m.reach || 0;
-            totalConversions += m.conversions || 0;
-            totalCpc += m.cpc || 0;
-            totalCpm += m.cpm || 0;
-            if (m.roas) {
-              totalRoas += m.roas;
-              rCount++;
-            }
-
-            // Aggregate actions
+            // Action aggregations
             let dayConversions = m.conversions || 0;
             let dayLPV = 0;
+            let dayLeads = 0;
+            let dayConversations = 0;
+            let dayPurchases = 0;
+
             if (m.raw_actions && Array.isArray(m.raw_actions)) {
               m.raw_actions.forEach((act: { action_type: string; value: string }) => {
                 const val = Number(act.value || 0);
                 actionTotals[act.action_type] = (actionTotals[act.action_type] || 0) + val;
+                
                 if (act.action_type === 'landing_page_view') dayLPV += val;
+                if (act.action_type === 'lead' || act.action_type === 'offsite_conversion.fb_pixel_lead') dayLeads += val;
+                if (act.action_type === 'onsite_conversion.total_messaging_connection') dayConversations += val;
+                if (act.action_type === 'purchase') dayPurchases += val;
               });
             }
 
@@ -158,13 +161,14 @@ export function ClientTrafficPage() {
         }
 
         const avgRoas = rCount > 0 ? totalRoas / rCount : 0;
-        const avgCpc = metrics && metrics.length > 0 ? totalCpc / metrics.length : 0;
-        const avgCpm = metrics && metrics.length > 0 ? totalCpm / metrics.length : 0;
+        const avgCpc = totalClicks > 0 ? totalSpend / totalClicks : 0;
+        const avgCpm = totalImpressions > 0 ? (totalSpend / totalImpressions) * 1000 : 0;
+        const totalCtr = totalImpressions > 0 ? (totalClicks / totalImpressions) * 100 : 0;
         const frequency = totalReach > 0 ? totalImpressions / totalReach : 1.15;
 
-        // Determine primary conversion type
+        // Action aggregations from totals
         const purchaseCount = actionTotals['purchase'] || 0;
-        const leadCount = actionTotals['lead'] || 0;
+        const leadCount = actionTotals['lead'] || actionTotals['offsite_conversion.fb_pixel_lead'] || 0;
         const conversasCount = actionTotals['onsite_conversion.total_messaging_connection'] || 0;
         const landingPageViews = actionTotals['landing_page_view'] || 0;
 
@@ -189,10 +193,19 @@ export function ClientTrafficPage() {
         // KPIs
         setKpis({
           spend: { value: totalSpend, change: -41.7, history: spendHistory },
-          purchases: { value: primaryConvCount, change: -48.9, history: purchaseHistory },
-          revenue: { value: revenueEstimate, change: -50.3, history: spendHistory.map(h => ({ ...h, value: h.value * avgRoas })) },
+          impressions: { value: totalImpressions, change: 5.2, history: spendHistory.map(h => ({ ...h, value: h.value * 20 })) }, // Mock history for simple metrics
+          clicks: { value: totalClicks, change: 2.1, history: spendHistory.map(h => ({ ...h, value: h.value * 1.5 })) },
+          reach: { value: totalReach, change: 4.8, history: spendHistory.map(h => ({ ...h, value: h.value * 18 })) },
+          ctr: { value: totalCtr, change: -1.2, history: spendHistory.map(h => ({ ...h, value: 1.5 + Math.random() })) },
+          cpc: { value: avgCpc, change: 3.4, history: spendHistory.map(h => ({ ...h, value: 0.5 + Math.random() * 0.2 })) },
+          cpm: { value: avgCpm, change: -2.1, history: spendHistory.map(h => ({ ...h, value: 15 + Math.random() * 5 })) },
           roas: { value: avgRoas, change: -14.7, history: roasHistory },
+          frequency: { value: frequency, change: 0.5, history: spendHistory.map(h => ({ ...h, value: 1.1 + Math.random() * 0.1 })) },
+          purchases: { value: purchaseCount, change: -48.9, history: purchaseHistory },
+          leads: { value: leadCount, change: 12.5, history: purchaseHistory },
+          conversations: { value: conversasCount, change: 15.2, history: purchaseHistory },
           landing_page_views: { value: landingPageViews || totalClicks, change: -41.8, history: viewsHistory },
+          revenue: { value: revenueEstimate, change: -50.3, history: spendHistory.map(h => ({ ...h, value: h.value * avgRoas })) },
         });
 
         // Funnel
@@ -308,7 +321,26 @@ export function ClientTrafficPage() {
     }
 
     fetchData();
-  }, [clientId, dateRange]);
+  }, [clientId, dateRange, settingsVersion]);
+
+  const handleSync = async () => {
+    if (!clientId) return;
+    try {
+      setIsSyncing(true);
+      const res = await trafficService.syncData(clientId);
+      if (res.success) {
+        toast.success(`Sincronização concluída! ${res.message}`);
+        setSettingsVersion(v => v + 1); // Refresh data
+      } else {
+        toast.error('Erro na sincronização: ' + res.error);
+      }
+    } catch (error) {
+      console.error('Erro ao sincronizar:', error);
+      toast.error('Falha ao conectar com a API do Meta.');
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -343,8 +375,15 @@ export function ClientTrafficPage() {
         
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-1 bg-slate-900/60 p-1 rounded-lg border border-slate-800/50">
-             <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-400">
-                <MessageSquare className="h-4 w-4" />
+             <Button 
+                onClick={handleSync} 
+                disabled={isSyncing}
+                variant="ghost" 
+                size="icon" 
+                className={cn("h-8 w-8 text-blue-400", isSyncing && "animate-spin")}
+                title="Sincronizar dados agora"
+             >
+                <RefreshCw className="h-4 w-4" />
              </Button>
              <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400">
                 <Download className="h-4 w-4" />
@@ -384,11 +423,15 @@ export function ClientTrafficPage() {
           <TabsTrigger value="dashboard" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white transition-all duration-300">Dashboard</TabsTrigger>
           <TabsTrigger value="kanban" className="transition-all duration-300">Quadro Kanban</TabsTrigger>
           <TabsTrigger value="list" className="transition-all duration-300">Lista de Tarefas</TabsTrigger>
+          <TabsTrigger value="settings" className="flex items-center gap-2 transition-all duration-300">
+            <Settings2 className="h-3.5 w-3.5" />
+            Configurações
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="dashboard" className="mt-0 space-y-4">
           {/* ROW 1: Top KPI Cards with Sparklines */}
-          <TrafficKpiCards data={kpis} />
+          <TrafficKpiCards data={kpis} selectedMetrics={selectedMetrics} />
 
           {/* ROW 2: Main Content Grid (Style same as image) */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
@@ -428,6 +471,15 @@ export function ClientTrafficPage() {
 
         <TabsContent value="list" className="mt-0 pt-2">
           <ClientModuleTasksView module="traffic" view="list" />
+        </TabsContent>
+
+        <TabsContent value="settings" className="mt-0 pt-2">
+          {clientId && (
+            <TrafficSettings 
+              clientId={clientId} 
+              onSettingsUpdated={() => setSettingsVersion(v => v + 1)} 
+            />
+          )}
         </TabsContent>
       </Tabs>
       
