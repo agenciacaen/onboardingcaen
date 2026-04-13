@@ -62,6 +62,8 @@ export function ClientTrafficPage() {
   const [conversionCards, setConversionCards] = useState<ConversionMetric[]>([]);
   const [revenueChartData, setRevenueChartData] = useState<any[]>([]);
   const [campaigns, setCampaigns] = useState<CampaignData[]>([]);
+  const [adSets, setAdSets] = useState<any[]>([]);
+  const [ads, setAds] = useState<any[]>([]);
   const [topAds, setTopAds] = useState<any[]>([]);
   
   const ALL_METRICS = METRIC_CATEGORIES.flatMap(c => c.metrics);
@@ -413,12 +415,11 @@ export function ClientTrafficPage() {
         setConversionCards(cards);
 
         // Revenue chart data
-        setRevenueChartData(dailyTimelineData);
-
-        // 4. Fetch campaigns for table
+        setRevenueChartData(dailyTimelineData);        // 4. Fetch campaigns for table
         const campaignsRaw = await trafficService.getCampaigns(clientId, startDate, endDate);
+        let processedCampaigns: CampaignData[] = [];
         if (campaignsRaw) {
-          const processedCampaigns: CampaignData[] = campaignsRaw.map(c => {
+          processedCampaigns = campaignsRaw.map(c => {
             const cMetrics = c.traffic_metrics || [];
             const campSpend = cMetrics.reduce((acc: number, m: any) => acc + (m.spend || 0), 0);
             const campImpressions = cMetrics.reduce((acc: number, m: any) => acc + (m.impressions || 0), 0);
@@ -448,10 +449,79 @@ export function ClientTrafficPage() {
               impressions: campImpressions,
               clicks: campClicks,
               roas: campRoas,
-              custom_metrics: customMetrics,
+              custom_metrics: customMetrics
             };
           });
           setCampaigns(processedCampaigns);
+        }
+
+        // 5. Fetch Ad Sets
+        const adsetsRaw = await trafficService.getAdSets(clientId, startDate, endDate);
+        let processedAdsets: any[] = [];
+        if (adsetsRaw) {
+           processedAdsets = adsetsRaw.map(a => {
+             const aMetrics = a.traffic_metrics || [];
+             const aSpend = aMetrics.reduce((acc: number, m: any) => acc + (m.spend || 0), 0);
+             const aImpressions = aMetrics.reduce((acc: number, m: any) => acc + (m.impressions || 0), 0);
+             const aClicks = aMetrics.reduce((acc: number, m: any) => acc + (m.clicks || 0), 0);
+             const customMetrics: Record<string, number> = {};
+             aMetrics.forEach((m: any) => {
+               if (m.raw_actions && Array.isArray(m.raw_actions)) {
+                 m.raw_actions.forEach((action: any) => {
+                   const type = action.action_type;
+                   const value = Number(action.value || 0);
+                   customMetrics[type] = (customMetrics[type] || 0) + value;
+                 });
+               }
+             });
+             return {
+                id: a.id,
+                name: a.name,
+                status: a.status,
+                campaign_name: Array.isArray(a.traffic_campaigns) ? a.traffic_campaigns[0]?.name : (a.traffic_campaigns as any)?.name,
+                spend: aSpend,
+                impressions: aImpressions,
+                clicks: aClicks,
+                custom_metrics: customMetrics
+             };
+           });
+           setAdSets(processedAdsets);
+        }
+
+        // 6. Fetch Ads
+        const adsRaw = await trafficService.getAds(clientId, startDate, endDate);
+        let processedAds: any[] = [];
+        if (adsRaw) {
+           processedAds = adsRaw.map(a => {
+             const aMetrics = a.traffic_metrics || [];
+             const aSpend = aMetrics.reduce((acc: number, m: any) => acc + (m.spend || 0), 0);
+             const aImpressions = aMetrics.reduce((acc: number, m: any) => acc + (m.impressions || 0), 0);
+             const aClicks = aMetrics.reduce((acc: number, m: any) => acc + (m.clicks || 0), 0);
+             const customMetrics: Record<string, number> = {};
+             aMetrics.forEach((m: any) => {
+               if (m.raw_actions && Array.isArray(m.raw_actions)) {
+                 m.raw_actions.forEach((action: any) => {
+                   const type = action.action_type;
+                   const value = Number(action.value || 0);
+                   customMetrics[type] = (customMetrics[type] || 0) + value;
+                 });
+               }
+             });
+             return {
+                id: a.id,
+                name: a.name,
+                status: a.status,
+                thumbnail_url: a.thumbnail_url,
+                campaign_name: Array.isArray(a.traffic_campaigns) ? a.traffic_campaigns[0]?.name : (a.traffic_campaigns as any)?.name,
+                adset_name: Array.isArray(a.traffic_ad_sets) ? a.traffic_ad_sets[0]?.name : (a.traffic_ad_sets as any)?.name,
+                spend: aSpend,
+                impressions: aImpressions,
+                clicks: aClicks,
+                custom_metrics: customMetrics
+             };
+           });
+           setAds(processedAds);
+        }
 
           // Top ads for donut
           const sortBy = adsConfig.sort_by || 'conversions';
@@ -497,7 +567,6 @@ export function ClientTrafficPage() {
               cpc: c.clicks > 0 ? c.spend / c.clicks : 0
             };
           }));
-        }
 
       } catch (error) {
         console.error('Erro ao carregar dados de tráfego:', error);
@@ -670,7 +739,7 @@ export function ClientTrafficPage() {
 
               {/* Bottom: Campaign Table (Enhanced) */}
               {visibilityConfig.show_table && (
-                <CampaignTable data={campaigns} />
+                <CampaignTable campaigns={campaigns} adSets={adSets} ads={ads} />
               )}
               
               {/* Extra Summary Row */}

@@ -33,7 +33,8 @@ export const trafficService = {
           date
         )
       `)
-      .eq('client_id', clientId);
+      .eq('client_id', clientId)
+      .eq('traffic_metrics.level', 'campaign');
 
     if (startDate) {
       query = query.gte('traffic_metrics.date', startDate);
@@ -48,12 +49,69 @@ export const trafficService = {
     return data;
   },
 
-  async getCampaignAds(campaignId: string) {
-    const { data, error } = await supabase
-      .from('traffic_ads')
-      .select('id, name, status, ctr, cpc, roas, impressions, spend, is_best')
-      .eq('campaign_id', campaignId);
+  async getAdSets(clientId: string, startDate?: string, endDate?: string) {
+    let query = supabase
+      .from('traffic_ad_sets')
+      .select(`
+        id,
+        name,
+        status,
+        campaign_id,
+        traffic_metrics (
+          spend,
+          impressions,
+          clicks,
+          conversions,
+          roas,
+          ctr,
+          cpc,
+          raw_actions,
+          date
+        ),
+        traffic_campaigns(name)
+      `)
+      .eq('client_id', clientId)
+      .eq('traffic_metrics.level', 'adset');
 
+    if (startDate) query = query.gte('traffic_metrics.date', startDate);
+    if (endDate) query = query.lte('traffic_metrics.date', endDate);
+      
+    const { data, error } = await query;
+    if (error) throw error;
+    return data;
+  },
+
+  async getAds(clientId: string, startDate?: string, endDate?: string) {
+    let query = supabase
+      .from('traffic_ads')
+      .select(`
+        id,
+        name,
+        status,
+        thumbnail_url,
+        adset_id,
+        campaign_id,
+        traffic_metrics (
+          spend,
+          impressions,
+          clicks,
+          conversions,
+          roas,
+          ctr,
+          cpc,
+          raw_actions,
+          date
+        ),
+        traffic_ad_sets(name),
+        traffic_campaigns(name)
+      `)
+      .eq('client_id', clientId)
+      .eq('traffic_metrics.level', 'ad');
+
+    if (startDate) query = query.gte('traffic_metrics.date', startDate);
+    if (endDate) query = query.lte('traffic_metrics.date', endDate);
+      
+    const { data, error } = await query;
     if (error) throw error;
     return data;
   },

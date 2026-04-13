@@ -111,7 +111,7 @@ export function ClientCampaignsPage() {
               <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
             </div>
           ) : (
-            <CampaignTable data={campaigns} />
+            <CampaignTable campaigns={campaigns} />
           )}
         </div>
       </div>
