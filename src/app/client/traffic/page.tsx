@@ -419,9 +419,10 @@ export function ClientTrafficPage() {
     if (!clientId) return;
     try {
       setIsSyncing(true);
-      const res = await trafficService.syncData(clientId, 7);
+      // Sincronização profunda (90 dias) para garantir paridade total com o Gerenciador de Anúncios
+      const res = await trafficService.syncData(clientId, 90);
       if (res.success) {
-        toast.success(`Sincronização concluída! ${res.message}`);
+        toast.success(`Sincronização profunda concluída! Dados atualizados.`);
         setSettingsVersion(v => v + 1); // Refresh data
       } else {
         toast.error('Erro na sincronização: ' + res.error);
