@@ -63,7 +63,7 @@ export function ClientTrafficPage() {
     steps: [],
     secondaryMetrics: { frequency: 0, cpc: 0, cpm: 0 }
   });
-  const [funnelConfig, setFunnelConfig] = useState<any>(null);
+
   const [conversionCards, setConversionCards] = useState<ConversionMetric[]>([]);
   const [revenueChartData, setRevenueChartData] = useState<RevenueDataPoint[]>([]);
   const [topAds, setTopAds] = useState<TopAdData[]>([]);
@@ -99,7 +99,7 @@ export function ClientTrafficPage() {
         const config = await trafficService.getSettings(clientId);
         const funnelObjective = config?.funnel_main_metric || 'conversions';
         const userFunnelConfig = config?.funnel_config;
-        setFunnelConfig(userFunnelConfig);
+
         const activeMetrics = config?.selected_metrics || ['spend', 'purchases', 'revenue', 'roas', 'landing_page_views'];
         setSelectedMetrics(activeMetrics);
 
