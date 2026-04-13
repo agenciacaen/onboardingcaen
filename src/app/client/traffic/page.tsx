@@ -70,6 +70,7 @@ export function ClientTrafficPage() {
   const [viewLevel, setViewLevel] = useState<ViewLevel>('campaign');
   const [selectedCampaignId, setSelectedCampaignId] = useState<string>('all');
   const [selectedAdSetId, setSelectedAdSetId] = useState<string>('all');
+  const [selectedAdId, setSelectedAdId] = useState<string>('all');
 
   // --- State for dashboard metrics ---
   const [kpis, setKpis] = useState<any>({
@@ -144,7 +145,12 @@ export function ClientTrafficPage() {
   // Reset child selectors when parent changes
   useEffect(() => {
     setSelectedAdSetId('all');
+    setSelectedAdId('all');
   }, [selectedCampaignId]);
+
+  useEffect(() => {
+    setSelectedAdId('all');
+  }, [selectedAdSetId]);
 
   useEffect(() => {
     async function fetchData() {
@@ -210,6 +216,9 @@ export function ClientTrafficPage() {
         }
         if (selectedAdSetId !== 'all' && (viewLevel === 'adset' || viewLevel === 'ad')) {
           metricsQuery = metricsQuery.eq('adset_id', selectedAdSetId);
+        }
+        if (selectedAdId !== 'all' && viewLevel === 'ad') {
+          metricsQuery = metricsQuery.eq('ad_id', selectedAdId);
         }
 
         const { data: metrics, error: metricsError } = await metricsQuery;
@@ -670,7 +679,7 @@ export function ClientTrafficPage() {
     }
 
     fetchData();
-  }, [clientId, dateRange, settingsVersion, viewLevel, selectedCampaignId, selectedAdSetId]);
+  }, [clientId, dateRange, settingsVersion, viewLevel, selectedCampaignId, selectedAdSetId, selectedAdId]);
 
   const handleSync = async () => {
     if (!clientId) return;
@@ -795,6 +804,23 @@ export function ClientTrafficPage() {
               <SelectContent>
                 <SelectItem value="all">Todos Conjuntos</SelectItem>
                 {filteredAdSets.map(a => (
+                  <SelectItem key={a.id} value={a.id}>
+                    <span className="truncate max-w-[140px]">{a.name}</span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+
+          {/* AD FILTER (visible only when viewing ads) */}
+          {viewLevel === 'ad' && (
+            <Select value={selectedAdId} onValueChange={(v) => setSelectedAdId(v)}>
+              <SelectTrigger className="w-[180px] h-9 bg-muted text-[11px] border-border text-foreground">
+                <SelectValue placeholder="Anúncios" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos Anúncios</SelectItem>
+                {filteredAds.map(a => (
                   <SelectItem key={a.id} value={a.id}>
                     <span className="truncate max-w-[140px]">{a.name}</span>
                   </SelectItem>
