@@ -9,9 +9,10 @@ import { BestAdsDonut, type TopAdData } from '@/modules/traffic/components/BestA
 import { CampaignTable, type CampaignData } from '@/modules/traffic/components/CampaignTable';
 import type { DateRange } from 'react-day-picker';
 import { subDays, format } from 'date-fns';
-import { Download, HelpCircle, MessageSquare, RefreshCw, Settings2 } from 'lucide-react';
+import { Download, HelpCircle, RefreshCw, Settings2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
+import { cn } from '@/lib/utils';
 import { TrafficSettings } from '@/modules/traffic/components/TrafficSettings';
 import { trafficService } from '@/modules/traffic/services/traffic.service';
 import { supabase } from '@/services/supabase';
@@ -55,7 +56,7 @@ export function ClientTrafficPage() {
   });
   const [selectedMetrics, setSelectedMetrics] = useState<string[]>([]);
   const [isSyncing, setIsSyncing] = useState(false);
-  const [lastSyncDate, setLastSyncDate] = useState<string | null>(null);
+  const [, setLastSyncDate] = useState<string | null>(null);
   const [settingsVersion, setSettingsVersion] = useState(0);
 
   const [funnelData, setFunnelData] = useState<FunnelData>({
@@ -128,12 +129,35 @@ export function ClientTrafficPage() {
         let totalRoas = 0;
         let rCount = 0;
 
-            // Action aggregations
+        // History trackers for sparklines
+        const spendHistory: any[] = [];
+        const purchaseHistory: any[] = [];
+        const roasHistory: any[] = [];
+        const viewsHistory: any[] = [];
+
+        // Action aggregation tracker
+        const actionTotals: Record<string, number> = {};
+        const dailyConversions: RevenueDataPoint[] = [];
+
+        if (!metricsError && metrics) {
+          metrics.forEach(m => {
+            totalSpend += m.spend || 0;
+            totalImpressions += m.impressions || 0;
+            totalClicks += m.clicks || 0;
+            totalReach += m.reach || 0;
+            totalConversions += m.conversions || 0;
+            totalCpc += m.cpc || 0;
+            totalCpm += m.cpm || 0;
+            if (m.roas) {
+              totalRoas += m.roas;
+              rCount++;
+            }
+
+            // Action aggregations per day
             let dayConversions = m.conversions || 0;
             let dayLPV = 0;
             let dayLeads = 0;
             let dayConversations = 0;
-            let dayPurchases = 0;
 
             if (m.raw_actions && Array.isArray(m.raw_actions)) {
               m.raw_actions.forEach((act: { action_type: string; value: string }) => {
@@ -143,7 +167,6 @@ export function ClientTrafficPage() {
                 if (act.action_type === 'landing_page_view') dayLPV += val;
                 if (act.action_type === 'lead' || act.action_type === 'offsite_conversion.fb_pixel_lead') dayLeads += val;
                 if (act.action_type === 'onsite_conversion.total_messaging_connection') dayConversations += val;
-                if (act.action_type === 'purchase') dayPurchases += val;
               });
             }
 

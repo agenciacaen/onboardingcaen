@@ -103,9 +103,6 @@ export function TrafficKpiCards({ data, selectedMetrics }: TrafficKpiCardsProps)
   const formatCompact = (num: number) =>
     new Intl.NumberFormat('pt-BR', { notation: 'compact', maximumFractionDigits: 1 }).format(num);
 
-  const formatPercent = (num: number) => 
-    new Intl.NumberFormat('pt-BR', { style: 'percent', minimumFractionDigits: 2 }).format(num / 100);
-
   const allPossibleKpis: Record<string, KpiItemProps> = {
     spend: {
       title: 'Investimento',
