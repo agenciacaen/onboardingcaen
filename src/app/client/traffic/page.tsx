@@ -121,7 +121,7 @@ export function ClientTrafficPage() {
           .select('date, spend, impressions, clicks, conversions, roas, cpc, cpm, reach, raw_actions')
           .eq('client_id', clientId)
           .gte('date', startDate)
-          .lte('date', endDate)
+          .lte('date', endDate) // Use formatted endDate string
           .order('date', { ascending: true });
 
         // Aggregate all metrics
@@ -419,10 +419,10 @@ export function ClientTrafficPage() {
     if (!clientId) return;
     try {
       setIsSyncing(true);
-      // Sincronização profunda (90 dias) para garantir paridade total com o Gerenciador de Anúncios
-      const res = await trafficService.syncData(clientId, 90);
+      // Sincronização padrão (7 dias) incluindo hoje para rapidez e precisão
+      const res = await trafficService.syncData(clientId, 7);
       if (res.success) {
-        toast.success(`Sincronização profunda concluída! Dados atualizados.`);
+        toast.success(`Sincronização concluída! Dados atualizados.`);
         setSettingsVersion(v => v + 1); // Refresh data
       } else {
         toast.error('Erro na sincronização: ' + res.error);

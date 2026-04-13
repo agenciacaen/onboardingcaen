@@ -66,10 +66,13 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    // Melhora na estratégia: Em vez de iterar campanhas, pedimos os insights da conta no nível de campanha.
-    // Isso garante que capturamos TODAS as campanhas que tiveram atividade (Ativas, Pausadas, Arquivadas).
-    const datePreset = lookback_days > 7 ? (lookback_days > 30 ? 'maximum' : 'last_30d') : 'last_7d';
-    if (lookback_days === 1) { /* manter last_7d para garantir live sync fiel */ }
+    // Estratégia de Datas: Usamos time_range para controle total, garantindo que incluímos HOJE.
+    const today = new Date().toISOString().split('T')[0];
+    const sinceDate = lookback_days === 1 
+      ? today 
+      : new Date(Date.now() - lookback_days * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    
+    const timeRange = JSON.stringify({ since: sinceDate, until: today });
 
     let syncedCount = 0;
     let metricsInserted = 0;
@@ -80,7 +83,7 @@ Deno.serve(async (req: Request) => {
         
         // 1. Buscar Insights agregados por campanha diretamente da conta
         const timeIncrement = '&time_increment=1'; // Sempre por dia para o gráfico
-        const insightsUrl = `https://graph.facebook.com/v25.0/${formattedAccountId}/insights?level=campaign&date_preset=${datePreset}&fields=campaign_id,campaign_name,impressions,clicks,spend,reach,cpc,cpm,ctr,actions,purchase_roas,date_start,date_stop,objective${timeIncrement}&access_token=${token}&limit=500`;
+        const insightsUrl = `https://graph.facebook.com/v25.0/${formattedAccountId}/insights?level=campaign&time_range=${timeRange}&fields=campaign_id,campaign_name,impressions,clicks,spend,reach,cpc,cpm,ctr,actions,purchase_roas,date_start,date_stop,objective${timeIncrement}&access_token=${token}&limit=500`;
         
         const insRes = await fetch(insightsUrl);
         const insData = await insRes.json();
