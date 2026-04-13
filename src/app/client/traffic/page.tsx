@@ -64,10 +64,15 @@ export function ClientTrafficPage() {
     secondaryMetrics: { frequency: 0, cpc: 0, cpm: 0 }
   });
 
-  const [conversionCards, setConversionCards] = useState<ConversionMetric[]>([]);
-  const [revenueChartData, setRevenueChartData] = useState<RevenueDataPoint[]>([]);
-  const [topAds, setTopAds] = useState<TopAdData[]>([]);
-  const [campaigns, setCampaigns] = useState<CampaignData[]>([]);
+  const [chartConfig, setChartConfig] = useState<any>({ left_metric: 'spend', right_metric: 'revenue' });
+  const [adsConfig, setAdsConfig] = useState<any>({ sort_by: 'conversions', limit: 5 });
+  const [visibilityConfig, setVisibilityConfig] = useState<any>({
+    show_funnel: true,
+    show_chart: true,
+    show_ranking: true,
+    show_table: true,
+    show_summary_cards: true
+  });
   const [conversionLabel, setConversionLabel] = useState('Conversões');
 
   useEffect(() => {
@@ -102,6 +107,9 @@ export function ClientTrafficPage() {
 
         const activeMetrics = config?.selected_metrics || ['spend', 'purchases', 'revenue', 'roas', 'landing_page_views'];
         setSelectedMetrics(activeMetrics);
+        if (config?.chart_config) setChartConfig(config.chart_config);
+        if (config?.ads_config) setAdsConfig(config.ads_config);
+        if (config?.visibility_config) setVisibilityConfig(config.visibility_config);
 
         if (accounts && accounts.length > 0) {
           const latest = accounts.reduce((acc, curr) => {
@@ -137,7 +145,7 @@ export function ClientTrafficPage() {
         
         // Action aggregation tracker
         const actionTotals: Record<string, number> = {};
-        const dailyConversions: RevenueDataPoint[] = [];
+        const dailyTimelineData: any[] = [];
 
         if (!metricsError && metrics) {
           metrics.forEach(m => {
@@ -160,11 +168,31 @@ export function ClientTrafficPage() {
               });
             }
 
-            dailyConversions.push({
+            // Timeline data for chart
+            const dailyItem: any = {
               date: m.date,
               spend: m.spend || 0,
+              impressions: m.impressions || 0,
+              clicks: m.clicks || 0,
+              reach: m.reach || 0,
               conversions: m.conversions || 0,
-            });
+              roas: m.roas || 0,
+              cpc: m.clicks > 0 ? (m.spend || 0) / m.clicks : 0,
+              cpm: m.impressions > 0 ? ((m.spend || 0) / m.impressions) * 1000 : 0,
+            };
+
+            // Map action totals to dailyItem
+            if (m.raw_actions && Array.isArray(m.raw_actions)) {
+               m.raw_actions.forEach((act: any) => {
+                 dailyItem[act.action_type] = (dailyItem[act.action_type] || 0) + Number(act.value || 0);
+               });
+            }
+            
+            // Shortcuts for revenue
+            if (dailyItem['purchase_value']) dailyItem['revenue'] = dailyItem['purchase_value'];
+            else dailyItem['revenue'] = (m.spend || 0) * (m.roas || 0);
+
+            dailyTimelineData.push(dailyItem);
 
             // Generic history tracker for sparklines
             const currentMetrics = ['spend', 'impressions', 'roas', 'purchases', 'revenue', 'clicks', 'reach', 'conversations', 'leads', 'landing_page_views'];
@@ -378,7 +406,7 @@ export function ClientTrafficPage() {
         setConversionCards(cards);
 
         // Revenue chart data
-        setRevenueChartData(dailyConversions);
+        setRevenueChartData(dailyTimelineData);
 
         // 4. Fetch campaigns for table
         const campaignsRaw = await trafficService.getCampaigns(clientId, startDate, endDate);
@@ -419,29 +447,47 @@ export function ClientTrafficPage() {
           setCampaigns(processedCampaigns);
 
           // Top ads for donut
+          const sortBy = adsConfig.sort_by || 'conversions';
           const topCampaigns = [...processedCampaigns]
             .sort((a, b) => {
-              const aConv = a.custom_metrics?.[Object.keys(actionTotals).find(k =>
-                k === 'onsite_conversion.messaging_conversation_started_7d' || k === 'lead' || k === 'purchase'
-              ) || ''] || 0;
-              const bConv = b.custom_metrics?.[Object.keys(actionTotals).find(k =>
-                k === 'onsite_conversion.messaging_conversation_started_7d' || k === 'lead' || k === 'purchase'
-              ) || ''] || 0;
-              return bConv - aConv;
+              let aVal = 0;
+              let bVal = 0;
+
+              if (sortBy === 'spend') {
+                aVal = a.spend;
+                bVal = b.spend;
+              } else if (sortBy === 'roas') {
+                aVal = a.roas;
+                bVal = b.roas;
+              } else if (sortBy === 'cpc') {
+                // For CPC we want the lowest value at the top, but the component sorts descending.
+                // To show "best" CPC (lowest) we invert the logic or handle it carefully.
+                // Here we'll treat lower as better for sorting purposes
+                return (a.clicks > 0 ? a.spend / a.clicks : 999) - (b.clicks > 0 ? b.spend / b.clicks : 999);
+              } else {
+                // Default: conversions
+                const mainKey = Object.keys(actionTotals).find(k => 
+                  k === 'onsite_conversion.messaging_conversation_started_7d' || k === 'lead' || k === 'purchase'
+                ) || '';
+                aVal = a.custom_metrics?.[mainKey] || 0;
+                bVal = b.custom_metrics?.[mainKey] || 0;
+              }
+              
+              return bVal - aVal;
             })
-            .slice(0, 5);
+            .slice(0, adsConfig.limit || 5);
 
           setTopAds(topCampaigns.map(c => {
-            let conv = 0;
-            if (conversations > 0) conv = c.custom_metrics?.['onsite_conversion.messaging_conversation_started_7d'] || c.custom_metrics?.['onsite_messaging_conversation_started'] || 0;
-            else if (leads > 0) conv = c.custom_metrics?.['lead'] || 0;
-            else if (purchases > 0) conv = c.custom_metrics?.['purchase'] || 0;
-            else conv = Math.round(c.clicks * 0.1); 
-
+            const mainKey = Object.keys(actionTotals).find(k => 
+              k === 'onsite_conversion.messaging_conversation_started_7d' || k === 'lead' || k === 'purchase'
+            ) || '';
+            
             return {
               name: c.name,
               spend: c.spend,
-              conversions: conv,
+              conversions: c.custom_metrics?.[mainKey] || 0,
+              roas: c.roas,
+              cpc: c.clicks > 0 ? c.spend / c.clicks : 0
             };
           }));
         }
@@ -568,34 +614,64 @@ export function ClientTrafficPage() {
           {/* ROW 1: Top KPI Cards with Sparklines */}
           <TrafficKpiCards data={kpis} selectedMetrics={selectedMetrics} />
 
-          {/* ROW 2: Main Content Grid (Style same as image) */}
+          {/* ROW 2: Main Content Grid (Dynamic Layout) */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-            {/* Left Col: Funnel + Secondary Metrics integrated */}
-            <div className="lg:col-span-3">
-              <TrafficFunnel data={funnelData} />
-            </div>
+            {/* Left Col: Funnel */}
+            {visibilityConfig.show_funnel && (
+              <div className={cn(
+                "col-span-1",
+                visibilityConfig.show_chart || visibilityConfig.show_ranking || visibilityConfig.show_table ? "lg:col-span-3" : "lg:col-span-12"
+              )}>
+                <TrafficFunnel data={funnelData} />
+              </div>
+            )}
 
             {/* Right Col: Complex Visuals Table + Charts */}
-            <div className="lg:col-span-9 flex flex-col gap-4">
+            <div className={cn(
+              "flex flex-col gap-4",
+              visibilityConfig.show_funnel ? "lg:col-span-9" : "lg:col-span-12"
+            )}>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4">
-                 {/* Center: Main Dual-Line Chart */}
-                <div className="lg:col-span-8">
-                  <RevenueChart data={revenueChartData} conversionLabel={conversionLabel} />
-                </div>
+                 {/* Center: Main Area Chart */}
+                {visibilityConfig.show_chart && (
+                  <div className={cn(
+                    "col-span-1",
+                    visibilityConfig.show_ranking ? "lg:col-span-8" : "lg:col-span-12"
+                  )}>
+                    <RevenueChart 
+                      data={revenueChartData} 
+                      metric1={{ id: chartConfig.left_metric || 'spend', label: ALL_METRICS.find(m => m.id === chartConfig.left_metric)?.label || 'Investimento' }} 
+                      metric2={{ id: chartConfig.right_metric || 'revenue', label: ALL_METRICS.find(m => m.id === chartConfig.right_metric)?.label || 'Receita' }} 
+                    />
+                  </div>
+                )}
                 
                 {/* Right: Best Ads Donut */}
-                <div className="lg:col-span-4">
-                  <BestAdsDonut ads={topAds} metricLabel={`Por ${conversionLabel}`} />
-                </div>
+                {visibilityConfig.show_ranking && (
+                  <div className={cn(
+                    "col-span-1",
+                    visibilityConfig.show_chart ? "lg:col-span-4" : "lg:col-span-12"
+                  )}>
+                    <BestAdsDonut 
+                      ads={topAds} 
+                      sortBy={adsConfig.sort_by}
+                      metricLabel={`Por ${adsConfig.sort_by === 'spend' ? 'Investimento' : adsConfig.sort_by === 'roas' ? 'ROAS' : adsConfig.sort_by === 'cpc' ? 'CPC' : conversionLabel}`} 
+                    />
+                  </div>
+                )}
               </div>
 
               {/* Bottom: Campaign Table (Enhanced) */}
-              <CampaignTable data={campaigns} />
+              {visibilityConfig.show_table && (
+                <CampaignTable data={campaigns} />
+              )}
               
               {/* Extra Summary Row */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <ConversionMetricCards metrics={conversionCards} />
-              </div>
+              {visibilityConfig.show_summary_cards && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <ConversionMetricCards metrics={conversionCards} />
+                </div>
+              )}
             </div>
           </div>
         </TabsContent>

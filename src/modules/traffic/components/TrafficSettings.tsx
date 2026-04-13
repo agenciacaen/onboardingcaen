@@ -110,6 +110,24 @@ interface FunnelConfig {
   steps: FunnelStepConfig[];
 }
 
+interface ChartConfig {
+  left_metric: string;
+  right_metric: string;
+}
+
+interface AdsConfig {
+  sort_by: string;
+  limit: number;
+}
+
+interface VisibilityConfig {
+  show_funnel: boolean;
+  show_chart: boolean;
+  show_ranking: boolean;
+  show_table: boolean;
+  show_summary_cards: boolean;
+}
+
 export function TrafficSettings({ clientId, onSettingsUpdated }: TrafficSettingsProps) {
   const [selectedMetrics, setSelectedMetrics] = useState<string[]>([]);
   const [funnelMetric, setFunnelMetric] = useState<string>('conversions');
@@ -122,6 +140,25 @@ export function TrafficSettings({ clientId, onSettingsUpdated }: TrafficSettings
       { label: 'Compras', metric: 'purchases' }
     ]
   });
+  
+  const [chartConfig, setChartConfig] = useState<ChartConfig>({
+    left_metric: 'spend',
+    right_metric: 'revenue'
+  });
+
+  const [adsConfig, setAdsConfig] = useState<AdsConfig>({
+    sort_by: 'conversions',
+    limit: 5
+  });
+
+  const [visibilityConfig, setVisibilityConfig] = useState<VisibilityConfig>({
+    show_funnel: true,
+    show_chart: true,
+    show_ranking: true,
+    show_table: true,
+    show_summary_cards: true
+  });
+
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
@@ -130,9 +167,10 @@ export function TrafficSettings({ clientId, onSettingsUpdated }: TrafficSettings
       if (settings) {
         setSelectedMetrics(settings.selected_metrics || ['spend', 'purchases', 'revenue', 'roas', 'landing_page_views']);
         setFunnelMetric(settings.funnel_main_metric || 'conversions');
-        if (settings.funnel_config) {
-          setFunnelConfig(settings.funnel_config);
-        }
+        if (settings.funnel_config) setFunnelConfig(settings.funnel_config);
+        if (settings.chart_config) setChartConfig(settings.chart_config);
+        if (settings.ads_config) setAdsConfig(settings.ads_config);
+        if (settings.visibility_config) setVisibilityConfig(settings.visibility_config);
       }
     }
     loadSettings();
@@ -198,13 +236,20 @@ export function TrafficSettings({ clientId, onSettingsUpdated }: TrafficSettings
     );
   };
 
+  const updateVisibility = (key: keyof VisibilityConfig, value: boolean) => {
+    setVisibilityConfig(prev => ({ ...prev, [key]: value }));
+  };
+
   const saveSettings = async () => {
     try {
       setIsSaving(true);
       const success = await trafficService.updateSettings(clientId, {
         selected_metrics: selectedMetrics,
         funnel_main_metric: funnelMetric,
-        funnel_config: funnelConfig
+        funnel_config: funnelConfig,
+        chart_config: chartConfig,
+        ads_config: adsConfig,
+        visibility_config: visibilityConfig
       });
 
       if (success) {
@@ -220,6 +265,8 @@ export function TrafficSettings({ clientId, onSettingsUpdated }: TrafficSettings
     }
   };
 
+  const ALL_METRICS = METRIC_CATEGORIES.flatMap(c => c.metrics);
+
   return (
     <Card className="bg-card border-border backdrop-blur-sm shadow-2xl">
       <CardHeader className="flex flex-col sm:flex-row items-center justify-between space-y-4 sm:space-y-0 pb-7">
@@ -229,7 +276,7 @@ export function TrafficSettings({ clientId, onSettingsUpdated }: TrafficSettings
             Configuração do Dashboard
           </CardTitle>
           <CardDescription className="text-muted-foreground text-sm">
-            Personalize métricas e o funil de vendas com dados nativos do Meta Ads.
+            Personalize métricas, eixos de gráficos e a visibilidade de cada card.
           </CardDescription>
         </div>
         <Button 
@@ -249,9 +296,11 @@ export function TrafficSettings({ clientId, onSettingsUpdated }: TrafficSettings
         <Tabs defaultValue="funnel" className="w-full">
           <TabsList className="bg-muted p-1 mb-6 flex flex-wrap h-auto gap-1">
             <TabsTrigger value="funnel" className="text-xs">Estrutura do Funil</TabsTrigger>
-            <TabsTrigger value="metrics" className="text-xs">Kpis da Dashboard</TabsTrigger>
+            <TabsTrigger value="metrics" className="text-xs">Kpis do Topo</TabsTrigger>
+            <TabsTrigger value="charts" className="text-xs">Gráficos e Ranking</TabsTrigger>
+            <TabsTrigger value="visibility" className="text-xs">Visibilidade</TabsTrigger>
           </TabsList>
- 
+
           <TabsContent value="funnel" className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-1 space-y-4">
@@ -306,7 +355,7 @@ export function TrafficSettings({ clientId, onSettingsUpdated }: TrafficSettings
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            {METRIC_CATEGORIES.flatMap(c => c.metrics).map(m => (
+                            {ALL_METRICS.map(m => (
                               <SelectItem key={m.id} value={m.id}>{m.label}</SelectItem>
                             ))}
                           </SelectContent>
@@ -337,6 +386,144 @@ export function TrafficSettings({ clientId, onSettingsUpdated }: TrafficSettings
               </div>
             </div>
           </TabsContent>
+
+          <TabsContent value="charts" className="space-y-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="space-y-4">
+                <Label className="text-sm font-bold uppercase text-primary">Configuração do Gráfico de Área</Label>
+                <div className="space-y-4 p-4 border border-border rounded-xl bg-muted/30">
+                  <div className="space-y-2">
+                    <Label className="text-xs text-muted-foreground italic">Métrica Eixo Y (Esquerdo)</Label>
+                    <Select value={chartConfig.left_metric} onValueChange={(v) => setChartConfig(prev => ({ ...prev, left_metric: v }))}>
+                      <SelectTrigger className="bg-background border-border"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {ALL_METRICS.map(m => (<SelectItem key={m.id} value={m.id}>{m.label}</SelectItem>))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs text-muted-foreground italic">Métrica Eixo Y (Direito)</Label>
+                    <Select value={chartConfig.right_metric} onValueChange={(v) => setChartConfig(prev => ({ ...prev, right_metric: v }))}>
+                      <SelectTrigger className="bg-background border-border border-emerald-500/30"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {ALL_METRICS.map(m => (<SelectItem key={m.id} value={m.id}>{m.label}</SelectItem>))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <Label className="text-sm font-bold uppercase text-primary">Ranking de Melhores Anúncios</Label>
+                <div className="space-y-4 p-4 border border-border rounded-xl bg-muted/30">
+                  <div className="space-y-2">
+                    <Label className="text-xs text-muted-foreground italic">Cálculo de Ranking por:</Label>
+                    <Select value={adsConfig.sort_by} onValueChange={(v) => setAdsConfig(prev => ({ ...prev, sort_by: v }))}>
+                      <SelectTrigger className="bg-background border-border"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="conversions">Volume de Conversão</SelectItem>
+                        <SelectItem value="spend">Maior Investimento</SelectItem>
+                        <SelectItem value="roas">ROAS (Eficiência)</SelectItem>
+                        <SelectItem value="cpc">Menor CPC</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs text-muted-foreground italic">Quantidade de Anúncios</Label>
+                    <div className="flex items-center gap-4">
+                      <input 
+                        type="range" min="3" max="7" 
+                        value={adsConfig.limit} 
+                        onChange={(e) => setAdsConfig(prev => ({ ...prev, limit: parseInt(e.target.value) }))}
+                        className="flex-1 h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-primary" 
+                      />
+                      <span className="text-sm font-bold min-w-[20px]">{adsConfig.limit}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="visibility" className="space-y-6">
+             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {[
+                  { id: 'show_funnel', label: 'Funil de Tráfego', desc: 'Visualização da jornada do cliente' },
+                  { id: 'show_chart', label: 'Gráfico Comparativo', desc: 'Análise evolutiva de duas métricas' },
+                  { id: 'show_ranking', label: 'Ranking de Anúncios', desc: 'Top performance criativa' },
+                  { id: 'show_table', label: 'Tabela de Campanhas', desc: 'Detalhamento por linha de campanha' },
+                  { id: 'show_summary_cards', label: 'Cards de Conversão', desc: 'Resumo de custo por resultado' }
+                ].map((item) => (
+                  <div key={item.id} className="flex items-center justify-between p-4 rounded-xl border border-border bg-muted/20">
+                    <div className="space-y-0.5">
+                      <Label className="text-sm font-bold">{item.label}</Label>
+                      <p className="text-[10px] text-muted-foreground">{item.desc}</p>
+                    </div>
+                    <Switch 
+                      checked={visibilityConfig[item.id as keyof VisibilityConfig]} 
+                      onCheckedChange={(val) => updateVisibility(item.id as keyof VisibilityConfig, val)} 
+                    />
+                  </div>
+                ))}
+             </div>
+          </TabsContent>
+
+          <TabsContent value="metrics" className="space-y-6">
+            <Tabs defaultValue="performance" className="w-full">
+              <TabsList className="bg-muted p-1 mb-6 flex flex-wrap h-auto gap-1 justify-center sm:justify-start">
+                {METRIC_CATEGORIES.map(cat => (
+                  <TabsTrigger 
+                    key={cat.id} 
+                    value={cat.id}
+                    className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-[11px] py-1.5 px-3 transition-all duration-300 flex items-center"
+                  >
+                    <cat.icon className="h-3.5 w-3.5 mr-2 hidden sm:inline" />
+                    {cat.label}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+
+              {METRIC_CATEGORIES.map(category => (
+                <TabsContent key={category.id} value={category.id} className="mt-0 animate-in fade-in zoom-in-95 duration-300">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {category.metrics.map((metric) => (
+                      <div
+                        key={metric.id}
+                        className={`flex items-center justify-between p-4 rounded-xl border transition-all duration-200 group ${
+                          selectedMetrics.includes(metric.id) 
+                            ? 'bg-primary/10 border-primary/30' 
+                            : 'bg-muted/20 border-border hover:border-primary/50'
+                        }`}
+                      >
+                        <div className="space-y-0.5">
+                          <Label
+                            htmlFor={`metric-${metric.id}`}
+                            className={`text-sm font-medium cursor-pointer transition-colors ${
+                              selectedMetrics.includes(metric.id) ? 'text-primary' : 'text-muted-foreground group-hover:text-foreground'
+                            }`}
+                          >
+                            {metric.label}
+                          </Label>
+                        </div>
+                        <Switch
+                          id={`metric-${metric.id}`}
+                          checked={selectedMetrics.includes(metric.id)}
+                          onCheckedChange={() => toggleMetric(metric.id)}
+                          className="data-[state=checked]:bg-primary shadow-lg"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </TabsContent>
+              ))}
+            </Tabs>
+          </TabsContent>
+        </Tabs>
+      </CardContent>
+    </Card>
+  );
+}
+
 
           <TabsContent value="metrics" className="space-y-6">
             <Tabs defaultValue="performance" className="w-full">

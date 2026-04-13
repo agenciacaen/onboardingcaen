@@ -6,40 +6,67 @@ export interface TopAdData {
   name: string;
   spend: number;
   conversions: number;
+  roas?: number;
+  cpc?: number;
   color?: string;
+  value?: number; // Universal field for charts
 }
 
 interface BestAdsDonutProps {
   ads: TopAdData[];
   metricLabel?: string;
+  sortBy?: string;
 }
 
 const COLORS = ['hsl(var(--primary))', '#10b981', '#f59e0b', '#8b5cf6', '#f43f5e', '#06b6d4', '#6366f1'];
 
-const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: any[] }) => {
+const CustomTooltip = ({ active, payload, sortBy }: any) => {
   if (active && payload && payload.length) {
     const formatCurrency = (val: number) =>
       new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
+    
+    const value = payload[0].value;
+    let displayValue = value;
+    
+    if (sortBy === 'spend' || sortBy === 'cpc') {
+      displayValue = formatCurrency(value);
+    } else if (sortBy === 'roas') {
+      displayValue = value.toFixed(2);
+    }
+
     return (
       <div className="bg-background border rounded-lg p-2 shadow-lg text-xs">
-        <p className="font-semibold truncate max-w-[180px]">{payload[0].name}</p>
-        <p className="text-muted-foreground">Investimento: {formatCurrency(payload[0].payload.spend)}</p>
-        <p className="text-muted-foreground">Resultado: {payload[0].value}</p>
+        <p className="font-semibold truncate max-w-[180px] mb-1">{payload[0].name}</p>
+        <p className="text-muted-foreground flex justify-between gap-4">
+          <span>Gasto:</span> 
+          <span className="text-foreground">{formatCurrency(payload[0].payload.spend)}</span>
+        </p>
+        <p className="text-muted-foreground flex justify-between gap-4">
+          <span>Resultado:</span> 
+          <span className="text-primary font-bold">{displayValue}</span>
+        </p>
       </div>
     );
   }
   return null;
 };
 
-export function BestAdsDonut({ ads, metricLabel = 'Por Resultado' }: BestAdsDonutProps) {
-  const chartData = ads.map((ad, i) => ({
-    name: ad.name.length > 30 ? ad.name.substring(0, 30) + '...' : ad.name,
-    value: ad.conversions,
-    spend: ad.spend,
-    color: COLORS[i % COLORS.length],
-  }));
+export function BestAdsDonut({ ads, metricLabel = 'Por Resultado', sortBy = 'conversions' }: BestAdsDonutProps) {
+  const chartData = ads.map((ad, i) => {
+    let val = ad.conversions;
+    if (sortBy === 'spend') val = ad.spend;
+    if (sortBy === 'roas') val = ad.roas || 0;
+    if (sortBy === 'cpc') val = ad.cpc || 0;
 
-  const totalConversions = ads.reduce((acc, ad) => acc + ad.conversions, 0);
+    return {
+      name: ad.name.length > 30 ? ad.name.substring(0, 30) + '...' : ad.name,
+      value: val,
+      spend: ad.spend,
+      color: COLORS[i % COLORS.length],
+    };
+  });
+
+  const totalValue = chartData.reduce((acc, item) => acc + item.value, 0);
 
   return (
     <Card className="h-full">
@@ -71,13 +98,18 @@ export function BestAdsDonut({ ads, metricLabel = 'Por Resultado' }: BestAdsDonu
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
-                  <Tooltip content={<CustomTooltip />} />
+                  <Tooltip content={<CustomTooltip sortBy={sortBy} />} />
                 </PieChart>
               </ResponsiveContainer>
               {/* Center label */}
               <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                <span className="text-xl font-bold">{totalConversions}</span>
-                <span className="text-[10px] text-muted-foreground">Total</span>
+                <span className="text-xl font-bold">
+                  {sortBy === 'spend' || sortBy === 'cpc' 
+                    ? `R$${new Intl.NumberFormat('pt-BR', { notation: 'compact' }).format(totalValue)}`
+                    : sortBy === 'roas' ? totalValue.toFixed(1) : totalValue
+                  }
+                </span>
+                <span className="text-[10px] text-muted-foreground uppercase tracking-tighter">Total ({sortBy})</span>
               </div>
             </div>
             {/* Legend */}
@@ -86,7 +118,12 @@ export function BestAdsDonut({ ads, metricLabel = 'Por Resultado' }: BestAdsDonu
                 <div key={i} className="flex items-center gap-2 text-xs">
                   <div className="h-2.5 w-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: item.color }} />
                   <span className="truncate flex-1 text-muted-foreground">{item.name}</span>
-                  <span className="font-medium">{item.value}</span>
+                  <span className="font-medium whitespace-nowrap">
+                    {sortBy === 'spend' || sortBy === 'cpc' 
+                      ? `R$${item.value.toFixed(0)}` 
+                      : item.value.toFixed(sortBy === 'roas' ? 2 : 0)
+                    }
+                  </span>
                 </div>
               ))}
             </div>
@@ -96,3 +133,4 @@ export function BestAdsDonut({ ads, metricLabel = 'Por Resultado' }: BestAdsDonu
     </Card>
   );
 }
+
