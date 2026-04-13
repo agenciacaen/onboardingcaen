@@ -182,7 +182,7 @@ export function ClientTrafficPage() {
                if (m.raw_actions && Array.isArray(m.raw_actions)) {
                   const eventMap: Record<string, string> = {
                     purchases: 'purchase',
-                    conversations: 'onsite_conversion.total_messaging_connection',
+                    conversations: 'onsite_conversion.messaging_conversation_started_7d',
                     leads: 'lead', // Fallback
                     landing_page_views: 'landing_page_view',
                     revenue: 'purchase_value' // Note: This might need more logic
@@ -213,7 +213,7 @@ export function ClientTrafficPage() {
         // Unified Events Extraction
         const purchases = actionTotals['purchase'] || 0;
         const leads = (actionTotals['lead'] || 0) + (actionTotals['offsite_conversion.fb_pixel_lead'] || 0);
-        const conversations = actionTotals['onsite_conversion.total_messaging_connection'] || 0;
+        const conversations = actionTotals['onsite_conversion.messaging_conversation_started_7d'] || actionTotals['onsite_messaging_conversation_started'] || 0;
         const initCheckouts = actionTotals['initiate_checkout'] || 0;
         const addToCart = actionTotals['add_to_cart'] || 0;
         const contentViews = actionTotals['view_content'] || 0;
@@ -233,8 +233,8 @@ export function ClientTrafficPage() {
         const v100 = actionTotals['video_p100_watched_actions'] || 0;
 
         // Determine Funnel Metric
-        let finalFunnelCount = totalConversions;
-        let finalFunnelLabel = 'Conversões';
+        let finalFunnelCount = conversations || totalConversions;
+        let finalFunnelLabel = 'Conversas';
 
         if (funnelObjective === 'purchases') {
           finalFunnelCount = purchases;
@@ -251,6 +251,9 @@ export function ClientTrafficPage() {
         } else if (funnelObjective === 'initiate_checkout') {
           finalFunnelCount = initCheckouts;
           finalFunnelLabel = 'Checkouts';
+        } else if (funnelObjective === 'conversions') {
+          finalFunnelCount = conversations || totalConversions;
+          finalFunnelLabel = 'Conversas';
         } else if (funnelObjective === 'link_clicks') {
           finalFunnelCount = totalLinkClicks;
           finalFunnelLabel = 'Cliques Link';
@@ -331,6 +334,7 @@ export function ClientTrafficPage() {
             value: totalSpend / finalFunnelCount,
             formattedValue: new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalSpend / finalFunnelCount),
             icon: 'cost',
+            highlight: true,
           });
         }
         setConversionCards(cards);
@@ -380,10 +384,10 @@ export function ClientTrafficPage() {
           const topCampaigns = [...processedCampaigns]
             .sort((a, b) => {
               const aConv = a.custom_metrics?.[Object.keys(actionTotals).find(k =>
-                k === 'onsite_conversion.total_messaging_connection' || k === 'lead' || k === 'purchase'
+                k === 'onsite_conversion.messaging_conversation_started_7d' || k === 'lead' || k === 'purchase'
               ) || ''] || 0;
               const bConv = b.custom_metrics?.[Object.keys(actionTotals).find(k =>
-                k === 'onsite_conversion.total_messaging_connection' || k === 'lead' || k === 'purchase'
+                k === 'onsite_conversion.messaging_conversation_started_7d' || k === 'lead' || k === 'purchase'
               ) || ''] || 0;
               return bConv - aConv;
             })
@@ -391,7 +395,7 @@ export function ClientTrafficPage() {
 
           setTopAds(topCampaigns.map(c => {
             let conv = 0;
-            if (conversations > 0) conv = c.custom_metrics?.['onsite_conversion.total_messaging_connection'] || 0;
+            if (conversations > 0) conv = c.custom_metrics?.['onsite_conversion.messaging_conversation_started_7d'] || c.custom_metrics?.['onsite_messaging_conversation_started'] || 0;
             else if (leads > 0) conv = c.custom_metrics?.['lead'] || 0;
             else if (purchases > 0) conv = c.custom_metrics?.['purchase'] || 0;
             else conv = Math.round(c.clicks * 0.1); 

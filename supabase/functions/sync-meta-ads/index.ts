@@ -94,7 +94,12 @@ Deno.serve(async (req: Request) => {
         }
 
         const metricsList = (insData.data || []) as MetaMetric[];
-        console.log(`[sync-meta-ads] Sincronizando ${metricsList.length} entradas de métricas para ${account.name}`);
+        console.log(`[sync-meta-ads] Conta ${account.name}: Recebidos ${metricsList.length} registros de insights no nível campanha.`);
+        
+        // Log de auditoria para todas as campanhas recebidas
+        metricsList.forEach(m => {
+          console.log(`[sync-meta-ads] CAMPANHA DETECTADA: "${m.campaign_name}" (ID: ${m.campaign_id}) | Objetivo: ${m.objective}`);
+        });
 
         for (const metric of metricsList) {
           // Garantir que a campanha existe no banco
@@ -122,7 +127,7 @@ Deno.serve(async (req: Request) => {
               client_id: account.client_id,
               meta_account_id: account.id,
               meta_campaign_id: metric.campaign_id,
-              status: 'active' // Presumimos ativo se veio no insight
+              status: 'active'
             }).select().single();
             
             if (insError) {
@@ -137,18 +142,50 @@ Deno.serve(async (req: Request) => {
           let roas = 0;
           
           if (metric.actions && Array.isArray(metric.actions)) {
-             const convObj = metric.actions.find((a) => 
-               a.action_type === 'onsite_conversion.total_messaging_connection' ||
+             // Mapeamos múltiplos tipos de conversão de mensagem para garantir que pegamos o dado completo
+             const messageActions = (metric.actions || []).filter(a => 
+               a.action_type.includes('messaging') ||
                a.action_type === 'lead' || 
                a.action_type === 'purchase' || 
                a.action_type === 'offsite_conversion.fb_pixel_lead'
              );
-             if (convObj) {
-               conversions = parseInt(convObj.value);
-               console.log(`[sync-meta-ads] Campanha ${metric.campaign_id} em ${metric.date_start}: Conversões detectadas (${convObj.action_type}): ${conversions}`);
+
+             // Estratégia: Para campanhas de mensagens, pegamos o maior valor entre os tipos de conversa
+             const messagingActions = messageActions.filter(a => 
+               ['onsite_conversion.total_messaging_connection', 
+                'onsite_messaging_conversation_started', 
+                'onsite_conversion.messaging_conversation_started_7d',
+                'messaging_conversation_started_7d'
+               ].includes(a.action_type)
+             );
+             
+             // Priorizamos 'messaging_conversation_started_7d' ou 'onsite_messaging_conversation_started' para o total de conversas
+             const primaryMessaging = messagingActions.find(a => 
+               a.action_type === 'onsite_conversion.messaging_conversation_started_7d' || 
+               a.action_type === 'messaging_conversation_started_7d' ||
+               a.action_type === 'onsite_messaging_conversation_started'
+             );
+             
+             const maxMessaging = primaryMessaging 
+               ? parseInt(primaryMessaging.value) 
+               : (messagingActions.length > 0 ? Math.max(...messagingActions.map(a => parseInt(a.value))) : 0);
+
+             // Outras conversões (leads, etc)
+             const otherConvs = messageActions.filter(a => ['lead', 'purchase', 'offsite_conversion.fb_pixel_lead'].includes(a.action_type));
+             const maxOthers = otherConvs.length > 0 
+               ? Math.max(...otherConvs.map(a => parseInt(a.value))) 
+               : 0;
+
+             conversions = Math.max(maxMessaging, maxOthers);
+
+             if (conversions > 0) {
+               console.log(`[sync-meta-ads] Campanha ${metric.campaign_name} (${metric.date_start}): Conversões totalizadas = ${conversions}`);
+               if (messagingActions.length > 0) {
+                 console.log(`[sync-meta-ads] Detalhes messaging:`, JSON.stringify(messagingActions));
+               }
              }
           } else {
-             console.log(`[sync-meta-ads] Campanha ${metric.campaign_id} em ${metric.date_start}: Sem actions ou formato inválido.`);
+             console.log(`[sync-meta-ads] Campanha ${metric.campaign_name} em ${metric.date_start}: Sem actions.`);
           }
 
           if (metric.purchase_roas && Array.isArray(metric.purchase_roas) && metric.purchase_roas.length > 0) {
@@ -190,7 +227,7 @@ Deno.serve(async (req: Request) => {
 
     return new Response(JSON.stringify({ 
       success: true, 
-      message: `Sincronização profunda concluída! ${metricsInserted} registros processados.` 
+      message: `Sincronização profunda concluída! ${metricsInserted} registros processados.`
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
