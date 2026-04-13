@@ -135,16 +135,23 @@ Deno.serve(async (req: Request) => {
           // Salvar Métrica
           let conversions = 0;
           let roas = 0;
-          if (metric.actions) {
+          
+          if (metric.actions && Array.isArray(metric.actions)) {
              const convObj = metric.actions.find((a) => 
                a.action_type === 'onsite_conversion.total_messaging_connection' ||
                a.action_type === 'lead' || 
                a.action_type === 'purchase' || 
                a.action_type === 'offsite_conversion.fb_pixel_lead'
              );
-             if (convObj) conversions = parseInt(convObj.value);
+             if (convObj) {
+               conversions = parseInt(convObj.value);
+               console.log(`[sync-meta-ads] Campanha ${metric.campaign_id} em ${metric.date_start}: Conversões detectadas (${convObj.action_type}): ${conversions}`);
+             }
+          } else {
+             console.log(`[sync-meta-ads] Campanha ${metric.campaign_id} em ${metric.date_start}: Sem actions ou formato inválido.`);
           }
-          if (metric.purchase_roas && metric.purchase_roas.length > 0) {
+
+          if (metric.purchase_roas && Array.isArray(metric.purchase_roas) && metric.purchase_roas.length > 0) {
              roas = parseFloat(metric.purchase_roas[0].value);
           }
 
@@ -167,7 +174,11 @@ Deno.serve(async (req: Request) => {
              raw_actions: metric.actions || []
            }, { onConflict: 'campaign_id,date' });
 
-          if (!upsertError) metricsInserted++;
+          if (upsertError) {
+            console.error(`[sync-meta-ads] Erro Upsert Métrica:`, upsertError.message);
+          } else {
+            metricsInserted++;
+          }
         }
 
         await supabase.from('meta_ad_accounts').update({ last_sync_at: new Date().toISOString() }).eq('id', account.id);
