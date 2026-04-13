@@ -98,6 +98,12 @@ export function ClientTrafficPage() {
           .eq('client_id', clientId)
           .eq('status', 'active');
 
+        // 2. Fetch Settings
+        const config = await trafficService.getSettings(clientId);
+        const activeMetrics = config?.selected_metrics || ['spend', 'purchases', 'revenue', 'roas', 'landing_page_views'];
+        const funnelObjective = config?.funnel_main_metric || 'conversions';
+        setSelectedMetrics(activeMetrics);
+
         if (accounts && accounts.length > 0) {
           const latest = accounts.reduce((acc, curr) => {
             if (!acc) return curr.last_sync_at;
@@ -121,20 +127,15 @@ export function ClientTrafficPage() {
         // Aggregate all metrics
         let totalSpend = 0;
         let totalImpressions = 0;
-        let totalClicks = 0;
+        let totalClicks = 0; // "Clicks (All)" from Meta
         let totalReach = 0;
         let totalConversions = 0;
-        let totalCpc = 0;
-        let totalCpm = 0;
         let totalRoas = 0;
         let rCount = 0;
 
         // History trackers for sparklines
-        const spendHistory: any[] = [];
-        const purchaseHistory: any[] = [];
-        const roasHistory: any[] = [];
-        const viewsHistory: any[] = [];
-
+        const sparklinesHistory: Record<string, any[]> = {};
+        
         // Action aggregation tracker
         const actionTotals: Record<string, number> = {};
         const dailyConversions: RevenueDataPoint[] = [];
@@ -146,101 +147,169 @@ export function ClientTrafficPage() {
             totalClicks += m.clicks || 0;
             totalReach += m.reach || 0;
             totalConversions += m.conversions || 0;
-            totalCpc += m.cpc || 0;
-            totalCpm += m.cpm || 0;
+            
             if (m.roas) {
               totalRoas += m.roas;
               rCount++;
             }
 
             // Action aggregations per day
-            let dayConversions = m.conversions || 0;
-            let dayLPV = 0;
-            let dayLeads = 0;
-            let dayConversations = 0;
-
             if (m.raw_actions && Array.isArray(m.raw_actions)) {
               m.raw_actions.forEach((act: { action_type: string; value: string }) => {
                 const val = Number(act.value || 0);
                 actionTotals[act.action_type] = (actionTotals[act.action_type] || 0) + val;
-                
-                if (act.action_type === 'landing_page_view') dayLPV += val;
-                if (act.action_type === 'lead' || act.action_type === 'offsite_conversion.fb_pixel_lead') dayLeads += val;
-                if (act.action_type === 'onsite_conversion.total_messaging_connection') dayConversations += val;
               });
             }
 
             dailyConversions.push({
               date: m.date,
               spend: m.spend || 0,
-              conversions: dayConversions,
+              conversions: m.conversions || 0,
             });
 
-            spendHistory.push({ date: m.date, value: m.spend || 0 });
-            purchaseHistory.push({ date: m.date, value: dayConversions });
-            roasHistory.push({ date: m.date, value: m.roas || 0 });
-            viewsHistory.push({ date: m.date, value: dayLPV || Math.round((m.clicks || 0) * 0.8) });
+            // Generic history tracker for sparklines
+            const currentMetrics = ['spend', 'impressions', 'roas', 'purchases', 'revenue', 'clicks', 'reach', 'conversations', 'leads', 'landing_page_views'];
+            currentMetrics.forEach(metricId => {
+               if (!sparklinesHistory[metricId]) sparklinesHistory[metricId] = [];
+               let val = 0;
+               if (metricId === 'spend') val = m.spend || 0;
+               if (metricId === 'impressions') val = m.impressions || 0;
+               if (metricId === 'roas') val = m.roas || 0;
+               if (metricId === 'clicks') val = m.clicks || 0;
+               if (metricId === 'reach') val = m.reach || 0;
+
+               // Events from raw_actions
+               if (m.raw_actions && Array.isArray(m.raw_actions)) {
+                  const eventMap: Record<string, string> = {
+                    purchases: 'purchase',
+                    conversations: 'onsite_conversion.total_messaging_connection',
+                    leads: 'lead', // Fallback
+                    landing_page_views: 'landing_page_view',
+                    revenue: 'purchase_value' // Note: This might need more logic
+                  };
+                  
+                  if (eventMap[metricId]) {
+                    const found = m.raw_actions.find((a: any) => a.action_type === eventMap[metricId]);
+                    val = found ? Number(found.value || 0) : 0;
+                  }
+               }
+               sparklinesHistory[metricId].push({ date: m.date, value: val });
+            });
           });
         }
 
         const avgRoas = rCount > 0 ? totalRoas / rCount : 0;
-        const avgCpc = totalClicks > 0 ? totalSpend / totalClicks : 0;
+        const totalLPV = actionTotals['landing_page_view'] || 0;
+        const totalLinkClicks = actionTotals['link_click'] || 0;
+        
+        // CPC/CTR Calculations
+        const cpcAll = totalClicks > 0 ? totalSpend / totalClicks : 0;
+        const cpcLink = totalLinkClicks > 0 ? totalSpend / totalLinkClicks : 0;
+        const ctrAll = totalImpressions > 0 ? (totalClicks / totalImpressions) : 0;
+        const ctrLink = totalImpressions > 0 ? (totalLinkClicks / totalImpressions) : 0;
         const avgCpm = totalImpressions > 0 ? (totalSpend / totalImpressions) * 1000 : 0;
-        const totalCtr = totalImpressions > 0 ? (totalClicks / totalImpressions) * 100 : 0;
         const frequency = totalReach > 0 ? totalImpressions / totalReach : 1.15;
 
-        // Action aggregations from totals
-        const purchaseCount = actionTotals['purchase'] || 0;
-        const leadCount = actionTotals['lead'] || actionTotals['offsite_conversion.fb_pixel_lead'] || 0;
-        const conversasCount = actionTotals['onsite_conversion.total_messaging_connection'] || 0;
-        const landingPageViews = actionTotals['landing_page_view'] || 0;
+        // Unified Events Extraction
+        const purchases = actionTotals['purchase'] || 0;
+        const leads = (actionTotals['lead'] || 0) + (actionTotals['offsite_conversion.fb_pixel_lead'] || 0);
+        const conversations = actionTotals['onsite_conversion.total_messaging_connection'] || 0;
+        const initCheckouts = actionTotals['initiate_checkout'] || 0;
+        const addToCart = actionTotals['add_to_cart'] || 0;
+        const contentViews = actionTotals['view_content'] || 0;
+        
+        // Engagement
+        const postEngagement = actionTotals['post_engagement'] || 0;
+        const postReactions = (actionTotals['post_reaction'] || 0) + (actionTotals['like'] || 0);
+        const comments = actionTotals['comment'] || 0;
+        const shares = actionTotals['shared'] || 0;
+        const pageEngagement = actionTotals['page_engagement'] || 0;
 
-        // Determine best conversion label
-        let primaryConvLabel = 'Conversões';
-        let primaryConvCount = totalConversions;
-        if (conversasCount > 0) {
-          primaryConvLabel = 'Conversas Iniciadas';
-          primaryConvCount = conversasCount;
-        } else if (leadCount > 0) {
-          primaryConvLabel = 'Leads';
-          primaryConvCount = leadCount;
-        } else if (purchaseCount > 0) {
-          primaryConvLabel = 'Compras';
-          primaryConvCount = purchaseCount;
+        // Video
+        const v25 = actionTotals['video_p25_watched_actions'] || 0;
+        const v50 = actionTotals['video_p50_watched_actions'] || 0;
+        const v75 = actionTotals['video_p75_watched_actions'] || 0;
+        const v95 = actionTotals['video_p95_watched_actions'] || 0;
+        const v100 = actionTotals['video_p100_watched_actions'] || 0;
+
+        // Determine Funnel Metric
+        let finalFunnelCount = totalConversions;
+        let finalFunnelLabel = 'Conversões';
+
+        if (funnelObjective === 'purchases') {
+          finalFunnelCount = purchases;
+          finalFunnelLabel = 'Compras';
+        } else if (funnelObjective === 'leads') {
+          finalFunnelCount = leads;
+          finalFunnelLabel = 'Leads';
+        } else if (funnelObjective === 'conversations') {
+          finalFunnelCount = conversations;
+          finalFunnelLabel = 'Conversas';
+        } else if (funnelObjective === 'landing_page_views') {
+          finalFunnelCount = totalLPV;
+          finalFunnelLabel = 'Visitas';
+        } else if (funnelObjective === 'initiate_checkout') {
+          finalFunnelCount = initCheckouts;
+          finalFunnelLabel = 'Checkouts';
+        } else if (funnelObjective === 'link_clicks') {
+          finalFunnelCount = totalLinkClicks;
+          finalFunnelLabel = 'Cliques Link';
         }
-        setConversionLabel(primaryConvLabel);
 
-        // Revenue (from purchase_roas * spend approximation, or use purchase value if available)
+        setConversionLabel(finalFunnelLabel);
+
+        // Revenue approximation
         const revenueEstimate = totalSpend * avgRoas;
 
         // KPIs
         setKpis({
-          spend: { value: totalSpend, change: -41.7, history: spendHistory },
-          impressions: { value: totalImpressions, change: 5.2, history: spendHistory.map(h => ({ ...h, value: h.value * 20 })) }, // Mock history for simple metrics
-          clicks: { value: totalClicks, change: 2.1, history: spendHistory.map(h => ({ ...h, value: h.value * 1.5 })) },
-          reach: { value: totalReach, change: 4.8, history: spendHistory.map(h => ({ ...h, value: h.value * 18 })) },
-          ctr: { value: totalCtr, change: -1.2, history: spendHistory.map(h => ({ ...h, value: 1.5 + Math.random() })) },
-          cpc: { value: avgCpc, change: 3.4, history: spendHistory.map(h => ({ ...h, value: 0.5 + Math.random() * 0.2 })) },
-          cpm: { value: avgCpm, change: -2.1, history: spendHistory.map(h => ({ ...h, value: 15 + Math.random() * 5 })) },
-          roas: { value: avgRoas, change: -14.7, history: roasHistory },
-          frequency: { value: frequency, change: 0.5, history: spendHistory.map(h => ({ ...h, value: 1.1 + Math.random() * 0.1 })) },
-          purchases: { value: purchaseCount, change: -48.9, history: purchaseHistory },
-          leads: { value: leadCount, change: 12.5, history: purchaseHistory },
-          conversations: { value: conversasCount, change: 15.2, history: purchaseHistory },
-          landing_page_views: { value: landingPageViews || totalClicks, change: -41.8, history: viewsHistory },
-          revenue: { value: revenueEstimate, change: -50.3, history: spendHistory.map(h => ({ ...h, value: h.value * avgRoas })) },
+          spend: { value: totalSpend, change: 0, history: sparklinesHistory['spend'] },
+          impressions: { value: totalImpressions, change: 0, history: sparklinesHistory['impressions'] },
+          reach: { value: totalReach, change: 0, history: sparklinesHistory['reach'] },
+          frequency: { value: frequency, change: 0 },
+          cpm: { value: avgCpm, change: 0 },
+          
+          clicks: { value: totalClicks, change: 0, history: sparklinesHistory['clicks'] },
+          link_clicks: { value: totalLinkClicks, change: 0 },
+          cpc: { value: cpcAll, change: 0 },
+          cpc_link: { value: cpcLink, change: 0 },
+          ctr: { value: ctrAll * 100, change: 0 },
+          ctr_link: { value: ctrLink * 100, change: 0 },
+
+          purchases: { value: purchases, change: 0, history: sparklinesHistory['purchases'] },
+          revenue: { value: revenueEstimate, change: 0, history: sparklinesHistory['revenue'] },
+          roas: { value: avgRoas, change: 0, history: sparklinesHistory['roas'] },
+          initiate_checkout: { value: initCheckouts, change: 0 },
+          add_to_cart: { value: addToCart, change: 0 },
+          view_content: { value: contentViews, change: 0 },
+
+          conversations: { value: conversations, change: 0, history: sparklinesHistory['conversations'] },
+          leads: { value: leads, change: 0, history: sparklinesHistory['leads'] },
+          landing_page_views: { value: totalLPV, change: 0, history: sparklinesHistory['landing_page_views'] },
+
+          post_engagement: { value: postEngagement, change: 0 },
+          post_reaction: { value: postReactions, change: 0 },
+          comment: { value: comments, change: 0 },
+          shared: { value: shares, change: 0 },
+          page_engagement: { value: pageEngagement, change: 0 },
+
+          video_p25: { value: v25, change: 0 },
+          video_p50: { value: v50, change: 0 },
+          video_p75: { value: v75, change: 0 },
+          video_p95: { value: v95, change: 0 },
+          video_p100: { value: v100, change: 0 },
         });
 
         // Funnel
         setFunnelData({
           impressions: totalImpressions,
           clicks: totalClicks,
-          landing_page_views: landingPageViews || Math.round(totalClicks * 0.8),
-          conversions: primaryConvCount,
-          conversionLabel: primaryConvLabel,
+          landing_page_views: totalLPV || Math.round(totalClicks * 0.8),
+          conversions: finalFunnelCount,
+          conversionLabel: finalFunnelLabel,
           secondaryMetrics: {
             frequency: frequency,
-            cpc: avgCpc,
+            cpc: cpcAll,
             cpm: avgCpm
           }
         });
@@ -249,18 +318,18 @@ export function ClientTrafficPage() {
         const cards: ConversionMetric[] = [];
         cards.push({
           id: 'primary_conv',
-          label: primaryConvLabel,
-          value: primaryConvCount,
-          formattedValue: new Intl.NumberFormat('pt-BR').format(primaryConvCount),
-          icon: conversasCount > 0 ? 'message' : purchaseCount > 0 ? 'cart' : 'target',
+          label: finalFunnelLabel,
+          value: finalFunnelCount,
+          formattedValue: new Intl.NumberFormat('pt-BR').format(finalFunnelCount),
+          icon: funnelObjective === 'conversations' ? 'message' : funnelObjective === 'purchases' ? 'cart' : 'target',
           highlight: true,
         });
-        if (primaryConvCount > 0) {
+        if (finalFunnelCount > 0) {
           cards.push({
             id: 'cost_per_conv',
-            label: `Custo por ${primaryConvLabel.replace('Iniciadas', '').trim()}`,
-            value: totalSpend / primaryConvCount,
-            formattedValue: new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalSpend / primaryConvCount),
+            label: `Custo por ${finalFunnelLabel}`,
+            value: totalSpend / finalFunnelCount,
+            formattedValue: new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalSpend / finalFunnelCount),
             icon: 'cost',
           });
         }
@@ -322,9 +391,9 @@ export function ClientTrafficPage() {
 
           setTopAds(topCampaigns.map(c => {
             let conv = 0;
-            if (conversasCount > 0) conv = c.custom_metrics?.['onsite_conversion.total_messaging_connection'] || 0;
-            else if (leadCount > 0) conv = c.custom_metrics?.['lead'] || 0;
-            else if (purchaseCount > 0) conv = c.custom_metrics?.['purchase'] || 0;
+            if (conversations > 0) conv = c.custom_metrics?.['onsite_conversion.total_messaging_connection'] || 0;
+            else if (leads > 0) conv = c.custom_metrics?.['lead'] || 0;
+            else if (purchases > 0) conv = c.custom_metrics?.['purchase'] || 0;
             else conv = Math.round(c.clicks * 0.1); 
 
             return {

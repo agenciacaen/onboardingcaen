@@ -1,154 +1,248 @@
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { trafficService } from '../services/traffic.service';
 import { toast } from 'sonner';
-import { LayoutDashboard, Save, RefreshCw, AlertCircle } from 'lucide-react';
+import { Save, LayoutGrid, MousePointer2, Target, BarChart3, Video, MessageSquare, Heart } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 
 interface TrafficSettingsProps {
   clientId: string;
-  onSettingsUpdated: () => void;
+  onSettingsUpdated?: () => void;
 }
 
-const AVAILABLE_METRICS = [
-  { id: 'spend', label: 'Investimento total', description: 'Valor total gasto em anúncios' },
-  { id: 'impressions', label: 'Impressões', description: 'Número de vezes que os anúncios foram exibidos' },
-  { id: 'clicks', label: 'Cliques', description: 'Cliques recebidos nos anúncios' },
-  { id: 'reach', label: 'Alcance', description: 'Pessoas únicas que viram os anúncios' },
-  { id: 'ctr', label: 'CTR (%)', description: 'Taxa de cliques por impressão' },
-  { id: 'cpc', label: 'CPC médio', description: 'Custo médio por clique' },
-  { id: 'cpm', label: 'CPM médio', description: 'Custo médio por mil impressões' },
-  { id: 'roas', label: 'ROAS', description: 'Retorno sobre investimento publicitário' },
-  { id: 'frequency', label: 'Frequência', description: 'Número médio de vezes que cada pessoa viu o anúncio' },
-  { id: 'purchases', label: 'Compras', description: 'Total de compras rastreadas' },
-  { id: 'leads', label: 'Leads', description: 'Total de leads ou cadastros realizados' },
-  { id: 'conversations', label: 'Conversas Iniciadas', description: 'Novas conversas no WhatsApp/Messenger' },
-  { id: 'landing_page_views', label: 'Visitas na Página', description: 'Visualizações da página de destino' },
-  { id: 'revenue', label: 'Receita Estimada', description: 'Valor estimado de vendas geradas' },
+const METRIC_CATEGORIES = [
+  {
+    id: 'performance',
+    label: 'Performance',
+    icon: BarChart3,
+    metrics: [
+      { id: 'spend', label: 'Investimento' },
+      { id: 'impressions', label: 'Impressões' },
+      { id: 'reach', label: 'Alcance' },
+      { id: 'frequency', label: 'Frequência' },
+      { id: 'cpm', label: 'CPM (Custo por mil)' },
+    ]
+  },
+  {
+    id: 'clicks',
+    label: 'Cliques e CTR',
+    icon: MousePointer2,
+    metrics: [
+      { id: 'clicks', label: 'Cliques (Todos)' },
+      { id: 'link_clicks', label: 'Cliques no Link' },
+      { id: 'cpc', label: 'CPC (Todos)' },
+      { id: 'cpc_link', label: 'CPC (Link)' },
+      { id: 'ctr', label: 'CTR (Todos)' },
+      { id: 'ctr_link', label: 'CTR (Link)' },
+    ]
+  },
+  {
+    id: 'conversions',
+    label: 'E-commerce',
+    icon: Target,
+    metrics: [
+      { id: 'purchases', label: 'Compras' },
+      { id: 'revenue', label: 'Receita' },
+      { id: 'roas', label: 'ROAS' },
+      { id: 'initiate_checkout', label: 'Checkouts Iniciados' },
+      { id: 'add_to_cart', label: 'Adições ao Carrinho' },
+      { id: 'view_content', label: 'Vizu. Conteúdo' },
+    ]
+  },
+  {
+    id: 'messaging',
+    label: 'Contatos e Leads',
+    icon: MessageSquare,
+    metrics: [
+      { id: 'conversations', label: 'Conversas Iniciadas' },
+      { id: 'leads', label: 'Leads (Total)' },
+      { id: 'landing_page_views', label: 'Visitas na Página' },
+    ]
+  },
+  {
+    id: 'engagement',
+    label: 'Engajamento',
+    icon: Heart,
+    metrics: [
+      { id: 'post_engagement', label: 'Envolvi. Publicação' },
+      { id: 'post_reaction', label: 'Reações' },
+      { id: 'comment', label: 'Comentários' },
+      { id: 'shared', label: 'Compartilhamentos' },
+      { id: 'page_engagement', label: 'Envolvi. Página' },
+    ]
+  },
+  {
+    id: 'video',
+    label: 'Vídeo',
+    icon: Video,
+    metrics: [
+      { id: 'video_p25', label: 'Vídeo 25%' },
+      { id: 'video_p50', label: 'Vídeo 50%' },
+      { id: 'video_p75', label: 'Vídeo 75%' },
+      { id: 'video_p95', label: 'Vídeo 95%' },
+      { id: 'video_p100', label: 'Vídeo 100%' },
+    ]
+  }
 ];
 
 export function TrafficSettings({ clientId, onSettingsUpdated }: TrafficSettingsProps) {
   const [selectedMetrics, setSelectedMetrics] = useState<string[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [funnelMetric, setFunnelMetric] = useState<string>('conversions');
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     async function loadSettings() {
-      try {
-        setIsLoading(true);
-        const settings = await trafficService.getSettings(clientId);
-        if (settings && settings.selected_metrics) {
-          setSelectedMetrics(settings.selected_metrics);
-        } else {
-          // Default metrics if none saved
-          setSelectedMetrics(['spend', 'purchases', 'revenue', 'roas', 'landing_page_views']);
-        }
-      } catch (error) {
-        console.error('Erro ao carregar configurações:', error);
-      } finally {
-        setIsLoading(false);
+      const settings = await trafficService.getSettings(clientId);
+      if (settings) {
+        setSelectedMetrics(settings.selected_metrics || ['spend', 'purchases', 'revenue', 'roas', 'landing_page_views']);
+        setFunnelMetric(settings.funnel_main_metric || 'conversions');
       }
     }
-
-    if (clientId) loadSettings();
+    loadSettings();
   }, [clientId]);
 
   const toggleMetric = (metricId: string) => {
-    setSelectedMetrics(prev => 
-      prev.includes(metricId) 
-        ? prev.filter(id => id !== metricId) 
+    setSelectedMetrics(prev =>
+      prev.includes(metricId)
+        ? prev.filter(id => id !== metricId)
         : [...prev, metricId]
     );
   };
 
-  const handleSave = async () => {
+  const saveSettings = async () => {
     try {
       setIsSaving(true);
-      await trafficService.updateSettings(clientId, { selected_metrics: selectedMetrics });
-      toast.success('Configurações salvas com sucesso!');
-      onSettingsUpdated();
+      const success = await trafficService.updateSettings(clientId, {
+        selected_metrics: selectedMetrics,
+        funnel_main_metric: funnelMetric
+      });
+
+      if (success) {
+        toast.success('Configurações salvas!');
+        onSettingsUpdated?.();
+      } else {
+        toast.error('Erro ao salvar configurações.');
+      }
     } catch (error) {
-      console.error('Erro ao salvar configurações:', error);
-      toast.error('Erro ao salvar configurações.');
+      toast.error('Erro ao salvar as configurações.');
     } finally {
       setIsSaving(false);
     }
   };
 
-  if (isLoading) {
-    return (
-      <Card className="bg-slate-900/40 border-slate-800">
-        <CardContent className="p-8 flex justify-center">
-          <RefreshCw className="h-8 w-8 text-blue-500 animate-spin" />
-        </CardContent>
-      </Card>
-    );
-  }
-
   return (
-    <div className="space-y-6">
-      <Card className="bg-slate-900/40 border-slate-800 backdrop-blur-sm">
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <LayoutDashboard className="h-5 w-5 text-blue-400" />
-            <div>
-              <CardTitle className="text-white text-lg">Configurar Dashboard</CardTitle>
-              <CardDescription className="text-slate-400">
-                Selecione quais métricas você deseja ver nos cards principais do dashboard.
-              </CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {AVAILABLE_METRICS.map((metric) => (
-              <div key={metric.id} className="flex items-start space-x-3 p-3 rounded-lg border border-slate-800/50 bg-slate-900/20 hover:bg-slate-800/30 transition-colors">
-                <Switch 
-                  id={`metric-${metric.id}`} 
-                  checked={selectedMetrics.includes(metric.id)}
-                  onCheckedChange={() => toggleMetric(metric.id)}
-                  className="mt-1"
-                />
-                <div className="grid gap-1.5 leading-none">
-                  <Label 
-                    htmlFor={`metric-${metric.id}`}
-                    className="text-sm font-medium text-white cursor-pointer"
-                  >
-                    {metric.label}
-                  </Label>
-                  <p className="text-xs text-slate-500">
-                    {metric.description}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-xl bg-blue-500/5 border border-blue-500/10">
-            <div className="flex items-center gap-3">
-              <AlertCircle className="h-5 w-5 text-blue-400 hidden sm:block" />
-              <p className="text-xs text-slate-400">
-                As métricas são atualizadas conforme a sincronização com o Meta Ads. 
-                Algumas métricas podem demorar até 24h para aparecer conforme o delay da própria plataforma.
-              </p>
-            </div>
-            <Button 
-              onClick={handleSave} 
-              disabled={isSaving}
-              className="bg-blue-600 hover:bg-blue-500 text-white min-w-[140px]"
-            >
-              {isSaving ? (
-                <RefreshCw className="h-4 w-4 animate-spin mr-2" />
-              ) : (
-                <Save className="h-4 w-4 mr-2" />
-              )}
+    <Card className="bg-slate-900/40 border-slate-800/50 backdrop-blur-sm shadow-2xl">
+      <CardHeader className="flex flex-col sm:flex-row items-center justify-between space-y-4 sm:space-y-0 pb-7">
+        <div className="space-y-1 text-center sm:text-left">
+          <CardTitle className="text-xl font-bold text-white flex items-center justify-center sm:justify-start gap-2">
+            <LayoutGrid className="h-5 w-5 text-blue-400" />
+            Configuração do Dashboard
+          </CardTitle>
+          <CardDescription className="text-slate-400 text-sm">
+            Personalize métricas e o funil de vendas com dados nativos do Meta Ads.
+          </CardDescription>
+        </div>
+        <Button 
+          onClick={saveSettings} 
+          disabled={isSaving}
+          className="bg-blue-600 hover:bg-blue-500 text-white font-semibold transition-all duration-300 w-full sm:w-auto"
+        >
+          {isSaving ? 'Salvando...' : (
+            <>
+              <Save className="mr-2 h-4 w-4" />
               Salvar Alterações
-            </Button>
+            </>
+          )}
+        </Button>
+      </CardHeader>
+      <CardContent className="space-y-8">
+        {/* FUNNEL CONFIGURATION */}
+        <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row items-center gap-4 p-4 rounded-xl bg-blue-500/5 border border-blue-500/20 shadow-inner">
+            <div className="flex-1 space-y-1 text-center sm:text-left">
+              <Label className="text-white font-bold text-base flex items-center justify-center sm:justify-start gap-2">
+                <Target className="h-4 w-4 text-blue-400" />
+                Métrica Final do Funil
+              </Label>
+              <p className="text-xs text-slate-500">Define qual evento encerra o fluxo do funil de tráfego.</p>
+            </div>
+            <Select value={funnelMetric} onValueChange={setFunnelMetric}>
+              <SelectTrigger className="w-full sm:w-[240px] bg-slate-900/80 border-slate-700 text-slate-200">
+                <SelectValue placeholder="Selecione o objetivo" />
+              </SelectTrigger>
+              <SelectContent className="bg-slate-900 border-slate-700 text-slate-200">
+                <SelectItem value="conversions">Conversões (Nativo Meta)</SelectItem>
+                <SelectItem value="purchases">Compras (E-commerce)</SelectItem>
+                <SelectItem value="leads">Leads (Cadastros)</SelectItem>
+                <SelectItem value="conversations">Conversas Iniciadas</SelectItem>
+                <SelectItem value="landing_page_views">Visitas na Página</SelectItem>
+                <SelectItem value="initiate_checkout">Checkouts Iniciados</SelectItem>
+                <SelectItem value="link_clicks">Cliques no Link</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
-        </CardContent>
-      </Card>
-    </div>
+        </div>
+
+        {/* METRICS CATEGORIES */}
+        <Tabs defaultValue="performance" className="w-full">
+          <TabsList className="bg-slate-800/50 p-1 mb-6 flex flex-wrap h-auto gap-1 justify-center sm:justify-start">
+            {METRIC_CATEGORIES.map(cat => (
+              <TabsTrigger 
+                key={cat.id} 
+                value={cat.id}
+                className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-[11px] py-1.5 px-3 transition-all duration-300 flex items-center"
+              >
+                <cat.icon className="h-3.5 w-3.5 mr-2 hidden sm:inline" />
+                {cat.label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+
+          {METRIC_CATEGORIES.map(category => (
+            <TabsContent key={category.id} value={category.id} className="mt-0 animate-in fade-in zoom-in-95 duration-300">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {category.metrics.map((metric) => (
+                  <div
+                    key={metric.id}
+                    className={`flex items-center justify-between p-4 rounded-xl border transition-all duration-200 group ${
+                      selectedMetrics.includes(metric.id) 
+                        ? 'bg-blue-500/10 border-blue-500/30' 
+                        : 'bg-slate-800/20 border-slate-800/50 hover:border-slate-700/50'
+                    }`}
+                  >
+                    <div className="space-y-0.5">
+                      <Label
+                        htmlFor={`metric-${metric.id}`}
+                        className={`text-sm font-medium cursor-pointer transition-colors ${
+                          selectedMetrics.includes(metric.id) ? 'text-blue-200' : 'text-slate-300 group-hover:text-white'
+                        }`}
+                      >
+                        {metric.label}
+                      </Label>
+                    </div>
+                    <Switch
+                      id={`metric-${metric.id}`}
+                      checked={selectedMetrics.includes(metric.id)}
+                      onCheckedChange={() => toggleMetric(metric.id)}
+                      className="data-[state=checked]:bg-blue-600 shadow-lg"
+                    />
+                  </div>
+                ))}
+              </div>
+            </TabsContent>
+          ))}
+        </Tabs>
+      </CardContent>
+    </Card>
   );
 }

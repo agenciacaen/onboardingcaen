@@ -1,7 +1,7 @@
 import { 
   DollarSign, TrendingUp, TrendingDown, Eye, CheckCircle2, 
   BarChart3, Target, MousePointer2, Users, Percent, 
-  Activity, MessageSquare, Briefcase 
+  Activity, MessageSquare, Briefcase, Video, Heart, Share2, MessageCircle
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
@@ -15,20 +15,9 @@ export interface KpiMetricData {
 }
 
 export interface TrafficKpiData {
+  [key: string]: KpiMetricData | undefined;
   spend: KpiMetricData;
-  impressions?: KpiMetricData;
-  clicks?: KpiMetricData;
-  reach?: KpiMetricData;
-  ctr?: KpiMetricData;
-  cpc?: KpiMetricData;
-  cpm?: KpiMetricData;
   roas: KpiMetricData;
-  frequency?: KpiMetricData;
-  purchases?: KpiMetricData;
-  leads?: KpiMetricData;
-  conversations?: KpiMetricData;
-  landing_page_views?: KpiMetricData;
-  revenue?: KpiMetricData;
 }
 
 interface TrafficKpiCardsProps {
@@ -98,141 +87,243 @@ function KpiItem({ title, value, change, icon: Icon, iconColor, history, lineCol
 
 export function TrafficKpiCards({ data, selectedMetrics }: TrafficKpiCardsProps) {
   const formatCurrency = (num: number) =>
-    new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(num);
+    new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: (num < 10 && num > 0) ? 2 : 0 }).format(num);
 
   const formatCompact = (num: number) =>
     new Intl.NumberFormat('pt-BR', { notation: 'compact', maximumFractionDigits: 1 }).format(num);
 
+  const getMetric = (id: string): KpiMetricData => data[id] || { value: 0, change: 0 };
+
   const allPossibleKpis: Record<string, KpiItemProps> = {
+    // performance
     spend: {
       title: 'Investimento',
-      value: formatCurrency(data.spend.value),
-      change: data.spend.change,
+      value: formatCurrency(getMetric('spend').value),
+      change: getMetric('spend').change,
       icon: DollarSign,
       iconColor: 'text-blue-400',
-      history: data.spend.history,
+      history: getMetric('spend').history,
       lineColor: '#3b82f6',
     },
     impressions: {
       title: 'Impressões',
-      value: formatCompact(data.impressions?.value || 0),
-      change: data.impressions?.change || 0,
+      value: formatCompact(getMetric('impressions').value),
+      change: getMetric('impressions').change,
       icon: Activity,
       iconColor: 'text-slate-400',
-      history: data.impressions?.history,
+      history: getMetric('impressions').history,
       lineColor: '#94a3b8',
-    },
-    clicks: {
-      title: 'Cliques',
-      value: formatCompact(data.clicks?.value || 0),
-      change: data.clicks?.change || 0,
-      icon: MousePointer2,
-      iconColor: 'text-blue-300',
-      history: data.clicks?.history,
-      lineColor: '#60a5fa',
     },
     reach: {
       title: 'Alcance',
-      value: formatCompact(data.reach?.value || 0),
-      change: data.reach?.change || 0,
+      value: formatCompact(getMetric('reach').value),
+      change: getMetric('reach').change,
       icon: Users,
       iconColor: 'text-emerald-400',
-      history: data.reach?.history,
+      history: getMetric('reach').history,
       lineColor: '#10b981',
-    },
-    ctr: {
-      title: 'CTR',
-      value: `${(data.ctr?.value || 0).toFixed(2)}%`,
-      change: data.ctr?.change || 0,
-      icon: Percent,
-      iconColor: 'text-amber-400',
-      history: data.ctr?.history,
-      lineColor: '#f59e0b',
-    },
-    cpc: {
-      title: 'CPC',
-      value: formatCurrency(data.cpc?.value || 0),
-      change: data.cpc?.change || 0,
-      icon: DollarSign,
-      iconColor: 'text-blue-400',
-      history: data.cpc?.history,
-      lineColor: '#3b82f6',
-    },
-    cpm: {
-      title: 'CPM',
-      value: formatCurrency(data.cpm?.value || 0),
-      change: data.cpm?.change || 0,
-      icon: DollarSign,
-      iconColor: 'text-slate-400',
-      history: data.cpm?.history,
-      lineColor: '#94a3b8',
-    },
-    roas: {
-      title: 'ROAS',
-      value: (data.roas.value || 0).toFixed(2),
-      change: data.roas.change,
-      icon: Target,
-      iconColor: 'text-purple-400',
-      history: data.roas.history,
-      lineColor: '#a855f7',
     },
     frequency: {
       title: 'Frequência',
-      value: (data.frequency?.value || 0).toFixed(2),
-      change: data.frequency?.change || 0,
+      value: getMetric('frequency').value.toFixed(2),
+      change: getMetric('frequency').change,
       icon: Activity,
       iconColor: 'text-slate-500',
-      history: data.frequency?.history,
+      history: getMetric('frequency').history,
       lineColor: '#64748b',
     },
+    cpm: {
+      title: 'CPM',
+      value: formatCurrency(getMetric('cpm').value),
+      change: getMetric('cpm').change,
+      icon: Target,
+      iconColor: 'text-slate-400',
+      history: getMetric('cpm').history,
+      lineColor: '#94a3b8',
+    },
+    // clicks
+    clicks: {
+      title: 'Cliques (Todos)',
+      value: formatCompact(getMetric('clicks').value),
+      change: getMetric('clicks').change,
+      icon: MousePointer2,
+      iconColor: 'text-blue-300',
+      history: getMetric('clicks').history,
+      lineColor: '#60a5fa',
+    },
+    link_clicks: {
+      title: 'Cliques no Link',
+      value: formatCompact(getMetric('link_clicks').value),
+      change: getMetric('link_clicks').change,
+      icon: MousePointer2,
+      iconColor: 'text-blue-400',
+      history: getMetric('link_clicks').history,
+      lineColor: '#3b82f6',
+    },
+    cpc: {
+      title: 'CPC (Todos)',
+      value: formatCurrency(getMetric('cpc').value),
+      change: getMetric('cpc').change,
+      icon: DollarSign,
+      iconColor: 'text-blue-300',
+      history: getMetric('cpc').history,
+      lineColor: '#60a5fa',
+    },
+    cpc_link: {
+      title: 'CPC (Link)',
+      value: formatCurrency(getMetric('cpc_link').value),
+      change: getMetric('cpc_link').change,
+      icon: DollarSign,
+      iconColor: 'text-blue-500',
+      history: getMetric('cpc_link').history,
+      lineColor: '#2563eb',
+    },
+    ctr: {
+      title: 'CTR (Todos)',
+      value: `${getMetric('ctr').value.toFixed(2)}%`,
+      change: getMetric('ctr').change,
+      icon: Percent,
+      iconColor: 'text-amber-300',
+      history: getMetric('ctr').history,
+      lineColor: '#fbbf24',
+    },
+    ctr_link: {
+      title: 'CTR (Link)',
+      value: `${getMetric('ctr_link').value.toFixed(2)}%`,
+      change: getMetric('ctr_link').change,
+      icon: Percent,
+      iconColor: 'text-amber-500',
+      history: getMetric('ctr_link').history,
+      lineColor: '#f59e0b',
+    },
+    // conversions
     purchases: {
       title: 'Compras',
-      value: formatCompact(data.purchases?.value || 0),
-      change: data.purchases?.change || 0,
+      value: formatCompact(getMetric('purchases').value),
+      change: getMetric('purchases').change,
       icon: CheckCircle2,
       iconColor: 'text-white',
-      history: data.purchases?.history,
+      history: getMetric('purchases').history,
+      lineColor: '#10b981',
+    },
+    revenue: {
+      title: 'Receita',
+      value: formatCurrency(getMetric('revenue').value),
+      change: getMetric('revenue').change,
+      icon: BarChart3,
+      iconColor: 'text-blue-400',
+      history: getMetric('revenue').history,
+      lineColor: '#60a5fa',
+    },
+    roas: {
+      title: 'ROAS',
+      value: getMetric('roas').value.toFixed(2),
+      change: getMetric('roas').change,
+      icon: Target,
+      iconColor: 'text-purple-400',
+      history: getMetric('roas').history,
+      lineColor: '#a855f7',
+    },
+    initiate_checkout: {
+      title: 'Checkouts',
+      value: formatCompact(getMetric('initiate_checkout').value),
+      change: getMetric('initiate_checkout').change,
+      icon: ShoppingCartIcon,
+      iconColor: 'text-amber-400',
+      history: getMetric('initiate_checkout').history,
+      lineColor: '#f59e0b',
+    },
+    add_to_cart: {
+      title: 'No Carrinho',
+      value: formatCompact(getMetric('add_to_cart').value),
+      change: getMetric('add_to_cart').change,
+      icon: ShoppingCartIcon,
+      iconColor: 'text-blue-300',
+      history: getMetric('add_to_cart').history,
+      lineColor: '#60a5fa',
+    },
+    view_content: {
+      title: 'Vizu. Conteúdo',
+      value: formatCompact(getMetric('view_content').value),
+      change: getMetric('view_content').change,
+      icon: Eye,
+      iconColor: 'text-slate-300',
+      history: getMetric('view_content').history,
+      lineColor: '#cbd5e1',
+    },
+    // messaging
+    conversations: {
+      title: 'Conversas',
+      value: formatCompact(getMetric('conversations').value),
+      change: getMetric('conversations').change,
+      icon: MessageSquare,
+      iconColor: 'text-emerald-400',
+      history: getMetric('conversations').history,
       lineColor: '#10b981',
     },
     leads: {
       title: 'Leads',
-      value: formatCompact(data.leads?.value || 0),
-      change: data.leads?.change || 0,
+      value: formatCompact(getMetric('leads').value),
+      change: getMetric('leads').change,
       icon: Briefcase,
       iconColor: 'text-blue-400',
-      history: data.leads?.history,
+      history: getMetric('leads').history,
       lineColor: '#3b82f6',
-    },
-    conversations: {
-      title: 'Conversas',
-      value: formatCompact(data.conversations?.value || 0),
-      change: data.conversations?.change || 0,
-      icon: MessageSquare,
-      iconColor: 'text-emerald-400',
-      history: data.conversations?.history,
-      lineColor: '#10b981',
     },
     landing_page_views: {
       title: 'Visitas',
-      value: formatCompact(data.landing_page_views?.value || 0),
-      change: data.landing_page_views?.change || 0,
+      value: formatCompact(getMetric('landing_page_views').value),
+      change: getMetric('landing_page_views').change,
       icon: Eye,
       iconColor: 'text-slate-400',
-      history: data.landing_page_views?.history,
+      history: getMetric('landing_page_views').history,
       lineColor: '#94a3b8',
     },
-    revenue: {
-      title: 'Receita',
-      value: formatCurrency(data.revenue?.value || 0),
-      change: data.revenue?.change || 0,
-      icon: BarChart3,
-      iconColor: 'text-blue-400',
-      history: data.revenue?.history,
-      lineColor: '#60a5fa',
+    // engagement
+    post_engagement: {
+      title: 'Envolvi. Publi',
+      value: formatCompact(getMetric('post_engagement').value),
+      change: getMetric('post_engagement').change,
+      icon: Heart,
+      iconColor: 'text-pink-400',
+      history: getMetric('post_engagement').history,
+      lineColor: '#ec4899',
     },
+    post_reaction: {
+      title: 'Reações',
+      value: formatCompact(getMetric('post_reaction').value),
+      change: getMetric('post_reaction').change,
+      icon: Heart,
+      iconColor: 'text-red-400',
+      history: getMetric('post_reaction').history,
+      lineColor: '#ef4444',
+    },
+    comment: {
+      title: 'Comentários',
+      value: formatCompact(getMetric('comment').value),
+      change: getMetric('comment').change,
+      icon: MessageCircle,
+      iconColor: 'text-blue-400',
+      history: getMetric('comment').history,
+      lineColor: '#3b82f6',
+    },
+    shared: {
+      title: 'Compartilhamentos',
+      value: formatCompact(getMetric('shared').value),
+      change: getMetric('shared').change,
+      icon: Share2,
+      iconColor: 'text-emerald-400',
+      history: getMetric('shared').history,
+      lineColor: '#10b981',
+    },
+    // video
+    video_p25: { title: 'Vídeo 25%', value: formatCompact(getMetric('video_p25').value), change: getMetric('video_p25').change, icon: Video, iconColor: 'text-slate-500', history: getMetric('video_p25').history, lineColor: '#64748b' },
+    video_p50: { title: 'Vídeo 50%', value: formatCompact(getMetric('video_p50').value), change: getMetric('video_p50').change, icon: Video, iconColor: 'text-slate-400', history: getMetric('video_p50').history, lineColor: '#94a3b8' },
+    video_p75: { title: 'Vídeo 75%', value: formatCompact(getMetric('video_p75').value), change: getMetric('video_p75').change, icon: Video, iconColor: 'text-slate-300', history: getMetric('video_p75').history, lineColor: '#cbd5e1' },
+    video_p95: { title: 'Vídeo 95%', value: formatCompact(getMetric('video_p95').value), change: getMetric('video_p95').change, icon: Video, iconColor: 'text-blue-300', history: getMetric('video_p95').history, lineColor: '#60a5fa' },
+    video_p100: { title: 'Vídeo 100%', value: formatCompact(getMetric('video_p100').value), change: getMetric('video_p100').change, icon: Video, iconColor: 'text-blue-500', history: getMetric('video_p100').history, lineColor: '#3b82f6' },
   };
 
-  // Se não houver métricas selecionadas, exibir as padrão
   const metricsToShow = selectedMetrics && selectedMetrics.length > 0
     ? selectedMetrics.filter(m => allPossibleKpis[m])
     : ['spend', 'purchases', 'revenue', 'roas', 'landing_page_views'];
@@ -251,3 +342,23 @@ export function TrafficKpiCards({ data, selectedMetrics }: TrafficKpiCardsProps)
   );
 }
 
+function ShoppingCartIcon(props: any) {
+  return (
+    <svg
+      {...props}
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <circle cx="8" cy="21" r="1" />
+      <circle cx="19" cy="21" r="1" />
+      <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12" />
+    </svg>
+  )
+}
