@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { PageHeader } from '../../../components/ui/PageHeader';
 import { DateRangeSelector } from '@/components/ui/DateRangeSelector';
 import { TrafficKpiCards } from '@/modules/traffic/components/TrafficKpiCards';
@@ -28,6 +28,35 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+// Tipo de nível de visualização
+type ViewLevel = 'campaign' | 'adset' | 'ad';
+
+// Mapeamento de action_type do Meta para chaves simplificadas usadas nos gráficos/KPIs
+const ACTION_KEY_MAP: Record<string, string> = {
+  'onsite_conversion.messaging_conversation_started_7d': 'conversations',
+  'messaging_conversation_started_7d': 'conversations',
+  'onsite_messaging_conversation_started': 'conversations',
+  'onsite_conversion.total_messaging_connection': 'messaging_connection',
+  'purchase': 'purchases',
+  'purchase_value': 'revenue',
+  'lead': 'leads',
+  'offsite_conversion.fb_pixel_lead': 'pixel_leads',
+  'landing_page_view': 'landing_page_views',
+  'link_click': 'link_clicks',
+  'initiate_checkout': 'initiate_checkout',
+  'add_to_cart': 'add_to_cart',
+  'view_content': 'view_content',
+  'add_payment_info': 'add_payment_info',
+  'post_engagement': 'post_engagement',
+  'post_reaction': 'post_reaction',
+  'like': 'post_reaction',
+  'comment': 'comment',
+  'shared': 'shared',
+  'page_engagement': 'page_engagement',
+  'onsite_conversion.post_save': 'post_save',
+  'video_view': 'video_view',
+};
+
 export function ClientTrafficPage() {
   const { clientId } = useAuth();
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
@@ -36,6 +65,11 @@ export function ClientTrafficPage() {
   });
 
   const [isLoading, setIsLoading] = useState(true);
+
+  // --- Hierarchy filter state ---
+  const [viewLevel, setViewLevel] = useState<ViewLevel>('campaign');
+  const [selectedCampaignId, setSelectedCampaignId] = useState<string>('all');
+  const [selectedAdSetId, setSelectedAdSetId] = useState<string>('all');
 
   // --- State for dashboard metrics ---
   const [kpis, setKpis] = useState<any>({
@@ -66,6 +100,11 @@ export function ClientTrafficPage() {
   const [ads, setAds] = useState<any[]>([]);
   const [topAds, setTopAds] = useState<any[]>([]);
   
+  // Raw data for hierarchy filtering
+  const [allCampaigns, setAllCampaigns] = useState<CampaignData[]>([]);
+  const [allAdSets, setAllAdSets] = useState<any[]>([]);
+  const [allAds, setAllAds] = useState<any[]>([]);
+  
   const ALL_METRICS = METRIC_CATEGORIES.flatMap(c => c.metrics);
 
   const [funnelData, setFunnelData] = useState<FunnelData>({
@@ -83,6 +122,29 @@ export function ClientTrafficPage() {
     show_summary_cards: true
   });
   const [conversionLabel, setConversionLabel] = useState('Conversões');
+
+  // Filtered adsets/ads based on selected campaign
+  const filteredAdSets = useMemo(() => {
+    if (selectedCampaignId === 'all') return allAdSets;
+    return allAdSets.filter(a => a.campaign_id === selectedCampaignId);
+  }, [allAdSets, selectedCampaignId]);
+
+  const filteredAds = useMemo(() => {
+    if (selectedCampaignId === 'all' && selectedAdSetId === 'all') return allAds;
+    let result = allAds;
+    if (selectedCampaignId !== 'all') {
+      result = result.filter(a => a.campaign_id === selectedCampaignId);
+    }
+    if (selectedAdSetId !== 'all') {
+      result = result.filter(a => a.adset_id === selectedAdSetId);
+    }
+    return result;
+  }, [allAds, selectedCampaignId, selectedAdSetId]);
+
+  // Reset child selectors when parent changes
+  useEffect(() => {
+    setSelectedAdSetId('all');
+  }, [selectedCampaignId]);
 
   useEffect(() => {
     async function fetchData() {
@@ -131,14 +193,26 @@ export function ClientTrafficPage() {
           }
         }
 
-        // 3. Fetch daily metrics with raw_actions
-        const { data: metrics, error: metricsError } = await supabase
+        // 3. Fetch daily metrics FILTERED BY LEVEL
+        // *** FIX: Only fetch metrics at the active view level to prevent triplication ***
+        let metricsQuery = supabase
           .from('traffic_metrics')
-          .select('date, spend, impressions, clicks, conversions, roas, cpc, cpm, reach, raw_actions')
+          .select('date, spend, impressions, clicks, conversions, roas, cpc, cpm, reach, raw_actions, campaign_id, adset_id, ad_id, level')
           .eq('client_id', clientId)
+          .eq('level', viewLevel)
           .gte('date', startDate)
-          .lte('date', endDate) // Use formatted endDate string
+          .lte('date', endDate)
           .order('date', { ascending: true });
+
+        // Apply hierarchy filters
+        if (selectedCampaignId !== 'all') {
+          metricsQuery = metricsQuery.eq('campaign_id', selectedCampaignId);
+        }
+        if (selectedAdSetId !== 'all' && (viewLevel === 'adset' || viewLevel === 'ad')) {
+          metricsQuery = metricsQuery.eq('adset_id', selectedAdSetId);
+        }
+
+        const { data: metrics, error: metricsError } = await metricsQuery;
 
         // Aggregate all metrics
         let totalSpend = 0;
@@ -178,6 +252,7 @@ export function ClientTrafficPage() {
             }
 
             // Timeline data for chart
+            // *** FIX: Map action types to simplified keys so chart can find them ***
             const dailyItem: any = {
               date: m.date,
               spend: m.spend || 0,
@@ -188,18 +263,31 @@ export function ClientTrafficPage() {
               roas: m.roas || 0,
               cpc: m.clicks > 0 ? (m.spend || 0) / m.clicks : 0,
               cpm: m.impressions > 0 ? ((m.spend || 0) / m.impressions) * 1000 : 0,
+              frequency: m.reach > 0 ? (m.impressions || 0) / m.reach : 0,
             };
 
-            // Map action totals to dailyItem
+            // Map raw actions to simplified keys for chart consumption
             if (m.raw_actions && Array.isArray(m.raw_actions)) {
                m.raw_actions.forEach((act: any) => {
+                 const simplifiedKey = ACTION_KEY_MAP[act.action_type] || act.action_type;
+                 dailyItem[simplifiedKey] = (dailyItem[simplifiedKey] || 0) + Number(act.value || 0);
+                 // Also keep original key for backward compat
                  dailyItem[act.action_type] = (dailyItem[act.action_type] || 0) + Number(act.value || 0);
                });
             }
             
-            // Shortcuts for revenue
-            if (dailyItem['purchase_value']) dailyItem['revenue'] = dailyItem['purchase_value'];
-            else dailyItem['revenue'] = (m.spend || 0) * (m.roas || 0);
+            // Revenue shortcut
+            if (dailyItem['revenue']) {
+              // already set from purchase_value mapping
+            } else {
+              dailyItem['revenue'] = (m.spend || 0) * (m.roas || 0);
+            }
+
+            // Link click based metrics
+            const dayLinkClicks = dailyItem['link_clicks'] || 0;
+            dailyItem['cpc_link'] = dayLinkClicks > 0 ? (m.spend || 0) / dayLinkClicks : 0;
+            dailyItem['ctr_link'] = (m.impressions || 0) > 0 ? (dayLinkClicks / (m.impressions || 1)) * 100 : 0;
+            dailyItem['ctr'] = (m.impressions || 0) > 0 ? ((m.clicks || 0) / (m.impressions || 1)) * 100 : 0;
 
             dailyTimelineData.push(dailyItem);
 
@@ -214,18 +302,18 @@ export function ClientTrafficPage() {
                if (metricId === 'clicks') val = m.clicks || 0;
                if (metricId === 'reach') val = m.reach || 0;
 
-               // Events from raw_actions
+               // Events from raw_actions using simplified keys
                if (m.raw_actions && Array.isArray(m.raw_actions)) {
-                  const eventMap: Record<string, string> = {
-                    purchases: 'purchase',
-                    conversations: 'onsite_conversion.messaging_conversation_started_7d',
-                    leads: 'lead', // Fallback
-                    landing_page_views: 'landing_page_view',
-                    revenue: 'purchase_value' // Note: This might need more logic
+                  const eventMap: Record<string, string[]> = {
+                    purchases: ['purchase'],
+                    conversations: ['onsite_conversion.messaging_conversation_started_7d', 'messaging_conversation_started_7d', 'onsite_messaging_conversation_started'],
+                    leads: ['lead', 'offsite_conversion.fb_pixel_lead'],
+                    landing_page_views: ['landing_page_view'],
+                    revenue: ['purchase_value']
                   };
                   
                   if (eventMap[metricId]) {
-                    const found = m.raw_actions.find((a: any) => a.action_type === eventMap[metricId]);
+                    const found = m.raw_actions.find((a: any) => eventMap[metricId].includes(a.action_type));
                     val = found ? Number(found.value || 0) : 0;
                   }
                }
@@ -249,7 +337,7 @@ export function ClientTrafficPage() {
         // Unified Events Extraction
         const purchases = actionTotals['purchase'] || 0;
         const leads = (actionTotals['lead'] || 0) + (actionTotals['offsite_conversion.fb_pixel_lead'] || 0);
-        const conversations = actionTotals['onsite_conversion.messaging_conversation_started_7d'] || actionTotals['onsite_messaging_conversation_started'] || 0;
+        const conversations = actionTotals['onsite_conversion.messaging_conversation_started_7d'] || actionTotals['messaging_conversation_started_7d'] || actionTotals['onsite_messaging_conversation_started'] || 0;
         const initCheckouts = actionTotals['initiate_checkout'] || 0;
         const addToCart = actionTotals['add_to_cart'] || 0;
         const contentViews = actionTotals['view_content'] || 0;
@@ -415,7 +503,9 @@ export function ClientTrafficPage() {
         setConversionCards(cards);
 
         // Revenue chart data
-        setRevenueChartData(dailyTimelineData);        // 4. Fetch campaigns for table
+        setRevenueChartData(dailyTimelineData);
+
+        // 4. Fetch campaigns for table
         const campaignsRaw = await trafficService.getCampaigns(clientId, startDate, endDate);
         let processedCampaigns: CampaignData[] = [];
         if (campaignsRaw) {
@@ -452,6 +542,7 @@ export function ClientTrafficPage() {
               custom_metrics: customMetrics
             };
           });
+          setAllCampaigns(processedCampaigns);
           setCampaigns(processedCampaigns);
         }
 
@@ -478,6 +569,7 @@ export function ClientTrafficPage() {
                 id: a.id,
                 name: a.name,
                 status: a.status,
+                campaign_id: a.campaign_id,
                 campaign_name: Array.isArray(a.traffic_campaigns) ? a.traffic_campaigns[0]?.name : (a.traffic_campaigns as any)?.name,
                 spend: aSpend,
                 impressions: aImpressions,
@@ -485,6 +577,7 @@ export function ClientTrafficPage() {
                 custom_metrics: customMetrics
              };
            });
+           setAllAdSets(processedAdsets);
            setAdSets(processedAdsets);
         }
 
@@ -512,6 +605,8 @@ export function ClientTrafficPage() {
                 name: a.name,
                 status: a.status,
                 thumbnail_url: a.thumbnail_url,
+                campaign_id: a.campaign_id,
+                adset_id: a.adset_id,
                 campaign_name: Array.isArray(a.traffic_campaigns) ? a.traffic_campaigns[0]?.name : (a.traffic_campaigns as any)?.name,
                 adset_name: Array.isArray(a.traffic_ad_sets) ? a.traffic_ad_sets[0]?.name : (a.traffic_ad_sets as any)?.name,
                 spend: aSpend,
@@ -520,6 +615,7 @@ export function ClientTrafficPage() {
                 custom_metrics: customMetrics
              };
            });
+           setAllAds(processedAds);
            setAds(processedAds);
         }
 
@@ -537,9 +633,6 @@ export function ClientTrafficPage() {
                 aVal = a.roas;
                 bVal = b.roas;
               } else if (sortBy === 'cpc') {
-                // For CPC we want the lowest value at the top, but the component sorts descending.
-                // To show "best" CPC (lowest) we invert the logic or handle it carefully.
-                // Here we'll treat lower as better for sorting purposes
                 return (a.clicks > 0 ? a.spend / a.clicks : 999) - (b.clicks > 0 ? b.spend / b.clicks : 999);
               } else {
                 // Default: conversions
@@ -577,7 +670,7 @@ export function ClientTrafficPage() {
     }
 
     fetchData();
-  }, [clientId, dateRange, settingsVersion]);
+  }, [clientId, dateRange, settingsVersion, viewLevel, selectedCampaignId, selectedAdSetId]);
 
   const handleSync = async () => {
     if (!clientId) return;
@@ -599,6 +692,16 @@ export function ClientTrafficPage() {
     }
   };
 
+  // Handle campaign selection from dropdown - also updates viewLevel
+  const handleCampaignSelect = (value: string) => {
+    setSelectedCampaignId(value);
+  };
+
+  // Handle adset selection from dropdown
+  const handleAdSetSelect = (value: string) => {
+    setSelectedAdSetId(value);
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-6">
@@ -608,6 +711,9 @@ export function ClientTrafficPage() {
       </div>
     );
   }
+
+  // View level label for UI
+  const viewLevelLabel = viewLevel === 'campaign' ? 'Campanhas' : viewLevel === 'adset' ? 'Conjuntos' : 'Anúncios';
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 min-h-screen bg-background p-6 pb-12 overflow-x-hidden">
@@ -625,7 +731,7 @@ export function ClientTrafficPage() {
               Overview <span className="flex items-center gap-1.5 text-primary"><svg className="inline h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.477 2 12C2 17.523 6.477 22 12 22C17.523 22 22 17.523 22 12C22 6.477 17.523 2 12 2ZM17.2 13.5C16.8 15.5 15.2 17.1 13.2 17.5C11.2 17.9 9.1 17.1 7.8 15.6C6.5 14.1 6.1 12 6.9 10.1C7.7 8.2 9.6 7 11.6 7C12.3 7 13.1 7.1 13.8 7.4C14.5 7.7 15.1 8.2 15.6 8.7C16.1 9.2 16.5 9.8 16.7 10.5C16.9 11.2 17 11.9 17 12.6C17 12.9 16.8 13.2 16.5 13.2C16.2 13.2 15.9 12.9 15.9 12.6C15.9 10.5 14.1 8.7 12 8.7C9.9 8.7 8.1 10.5 8.1 12.6C8.1 14.7 9.9 16.5 12 16.5C13.2 16.5 14.2 15.9 14.8 15C15.4 14.1 15.5 13.1 15.2 12.1C15.1 11.8 15.3 11.5 15.6 11.4C15.9 11.3 16.2 11.5 16.3 11.8C16.7 13.3 16.6 14.9 15.8 16.1C14.9 17.3 13.5 18 12 18C10.5 18 9.1 17.3 8.1 16.1C7.1 14.9 6.8 13.3 7.2 11.8C7.6 10.3 8.7 9.1 10.2 8.4C11.7 7.7 13.4 7.7 14.8 8.4C15.5 8.8 16.1 9.3 16.5 10C17 10.7 17.2 11.4 17.2 12.2V13.5Z"/></svg> Meta</span>
             </h1>
             <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mt-1">
-              Relatório Meta Ads | <span className="text-slate-300">Agência CAEN</span>
+              Relatório Meta Ads | Nível: <span className="text-primary">{viewLevelLabel}</span> | <span className="text-slate-300">Agência CAEN</span>
             </p>
           </div>
         </div>
@@ -650,24 +756,52 @@ export function ClientTrafficPage() {
              </Button>
           </div>
 
-          <Select defaultValue="all">
-            <SelectTrigger className="w-[140px] h-9 bg-muted text-[11px] border-border text-foreground">
+          {/* VIEW LEVEL SELECTOR */}
+          <Select value={viewLevel} onValueChange={(v) => setViewLevel(v as ViewLevel)}>
+            <SelectTrigger className="w-[130px] h-9 bg-muted text-[11px] border-border text-foreground">
+              <SelectValue placeholder="Nível" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="campaign">Campanhas</SelectItem>
+              <SelectItem value="adset">Conjuntos</SelectItem>
+              <SelectItem value="ad">Anúncios</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {/* CAMPAIGN FILTER */}
+          <Select value={selectedCampaignId} onValueChange={handleCampaignSelect}>
+            <SelectTrigger className="w-[180px] h-9 bg-muted text-[11px] border-border text-foreground">
               <SelectValue placeholder="Campanhas" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todas Campanhas</SelectItem>
-              <SelectItem value="active">Campanhas Ativas</SelectItem>
+              {allCampaigns.map(c => (
+                <SelectItem key={c.id} value={c.id}>
+                  <div className="flex items-center gap-2">
+                    <div className={cn("w-1.5 h-1.5 rounded-full flex-shrink-0", c.status === 'active' ? 'bg-emerald-500' : 'bg-slate-500')} />
+                    <span className="truncate max-w-[140px]">{c.name}</span>
+                  </div>
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
 
-          <Select defaultValue="all">
-            <SelectTrigger className="w-[140px] h-9 bg-muted text-[11px] border-border text-foreground">
-              <SelectValue placeholder="Anúncios" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos Anúncios</SelectItem>
-            </SelectContent>
-          </Select>
+          {/* ADSET FILTER (visible when viewing adsets or ads, or when a campaign is selected) */}
+          {(viewLevel === 'adset' || viewLevel === 'ad') && (
+            <Select value={selectedAdSetId} onValueChange={handleAdSetSelect}>
+              <SelectTrigger className="w-[180px] h-9 bg-muted text-[11px] border-border text-foreground">
+                <SelectValue placeholder="Conjuntos" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos Conjuntos</SelectItem>
+                {filteredAdSets.map(a => (
+                  <SelectItem key={a.id} value={a.id}>
+                    <span className="truncate max-w-[140px]">{a.name}</span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
 
           <div className="bg-muted border border-border rounded-lg">
             <DateRangeSelector date={dateRange} setDate={setDateRange} />
@@ -737,9 +871,13 @@ export function ClientTrafficPage() {
                 )}
               </div>
 
-              {/* Bottom: Campaign Table (Enhanced) */}
+              {/* Bottom: Campaign Table (Enhanced) - passes filtered data */}
               {visibilityConfig.show_table && (
-                <CampaignTable campaigns={campaigns} adSets={adSets} ads={ads} />
+                <CampaignTable 
+                  campaigns={selectedCampaignId === 'all' ? allCampaigns : allCampaigns.filter(c => c.id === selectedCampaignId)} 
+                  adSets={filteredAdSets} 
+                  ads={filteredAds} 
+                />
               )}
               
               {/* Extra Summary Row */}
@@ -783,4 +921,3 @@ export function ClientTrafficPage() {
     </div>
   );
 }
-

@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid, Legend } from 'recharts';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { useMemo } from 'react';
 
 export interface RevenueDataPoint {
   date: string;
@@ -21,6 +22,7 @@ const CustomTooltip = ({ active, payload, label, metric1Id, metric2Id }: any) =>
       new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
 
     const isCurrency = (id: string) => ['spend', 'revenue', 'cpc', 'cpc_link', 'cpm'].includes(id);
+    const isPercent = (id: string) => ['ctr', 'ctr_link'].includes(id);
 
     return (
       <div className="bg-background border rounded-lg p-3 shadow-lg text-sm">
@@ -28,9 +30,10 @@ const CustomTooltip = ({ active, payload, label, metric1Id, metric2Id }: any) =>
         {payload.map((entry: any, i: number) => {
           const mId = i === 0 ? metric1Id : metric2Id;
           const isCurr = isCurrency(mId);
+          const isPct = isPercent(mId);
           return (
             <p key={i} style={{ color: entry.color }} className="text-xs">
-              {entry.name}: {isCurr ? formatCurrency(entry.value) : entry.value.toFixed(mId === 'roas' || mId === 'ctr' ? 2 : 0)}
+              {entry.name}: {isCurr ? formatCurrency(entry.value) : isPct ? `${entry.value.toFixed(2)}%` : entry.value.toFixed(mId === 'roas' || mId === 'frequency' ? 2 : 0)}
             </p>
           );
         })}
@@ -53,14 +56,63 @@ export function RevenueChart({
     return new Intl.NumberFormat('pt-BR', { notation: 'compact', maximumFractionDigits: 1 }).format(tickItem);
   };
 
+  // Aggregate data by date to ensure we have one data point per day
+  // and ensure both metric keys exist on every data point
+  const chartData = useMemo(() => {
+    if (!data || data.length === 0) return [];
+    
+    const dateMap = new Map<string, any>();
+    
+    data.forEach(item => {
+      const date = item.date;
+      if (!dateMap.has(date)) {
+        dateMap.set(date, { date, [metric1.id]: 0, [metric2.id]: 0 });
+      }
+      const existing = dateMap.get(date)!;
+      
+      // Aggregate metric1
+      if (item[metric1.id] !== undefined) {
+        existing[metric1.id] = (existing[metric1.id] || 0) + Number(item[metric1.id] || 0);
+      }
+      
+      // Aggregate metric2
+      if (item[metric2.id] !== undefined) {
+        existing[metric2.id] = (existing[metric2.id] || 0) + Number(item[metric2.id] || 0);
+      }
+
+      // Copy all other keys on first encounter
+      Object.keys(item).forEach(key => {
+        if (key !== 'date' && existing[key] === undefined) {
+          existing[key] = item[key];
+        }
+      });
+    });
+    
+    return Array.from(dateMap.values()).sort((a, b) => a.date.localeCompare(b.date));
+  }, [data, metric1.id, metric2.id]);
+
+  // Check if metric2 has any data at all
+  const hasMetric1Data = chartData.some(d => d[metric1.id] > 0);
+  const hasMetric2Data = chartData.some(d => d[metric2.id] > 0);
+
   return (
     <Card className="col-span-1 lg:col-span-2">
       <CardHeader className="pb-2">
-        <CardTitle className="text-base">{metric1.label} x {metric2.label}</CardTitle>
+        <CardTitle className="text-base flex items-center gap-2">
+          <span>{metric1.label}</span>
+          <span className="text-muted-foreground font-normal">×</span>
+          <span className="text-emerald-500">{metric2.label}</span>
+          {(!hasMetric1Data || !hasMetric2Data) && (
+            <span className="text-[10px] text-muted-foreground font-normal ml-auto">
+              {!hasMetric1Data && `(${metric1.label} sem dados)`}
+              {!hasMetric2Data && `(${metric2.label} sem dados)`}
+            </span>
+          )}
+        </CardTitle>
       </CardHeader>
       <CardContent className="h-[280px] w-full">
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={data} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+          <AreaChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
             <defs>
               <linearGradient id="colorM1" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
@@ -91,6 +143,7 @@ export function RevenueChart({
             <YAxis
               yAxisId="right"
               orientation="right"
+              tickFormatter={formatYAxis}
               axisLine={false}
               tickLine={false}
               tick={{ fontSize: 11, fill: '#10b981' }}
@@ -111,6 +164,7 @@ export function RevenueChart({
               fill="url(#colorM1)"
               strokeWidth={3}
               activeDot={{ r: 6, stroke: 'hsl(var(--primary))', strokeWidth: 2, fill: 'hsl(var(--background))' }}
+              connectNulls
             />
             <Area
               yAxisId="right"
@@ -121,6 +175,7 @@ export function RevenueChart({
               fill="url(#colorM2)"
               strokeWidth={3}
               activeDot={{ r: 6, stroke: '#10b981', strokeWidth: 2, fill: 'hsl(var(--background))' }}
+              connectNulls
             />
           </AreaChart>
         </ResponsiveContainer>
@@ -128,4 +183,3 @@ export function RevenueChart({
     </Card>
   );
 }
-
