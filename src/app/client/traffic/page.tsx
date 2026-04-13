@@ -419,7 +419,7 @@ export function ClientTrafficPage() {
     if (!clientId) return;
     try {
       setIsSyncing(true);
-      const res = await trafficService.syncData(clientId);
+      const res = await trafficService.syncData(clientId, 7);
       if (res.success) {
         toast.success(`Sincronização concluída! ${res.message}`);
         setSettingsVersion(v => v + 1); // Refresh data

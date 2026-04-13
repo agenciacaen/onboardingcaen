@@ -71,9 +71,9 @@ export const trafficService = {
     return data;
   },
 
-  async syncData(clientId: string) {
+  async syncData(clientId: string, lookbackDays: number = 1) {
     const { data, error } = await supabase.functions.invoke('sync-meta-ads', {
-      body: { client_id: clientId, lookback_days: 1 }
+      body: { client_id: clientId, lookback_days: lookbackDays }
     });
 
     if (error) throw error;
