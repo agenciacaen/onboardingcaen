@@ -1,12 +1,13 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Filter } from 'lucide-react';
 
+export interface FunnelStep {
+  label: string;
+  value: number;
+}
+
 export interface FunnelData {
-  impressions: number;
-  clicks: number;
-  landing_page_views: number;
-  conversions: number;
-  conversionLabel?: string;
+  steps: FunnelStep[];
   secondaryMetrics?: {
     frequency: number;
     cpc: number;
@@ -27,9 +28,43 @@ export function TrafficFunnel({ data }: TrafficFunnelProps) {
 
   const safeRate = (a: number, b: number) => (b > 0 ? ((a / b) * 100).toFixed(2).replace('.', ',') : '0,00');
 
-  const ctr = safeRate(data.clicks, data.impressions);
-  const connectRate = safeRate(data.landing_page_views, data.clicks);
-  const conversionRate = safeRate(data.conversions, data.landing_page_views);
+  // Fallback to default steps if none provided (maintenance mode or initial load)
+  const steps = data.steps && data.steps.length > 0 ? data.steps : [
+    { label: 'Cliques', value: 0 },
+    { label: 'Page Views', value: 0 },
+    { label: 'Checkouts', value: 0 },
+    { label: 'Compras', value: 0 },
+  ];
+
+  const totalSteps = steps.length;
+  const svgWidth = 220;
+  const svgHeight = 280;
+  const marginTop = 10;
+  const marginBottom = 10;
+  const padding = 2;
+  const availableHeight = svgHeight - marginTop - marginBottom - (totalSteps - 1) * padding;
+  const stepHeight = availableHeight / totalSteps;
+  
+  const initialWidth = 200;
+  const finalWidth = 60;
+  const widthReduction = (initialWidth - finalWidth) / totalSteps;
+
+  const segments = steps.map((step, i) => {
+    const yTop = marginTop + i * (stepHeight + padding);
+    const yBottom = yTop + stepHeight;
+    const wTop = initialWidth - i * widthReduction;
+    const wBottom = initialWidth - (i + 1) * widthReduction;
+    
+    return {
+      path: `M ${110 - wTop / 2} ${yTop} H ${110 + wTop / 2} L ${110 + wBottom / 2} ${yBottom} H ${110 - wBottom / 2} Z`,
+      yText: yTop + stepHeight / 2,
+      label: step.label,
+      value: step.value,
+      yTop,
+      yBottom,
+      gradientId: `funnelGradient${i}`
+    };
+  });
 
   return (
     <Card className="h-full bg-card border-border backdrop-blur-sm">
@@ -42,65 +77,52 @@ export function TrafficFunnel({ data }: TrafficFunnelProps) {
       <CardContent className="pb-6">
         <div className="flex items-center justify-center relative min-h-[300px]">
           {/* Funnel SVG */}
-          <svg width="220" height="280" viewBox="0 0 220 280" fill="none" xmlns="http://www.w3.org/2000/svg" className="drop-shadow-2xl">
-            {/* Clicks Segment */}
-            <path d="M10 10H210L195 90H25L10 10Z" fill="url(#funnelGradient1)" fillOpacity="0.8" />
-            <text x="110" y="45" textAnchor="middle" fill="white" fontSize="12" fontWeight="600">Cliques</text>
-            <text x="110" y="65" textAnchor="middle" fill="white" fontSize="16" fontWeight="bold">{formatCompact(data.clicks)}</text>
-
-            {/* Page Views Segment */}
-            <path d="M25 92H195L175 160H45L25 92Z" fill="url(#funnelGradient2)" fillOpacity="0.8" />
-            <text x="110" y="120" textAnchor="middle" fill="white" fontSize="11" fontWeight="600">Page Views</text>
-            <text x="110" y="138" textAnchor="middle" fill="white" fontSize="15" fontWeight="bold">{formatCompact(data.landing_page_views)}</text>
-
-            {/* Checkouts Segment (Implicit) */}
-            <path d="M45 162H175L150 220H70L45 162Z" fill="url(#funnelGradient3)" fillOpacity="0.8" />
-            <text x="110" y="185" textAnchor="middle" fill="white" fontSize="10" fontWeight="600">Checkouts</text>
-            <text x="110" y="202" textAnchor="middle" fill="white" fontSize="14" fontWeight="bold">253</text>
-
-            {/* Compras Segment */}
-            <path d="M70 222H150L135 270H85L70 222Z" fill="url(#funnelGradient4)" fillOpacity="0.9" />
-            <text x="110" y="242" textAnchor="middle" fill="white" fontSize="9" fontWeight="600">Compras</text>
-            <text x="110" y="258" textAnchor="middle" fill="white" fontSize="13" fontWeight="bold">{formatCompact(data.conversions)}</text>
+          <svg width={svgWidth} height={svgHeight} viewBox={`0 0 ${svgWidth} ${svgHeight}`} fill="none" xmlns="http://www.w3.org/2000/svg" className="drop-shadow-2xl">
+            {segments.map((seg, i) => (
+              <g key={i} className="transition-all duration-500">
+                <path d={seg.path} fill={`url(#${seg.gradientId})`} fillOpacity={0.8 + (i * 0.05)} />
+                <text x="110" y={seg.yText - 8} textAnchor="middle" fill="white" fontSize={Math.max(8, 12 - i)} fontWeight="600" className="pointer-events-none">
+                  {seg.label}
+                </text>
+                <text x="110" y={seg.yText + 12} textAnchor="middle" fill="white" fontSize={Math.max(10, 16 - i)} fontWeight="bold" className="pointer-events-none">
+                  {formatCompact(seg.value)}
+                </text>
+              </g>
+            ))}
 
             <defs>
-              <linearGradient id="funnelGradient1" x1="110" y1="10" x2="110" y2="90" gradientUnits="userSpaceOnUse">
-                <stop stopColor="hsl(var(--primary))" />
-                <stop offset="1" stopColor="hsl(var(--primary))" stopOpacity="0.8" />
-              </linearGradient>
-              <linearGradient id="funnelGradient2" x1="110" y1="92" x2="110" y2="160" gradientUnits="userSpaceOnUse">
-                <stop stopColor="hsl(var(--primary))" stopOpacity="0.8" />
-                <stop offset="1" stopColor="hsl(var(--primary))" stopOpacity="0.6" />
-              </linearGradient>
-              <linearGradient id="funnelGradient3" x1="110" y1="162" x2="110" y2="220" gradientUnits="userSpaceOnUse">
-                <stop stopColor="hsl(var(--primary))" stopOpacity="0.6" />
-                <stop offset="1" stopColor="hsl(var(--primary))" stopOpacity="0.4" />
-              </linearGradient>
-              <linearGradient id="funnelGradient4" x1="110" y1="222" x2="110" y2="270" gradientUnits="userSpaceOnUse">
-                <stop stopColor="hsl(var(--primary))" stopOpacity="0.4" />
-                <stop offset="1" stopColor="hsl(var(--primary))" stopOpacity="0.2" />
-              </linearGradient>
+              {segments.map((seg, i) => (
+                <linearGradient key={i} id={seg.gradientId} x1="110" y1={seg.yTop} x2="110" y2={seg.yBottom} gradientUnits="userSpaceOnUse">
+                  <stop stopColor="hsl(var(--primary))" stopOpacity={1 - (i * 0.15)} />
+                  <stop offset="1" stopColor="hsl(var(--primary))" stopOpacity={0.8 - (i * 0.15)} />
+                </linearGradient>
+              ))}
             </defs>
           </svg>
 
           {/* Rates Labels (Absolute Positioned) */}
-          <div className="absolute right-[-10px] top-0 h-full flex flex-col justify-around py-4 text-right">
-            <div className="mb-8">
-              <p className="text-[10px] text-muted-foreground">Taxa de Cliques</p>
-              <p className="text-xs font-bold text-foreground">{ctr}%</p>
-            </div>
-            <div className="mb-4">
-              <p className="text-[10px] text-muted-foreground">Connect Rate</p>
-              <p className="text-xs font-bold text-foreground">{connectRate}%</p>
-            </div>
-            <div className="mt-4">
-              <p className="text-[10px] text-muted-foreground">Taxa de Checkout</p>
-              <p className="text-xs font-bold text-foreground">19,86%</p>
-            </div>
-            <div className="mt-8">
-              <p className="text-[10px] text-muted-foreground">Taxa de Compras</p>
-              <p className="text-xs font-bold text-foreground">{conversionRate}%</p>
-            </div>
+          <div className="absolute right-[-10px] top-0 h-full flex flex-col justify-between py-8 text-right pr-2">
+            {steps.map((_, i) => {
+              if (i === steps.length - 1) {
+                // Final Conversion Rate
+                if (steps.length > 2) {
+                  return (
+                    <div key="final" className="mt-auto">
+                      <p className="text-[9px] text-muted-foreground uppercase font-bold tracking-tighter">Taxa Final</p>
+                      <p className="text-xs font-black text-primary">{safeRate(steps[steps.length - 1].value, steps[0].value)}%</p>
+                    </div>
+                  );
+                }
+                return null;
+              }
+              
+              return (
+                <div key={i} className="group transition-all">
+                  <p className="text-[9px] text-muted-foreground uppercase font-bold tracking-tighter">Taxa {i+1}-{i+2}</p>
+                  <p className="text-xs font-black text-foreground">{safeRate(steps[i+1].value, steps[i].value)}%</p>
+                </div>
+              );
+            })}
           </div>
         </div>
 

@@ -60,13 +60,10 @@ export function ClientTrafficPage() {
   const [settingsVersion, setSettingsVersion] = useState(0);
 
   const [funnelData, setFunnelData] = useState<FunnelData>({
-    impressions: 0,
-    clicks: 0,
-    landing_page_views: 0,
-    conversions: 0,
-    conversionLabel: 'Conversões',
+    steps: [],
+    secondaryMetrics: { frequency: 0, cpc: 0, cpm: 0 }
   });
-
+  const [funnelConfig, setFunnelConfig] = useState<any>(null);
   const [conversionCards, setConversionCards] = useState<ConversionMetric[]>([]);
   const [revenueChartData, setRevenueChartData] = useState<RevenueDataPoint[]>([]);
   const [topAds, setTopAds] = useState<TopAdData[]>([]);
@@ -98,10 +95,12 @@ export function ClientTrafficPage() {
           .eq('client_id', clientId)
           .eq('status', 'active');
 
-        // 2. Fetch Settings
+        // 2. Fetch settings
         const config = await trafficService.getSettings(clientId);
-        const activeMetrics = config?.selected_metrics || ['spend', 'purchases', 'revenue', 'roas', 'landing_page_views'];
         const funnelObjective = config?.funnel_main_metric || 'conversions';
+        const userFunnelConfig = config?.funnel_config;
+        setFunnelConfig(userFunnelConfig);
+        const activeMetrics = config?.selected_metrics || ['spend', 'purchases', 'revenue', 'roas', 'landing_page_views'];
         setSelectedMetrics(activeMetrics);
 
         if (accounts && accounts.length > 0) {
@@ -262,7 +261,7 @@ export function ClientTrafficPage() {
         setConversionLabel(finalFunnelLabel);
 
         // Revenue approximation
-        const revenueEstimate = totalSpend * avgRoas;
+        const revenueEstimate = actionTotals['purchase_value'] || (totalSpend * avgRoas);
 
         // KPIs
         setKpis({
@@ -303,13 +302,52 @@ export function ClientTrafficPage() {
           video_p100: { value: v100, change: 0 },
         });
 
+        // Helper to get metric value by ID
+        const getMetricValue = (metricId: string) => {
+          // Standard Native Metrics
+          if (metricId === 'spend') return totalSpend;
+          if (metricId === 'impressions') return totalImpressions;
+          if (metricId === 'clicks') return totalClicks;
+          if (metricId === 'reach') return totalReach;
+          if (metricId === 'cpc') return cpcAll;
+          if (metricId === 'cpc_link') return cpcLink;
+          if (metricId === 'ctr') return ctrAll * 100;
+          if (metricId === 'ctr_link') return ctrLink * 100;
+          if (metricId === 'cpm') return avgCpm;
+          if (metricId === 'frequency') return frequency;
+          if (metricId === 'roas') return avgRoas;
+          
+          // Legacy/Common Aliases
+          if (metricId === 'landing_page_views') return totalLPV;
+          if (metricId === 'purchases') return purchases;
+          if (metricId === 'conversations') return conversations;
+          if (metricId === 'leads') return leads;
+          if (metricId === 'initiate_checkout') return initCheckouts;
+          if (metricId === 'add_to_cart') return addToCart;
+          if (metricId === 'view_content') return contentViews;
+          
+          // Dynamic match from actionTotals (Meta action_type)
+          if (actionTotals[metricId] !== undefined) return actionTotals[metricId];
+
+          // Special case for revenue (purchase_value)
+          if (metricId === 'revenue') return actionTotals['purchase_value'] || (totalSpend * avgRoas);
+
+          return 0;
+        };
+
         // Funnel
+        const funnelSteps = userFunnelConfig?.steps?.map((step: any) => ({
+          label: step.label,
+          value: getMetricValue(step.metric)
+        })) || [
+          { label: 'Impressões', value: totalImpressions },
+          { label: 'Cliques', value: totalClicks },
+          { label: 'Visitas', value: totalLPV || Math.round(totalClicks * 0.8) },
+          { label: finalFunnelLabel, value: finalFunnelCount }
+        ];
+
         setFunnelData({
-          impressions: totalImpressions,
-          clicks: totalClicks,
-          landing_page_views: totalLPV || Math.round(totalClicks * 0.8),
-          conversions: finalFunnelCount,
-          conversionLabel: finalFunnelLabel,
+          steps: funnelSteps,
           secondaryMetrics: {
             frequency: frequency,
             cpc: cpcAll,
