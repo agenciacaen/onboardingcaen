@@ -583,6 +583,7 @@ export function ClientTrafficPage() {
                 spend: aSpend,
                 impressions: aImpressions,
                 clicks: aClicks,
+                reach: aMetrics.reduce((acc: number, m: any) => acc + (m.reach || 0), 0),
                 custom_metrics: customMetrics
              };
            });
