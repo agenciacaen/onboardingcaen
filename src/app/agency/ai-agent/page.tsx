@@ -1,5 +1,5 @@
-// Build trigger: 21:04
 import { useState, useEffect, useCallback } from "react";
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/services/supabase";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -55,6 +55,8 @@ interface WhatsAppGroup {
 }
 
 export default function AIAgentPage() {
+  const [searchParams] = useSearchParams();
+  const activeTab = searchParams.get('tab') || 'instances';
   const [instances, setInstances] = useState<WhatsAppInstance[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
@@ -256,15 +258,7 @@ export default function AIAgentPage() {
         />
       </div>
 
-      <Tabs defaultValue="instances" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 max-w-[400px]">
-          <TabsTrigger value="instances" className="flex items-center gap-2">
-            <Zap className="w-4 h-4" /> Instâncias (WhatsApp)
-          </TabsTrigger>
-          <TabsTrigger value="clients" className="flex items-center gap-2">
-            <Users className="w-4 h-4" /> Configuração de Clientes
-          </TabsTrigger>
-        </TabsList>
+      <Tabs value={activeTab} className="w-full">
 
         <TabsContent value="instances" className="space-y-6 pt-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

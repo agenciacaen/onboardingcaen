@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { PageHeader } from '../../../components/ui/PageHeader';
 import { DateRangeSelector } from '@/components/ui/DateRangeSelector';
 import type { DateRange } from 'react-day-picker';
@@ -11,6 +12,8 @@ import { ClientModuleTasksView } from '@/components/modules/ClientModuleTasksVie
 
 export function ClientSocialPage() {
   const { clientId } = useAuth();
+  const [searchParams] = useSearchParams();
+  const activeTab = searchParams.get('tab') || 'kanban';
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: subDays(new Date(), 30),
     to: new Date()
@@ -65,12 +68,7 @@ export function ClientSocialPage() {
         </div>
       </div>
 
-      <Tabs defaultValue="kanban" className="w-full">
-        <TabsList className="mb-4 bg-slate-100/50">
-          <TabsTrigger value="kanban">Quadro Kanban</TabsTrigger>
-          <TabsTrigger value="list">Lista de Tarefas</TabsTrigger>
-          <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-        </TabsList>
+      <Tabs value={activeTab} className="w-full">
 
         <TabsContent value="kanban" className="mt-0 pt-2">
           <ClientModuleTasksView module="social" view="kanban" />

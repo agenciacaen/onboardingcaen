@@ -59,10 +59,34 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
         <SidebarItem icon={GitBranch} label="Fluxos" href="/agency/flows" onNavigate={onNavigate} />
       </SidebarGroup>
       <SidebarGroup label="Módulos">
-        <SidebarItem icon={MessageCircle} label="Agente IA" href="/agency/ai-agent" onNavigate={onNavigate} />
-        <SidebarItem icon={CheckSquare} label="Geral" href="/agency/general" onNavigate={onNavigate} />
-        <SidebarItem icon={TrendingUp} label="Tráfego Pago" href="/agency/traffic" onNavigate={onNavigate} />
-        <SidebarItem icon={Share2} label="Social Media" href="/agency/social" onNavigate={onNavigate} />
+        <SidebarItem 
+          icon={MessageCircle} 
+          label="Agente IA" 
+          href="/agency/ai-agent?tab=instances" 
+          onNavigate={onNavigate} 
+          subItems={[
+            { label: "Instâncias WhatsApp", href: "/agency/ai-agent?tab=instances" },
+            { label: "Configuração de Clientes", href: "/agency/ai-agent?tab=clients" },
+          ]}
+        />
+        <SidebarItem 
+          icon={CheckSquare} 
+          label="Geral" 
+          href="/agency/general" 
+          onNavigate={onNavigate}
+        />
+        <SidebarItem 
+          icon={TrendingUp} 
+          label="Tráfego Pago" 
+          href="/agency/traffic" 
+          onNavigate={onNavigate} 
+        />
+        <SidebarItem 
+          icon={Share2} 
+          label="Social Media" 
+          href="/agency/social" 
+          onNavigate={onNavigate} 
+        />
         <SidebarItem icon={Globe} label="Web" href="/agency/web" onNavigate={onNavigate} />
         <SidebarItem icon={Database} label="CRM e Tecnologia" href="/agency/crm" onNavigate={onNavigate} />
       </SidebarGroup>
@@ -91,11 +115,62 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
         />
       </SidebarGroup>
       <SidebarGroup label="Módulos">
-        <SidebarItem icon={CheckSquare} label="Geral" href="/client/general" onNavigate={onNavigate} />
-        <SidebarItem icon={TrendingUp} label="Tráfego Pago" href="/client/traffic" onNavigate={onNavigate} />
-        <SidebarItem icon={Share2} label="Social Media" href="/client/social" onNavigate={onNavigate} />
-        <SidebarItem icon={Globe} label="Web" href="/client/web" onNavigate={onNavigate} />
-        <SidebarItem icon={Database} label="CRM e Tecnologia" href="/client/crm" onNavigate={onNavigate} />
+        <SidebarItem 
+          icon={CheckSquare} 
+          label="Geral" 
+          href="/client/general?tab=dashboard" 
+          onNavigate={onNavigate}
+          subItems={[
+            { label: "Dashboard", href: "/client/general?tab=dashboard" },
+            { label: "Quadro Kanban", href: "/client/general?tab=kanban" },
+            { label: "Lista de Tarefas", href: "/client/general?tab=list" },
+          ]}
+        />
+        <SidebarItem 
+          icon={TrendingUp} 
+          label="Tráfego Pago" 
+          href="/client/traffic?tab=dashboard" 
+          onNavigate={onNavigate}
+          subItems={[
+            { label: "Dashboard", href: "/client/traffic?tab=dashboard" },
+            { label: "Quadro Kanban", href: "/client/traffic?tab=kanban" },
+            { label: "Lista de Tarefas", href: "/client/traffic?tab=list" },
+            { label: "Configurações", href: "/client/traffic?tab=settings" },
+          ]}
+        />
+        <SidebarItem 
+          icon={Share2} 
+          label="Social Media" 
+          href="/client/social?tab=kanban" 
+          onNavigate={onNavigate}
+          subItems={[
+            { label: "Quadro Kanban", href: "/client/social?tab=kanban" },
+            { label: "Lista de Tarefas", href: "/client/social?tab=list" },
+            { label: "Dashboard", href: "/client/social?tab=dashboard" },
+          ]}
+        />
+        <SidebarItem 
+          icon={Globe} 
+          label="Web" 
+          href="/client/web?tab=kanban" 
+          onNavigate={onNavigate}
+          subItems={[
+            { label: "Quadro Kanban", href: "/client/web?tab=kanban" },
+            { label: "Lista de Tarefas", href: "/client/web?tab=list" },
+            { label: "Dashboard", href: "/client/web?tab=dashboard" },
+          ]}
+        />
+        <SidebarItem 
+          icon={Database} 
+          label="CRM e Tecnologia" 
+          href="/client/crm?tab=kanban" 
+          onNavigate={onNavigate}
+          subItems={[
+            { label: "Quadro Kanban", href: "/client/crm?tab=kanban" },
+            { label: "Lista de Tarefas", href: "/client/crm?tab=list" },
+            { label: "Dashboard", href: "/client/crm?tab=dashboard" },
+          ]}
+        />
       </SidebarGroup>
       <SidebarGroup label="Ações">
         <SidebarItem 

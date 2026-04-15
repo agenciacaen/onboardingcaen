@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { PageHeader } from '../../../components/ui/PageHeader';
 import { useAuth } from '@/hooks/useAuth';
 import { webService } from '@/services/web.service';
@@ -8,6 +9,8 @@ import { ClientModuleTasksView } from '@/components/modules/ClientModuleTasksVie
 
 export function ClientWebPage() {
   const { clientId } = useAuth();
+  const [searchParams] = useSearchParams();
+  const activeTab = searchParams.get('tab') || 'kanban';
   const [isLoading, setIsLoading] = useState(false);
   const [data, setData] = useState<WebOverview | null>(null);
 
@@ -48,12 +51,7 @@ export function ClientWebPage() {
         <PageHeader title="Desenvolvimento Web" description="Acompanhe o desempenho do site, auditorias e métricas de SEO." />
       </div>
 
-      <Tabs defaultValue="kanban" className="w-full">
-        <TabsList className="mb-4 bg-slate-100/50">
-          <TabsTrigger value="kanban">Quadro Kanban</TabsTrigger>
-          <TabsTrigger value="list">Lista de Tarefas</TabsTrigger>
-          <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-        </TabsList>
+      <Tabs value={activeTab} className="w-full">
 
         <TabsContent value="kanban" className="mt-0 pt-2">
           <ClientModuleTasksView module="web" view="kanban" />

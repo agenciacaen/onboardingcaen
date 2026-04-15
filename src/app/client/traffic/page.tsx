@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { PageHeader } from '../../../components/ui/PageHeader';
 import { DateRangeSelector } from '@/components/ui/DateRangeSelector';
 import { TrafficKpiCards } from '@/modules/traffic/components/TrafficKpiCards';
@@ -59,6 +60,8 @@ const ACTION_KEY_MAP: Record<string, string> = {
 
 export function ClientTrafficPage() {
   const { clientId } = useAuth();
+  const [searchParams] = useSearchParams();
+  const activeTab = searchParams.get('tab') || 'dashboard';
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: subDays(new Date(), 30),
     to: new Date()
@@ -836,16 +839,7 @@ export function ClientTrafficPage() {
         </div>
       </div>
 
-      <Tabs defaultValue="dashboard" className="w-full">
-        <TabsList className="mb-4 bg-muted/50 border border-border p-1 h-11">
-          <TabsTrigger value="dashboard" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all duration-300">Dashboard</TabsTrigger>
-          <TabsTrigger value="kanban" className="transition-all duration-300">Quadro Kanban</TabsTrigger>
-          <TabsTrigger value="list" className="transition-all duration-300">Lista de Tarefas</TabsTrigger>
-          <TabsTrigger value="settings" className="flex items-center gap-2 transition-all duration-300">
-            <Settings2 className="h-3.5 w-3.5" />
-            Configurações
-          </TabsTrigger>
-        </TabsList>
+      <Tabs value={activeTab} className="w-full">
 
         <TabsContent value="dashboard" className="mt-0 space-y-4">
           {/* ROW 1: Top KPI Cards with Sparklines */}
