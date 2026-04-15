@@ -2,14 +2,14 @@ import { useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/services/supabase";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { 
-  Bot, MessageCircle, Zap, Loader2, Plus, RefreshCw, 
-  Trash2, Rocket, Users, ListFilter, Search, Copy, Check
+  Bot, MessageCircle, Loader2, Plus, RefreshCw, 
+  Trash2, Rocket, ListFilter, Search, Copy, Check
 } from "lucide-react";
 import { toast } from "sonner";
 import { 

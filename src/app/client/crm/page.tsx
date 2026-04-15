@@ -7,7 +7,7 @@ import type { DateRange } from 'react-day-picker';
 import { subDays } from 'date-fns';
 
 import { useAuth } from '@/hooks/useAuth';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { ClientModuleTasksView } from '@/components/modules/ClientModuleTasksView';
 import { Database, Cpu, Zap, CheckCircle2, Clock } from 'lucide-react';
 

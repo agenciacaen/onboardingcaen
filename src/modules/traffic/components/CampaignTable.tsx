@@ -8,7 +8,7 @@ import {
   TableRow 
 } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
-import { Search, Image as ImageIcon, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { Search, Image as ImageIcon } from 'lucide-react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
@@ -72,19 +72,6 @@ const getActionValue = (item: any, ...actionTypes: string[]): number => {
   return 0;
 };
 
-// Badge de performance inline 
-function PerformanceBadge({ value, type }: { value: number; type: 'currency' | 'number' | 'percent' | 'roas' }) {
-  const formatted = type === 'currency' ? formatCurrency(value) 
-    : type === 'percent' ? formatPercent(value)
-    : type === 'roas' ? value.toFixed(2) + 'x'
-    : formatNumber(value);
-  
-  return (
-    <span className="text-[11px] font-semibold tabular-nums text-foreground">
-      {formatted}
-    </span>
-  );
-}
 
 // =====================================================
 // MAIN COMPONENT

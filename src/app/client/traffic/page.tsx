@@ -10,7 +10,7 @@ import { BestAdsDonut } from '@/modules/traffic/components/BestAdsDonut';
 import { CampaignTable, type CampaignData } from '@/modules/traffic/components/CampaignTable';
 import type { DateRange } from 'react-day-picker';
 import { subDays, format } from 'date-fns';
-import { Download, HelpCircle, RefreshCw, Settings2 } from 'lucide-react';
+import { Download, HelpCircle, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
@@ -19,7 +19,7 @@ import { trafficService } from '@/modules/traffic/services/traffic.service';
 import { supabase } from '@/services/supabase';
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
 import { toast } from 'sonner';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { ClientModuleTasksView } from '@/components/modules/ClientModuleTasksView';
 import {
   Select,

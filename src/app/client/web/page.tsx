@@ -4,7 +4,7 @@ import { PageHeader } from '../../../components/ui/PageHeader';
 import { useAuth } from '@/hooks/useAuth';
 import { webService } from '@/services/web.service';
 import type { WebOverview } from '@/types/web.types';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { ClientModuleTasksView } from '@/components/modules/ClientModuleTasksView';
 
 export function ClientWebPage() {

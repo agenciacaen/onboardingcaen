@@ -7,7 +7,7 @@ import { subDays, format } from 'date-fns';
 
 import { useAuth } from '@/hooks/useAuth';
 import { socialService } from '@/services/social.service';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { ClientModuleTasksView } from '@/components/modules/ClientModuleTasksView';
 
 export function ClientSocialPage() {
