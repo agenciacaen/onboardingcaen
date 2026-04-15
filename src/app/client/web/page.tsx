@@ -10,7 +10,7 @@ import { ClientModuleTasksView } from '@/components/modules/ClientModuleTasksVie
 export function ClientWebPage() {
   const { clientId } = useAuth();
   const [searchParams] = useSearchParams();
-  const activeTab = searchParams.get('tab') || 'kanban';
+  const activeTab = searchParams.get('tab') || 'projects';
   const [isLoading, setIsLoading] = useState(false);
   const [data, setData] = useState<WebOverview | null>(null);
 
@@ -53,11 +53,11 @@ export function ClientWebPage() {
 
       <Tabs value={activeTab} className="w-full">
 
-        <TabsContent value="kanban" className="mt-0 pt-2">
+        <TabsContent value="projects" className="mt-0 pt-2">
           <ClientModuleTasksView module="web" view="kanban" />
         </TabsContent>
 
-        <TabsContent value="list" className="mt-0 pt-2">
+        <TabsContent value="deliveries" className="mt-0 pt-2">
           <ClientModuleTasksView module="web" view="list" />
         </TabsContent>
 

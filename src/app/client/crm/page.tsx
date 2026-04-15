@@ -22,7 +22,7 @@ interface TaskCounts {
 export function ClientCRMPage() {
   const { clientId } = useAuth();
   const [searchParams] = useSearchParams();
-  const activeTab = searchParams.get('tab') || 'kanban';
+  const activeTab = searchParams.get('tab') || 'dashboard';
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: subDays(new Date(), 30),
     to: new Date()
@@ -94,7 +94,7 @@ export function ClientCRMPage() {
           {clientId && <ClientModuleTasksView module="crm" view="kanban" />}
         </TabsContent>
 
-        <TabsContent value="list" className="mt-0 pt-2">
+        <TabsContent value="integrations" className="mt-0 pt-2">
           {clientId && <ClientModuleTasksView module="crm" view="list" />}
         </TabsContent>
 

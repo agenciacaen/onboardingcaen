@@ -1,0 +1,144 @@
+# Reestruturação Completa da Navegação - Sidebar & Módulos
+
+Reorganização dos módulos e navegação do sistema para tornar a experiência mais eficiente para a agência e mais clara para o cliente, conforme discutido.
+
+## Escopo desta Fase
+
+> [!IMPORTANT]
+> Esta é a **Fase 1 — Reestruturação da Sidebar**. Vamos reorganizar toda a hierarquia de navegação, renomear módulos, e ajustar os sub-itens de cada módulo. As páginas continuarão funcionando — estamos mudando como o usuário *acessa* elas, não o conteúdo interno (isso será Fase 2).
+
+---
+
+## Mudanças Propostas
+
+### 👤 Sidebar do CLIENTE — De/Para
+
+| Antes | Depois |
+|---|---|
+| **Principal:** Dashboard, Calendário | **Principal:** Dashboard |
+| **Início:** Onboarding | **Estratégia:** Estratégia (Timeline · Kanban · Lista) |
+| **Módulos:** Geral (Dashboard/Kanban/Lista), Tráfego (Dashboard/Kanban/Lista/Config), Social (Kanban/Lista/Dashboard), Web (Kanban/Lista/Dashboard), CRM (Kanban/Lista/Dashboard) | **Serviços:** Tráfego Pago (Resultados · Campanhas), Social Media (Calendário · Aprovações), Web (Projetos · Entregas), CRM & Tecnologia (Status · Integrações) |
+| **Ações:** Aprovações | **Ações:** Aprovações, Financeiro |
+| **Suporte:** Suporte (em breve) | **Recursos:** Documentos, Suporte (em breve) |
+| **Financeiro:** Financeiro | *(movido para Ações)* |
+| **Conteúdo:** Documentos | *(movido para Recursos)* |
+
+**Eliminados do cliente:**
+- ❌ **Calendário** (standalone) — vive dentro de Social Media
+- ❌ **Geral** — tarefas genéricas vão para Estratégia ou são criadas pela agência via Fluxos
+
+---
+
+### 🏢 Sidebar da AGÊNCIA — De/Para
+
+| Antes | Depois |
+|---|---|
+| **Principal:** Dashboard | **Principal:** Dashboard |
+| **Gestão:** Clientes, Acessos, Aprovações, Financeiro, Equipe | **Gestão:** Clientes (Overview · Pipeline), Equipe, Acessos |
+| **Operacional:** Calendário, Tarefas, Fluxos | **Operacional:** Tarefas (Kanban · Lista · Calendário), Fluxos, Aprovações |
+| **Módulos:** Agente IA, Geral, Tráfego, Social, Web, CRM | **Serviços:** Tráfego Pago (Dashboard · Campanhas · Otimizações), Social Media (Calendário · Produção · Aprovações), Web (Projetos · Entregas), CRM & Tech (Integrações · Automações) |
+| **Conteúdo:** Documentos | **Inteligência:** Agente IA (Instâncias · Config), Relatórios (Gerar · Histórico) |
+| **Análise:** Relatórios | **Financeiro:** Financeiro |
+| | **Conteúdo:** Documentos |
+
+**Mudanças-chave na agência:**
+- ❌ **Geral** eliminado — tarefas genéricas vão para "Tarefas" (cross-client)
+- ❌ **Calendário** standalone eliminado — vira sub-item de "Tarefas"
+- 🔄 **Aprovações** move de Gestão → Operacional (faz mais sentido)
+- 🔄 **Financeiro** ganha grupo próprio
+- 🔄 **Relatórios** move para "Inteligência" junto com Agente IA
+
+---
+
+## Arquivos Afetados
+
+### [MODIFY] [Sidebar.tsx](file:///c:/Users/Henrique%20de%20Souza/Desktop/Apps/ONBOARDING%20-%20CAEN/src/components/sidebar/Sidebar.tsx)
+Arquivo principal. Toda a reorganização de grupos, itens e sub-itens acontece aqui.
+
+**Cliente (`clientItems`):**
+- Remover `Calendário` do grupo Principal
+- Renomear grupo "Início" → "Estratégia"
+- Renomear item "Onboarding" → "Estratégia" (manter href `/client/onboarding` por enquanto para não quebrar rota)
+- Atualizar ícone de Onboarding (Rocket → Target ou TrendingUp)
+- Remover módulo "Geral" inteiro
+- Reorganizar sub-items dos módulos de serviço:
+  - Tráfego: `Resultados` (tab=dashboard) + `Campanhas` (tab=campaigns)
+  - Social: `Calendário` (tab=calendar) + `Aprovações` (tab=approvals) 
+  - Web: `Projetos` (tab=projects) + `Entregas` (tab=deliveries)
+  - CRM: `Status` (tab=dashboard) + `Integrações` (tab=integrations)
+- Mover Financeiro para grupo "Ações"
+- Mover Documentos + Suporte para grupo "Recursos"
+
+**Agência (`agencyItems`):**
+- Adicionar sub-items em "Clientes": Overview + Pipeline
+- Remover Aprovações e Financeiro do grupo Gestão
+- Remover Calendário standalone do Operacional
+- Adicionar sub-items em "Tarefas": Kanban + Lista + Calendário
+- Mover Aprovações para Operacional
+- Renomear grupo "Módulos" → "Serviços"
+- Eliminar "Geral" do grupo Serviços
+- Adicionar sub-items nos módulos de serviço:
+  - Tráfego: Dashboard + Campanhas + Otimizações
+  - Social: Calendário + Produção + Aprovações
+  - Web: Projetos + Entregas
+  - CRM: Integrações + Automações
+- Criar grupo "Inteligência" com Agente IA e Relatórios
+- Mover Financeiro para grupo próprio
+
+### [MODIFY] [App.tsx](file:///c:/Users/Henrique%20de%20Souza/Desktop/Apps/ONBOARDING%20-%20CAEN/src/App.tsx)
+- Remover a rota `/client/calendar` (redirecioná-la opcionalmente)
+- Remover a rota `/client/general`
+- Remover a rota `/agency/general`
+- Remover a rota `/agency/calendar` (o calendário agora é acessado via `/agency/tasks?tab=calendar`)
+- Remover os imports correspondentes
+
+### [MODIFY] [client/onboarding/page.tsx](file:///c:/Users/Henrique%20de%20Souza/Desktop/Apps/ONBOARDING%20-%20CAEN/src/app/client/onboarding/page.tsx)
+- Renomear títulos internos: "Onboarding" → "Estratégia", "Roadmap de Ativação" → "Plano Estratégico"
+- Manter a funcionalidade intacta
+
+### [MODIFY] [agency/tasks/page.tsx](file:///c:/Users/Henrique%20de%20Souza/Desktop/Apps/ONBOARDING%20-%20CAEN/src/app/agency/tasks/page.tsx)
+- Adicionar suporte a `?tab=` (kanban, list, calendar) via `useSearchParams`
+- Tab `calendar`: renderizar o componente de calendário existente
+- Tab `kanban`: manter o KanbanBoard atual (default)
+- Tab `list`: adicionar visão de lista
+
+### [MODIFY] [client/traffic/page.tsx](file:///c:/Users/Henrique%20de%20Souza/Desktop/Apps/ONBOARDING%20-%20CAEN/src/app/client/traffic/page.tsx)
+- Garantir que os tabs `dashboard` e `campaigns` funcionem com os novos nomes de sub-items na sidebar
+- Tab `dashboard` = "Resultados" (já existe, é o dashboard de KPIs)
+- Tab `campaigns` = "Campanhas" (já existe como tabela de campanhas dentro do dashboard)
+
+### [MODIFY] [client/social/page.tsx](file:///c:/Users/Henrique%20de%20Souza/Desktop/Apps/ONBOARDING%20-%20CAEN/src/app/client/social/page.tsx)
+- Ajustar tabs para `calendar` e `approvals` em vez de `kanban`, `list`, `dashboard`
+
+### [MODIFY] [client/web/page.tsx](file:///c:/Users/Henrique%20de%20Souza/Desktop/Apps/ONBOARDING%20-%20CAEN/src/app/client/web/page.tsx)
+- Ajustar tabs para `projects` e `deliveries` em vez de `kanban`, `list`, `dashboard`
+
+### [MODIFY] [client/crm/page.tsx](file:///c:/Users/Henrique%20de%20Souza/Desktop/Apps/ONBOARDING%20-%20CAEN/src/app/client/crm/page.tsx)
+- Ajustar tabs para `dashboard` (Status) e `integrations` em vez de `kanban`, `list`, `dashboard`
+
+---
+
+## Decisões de Design
+
+> [!WARNING]
+> **Rotas preservadas**: Não vamos mudar os paths das rotas (ex: `/client/onboarding` continua existindo), apenas os labels e sub-items na sidebar. Isso evita quebrar bookmarks, links compartilhados e deploy.
+
+> [!IMPORTANT]
+> **Módulo "Geral" eliminado**: Tarefas do módulo `general` que já existem no banco de dados NÃO serão deletadas. Apenas removemos o acesso direto. Futuramente, essas tarefas podem ser migradas para o módulo "Estratégia" ou para "Tarefas" da agência.
+
+---
+
+## Plano de Verificação
+
+### Testes Automatizados
+- `npm run build` — garantir zero erros TypeScript após as alterações
+- Build precisa passar limpo para deploy na Vercel
+
+### Verificação Manual
+- Navegar por todos os itens da sidebar do cliente e confirmar que cada sub-item abre a visualização correta
+- Navegar por todos os itens da sidebar da agência e confirmar a mesma coisa
+- Confirmar que rotas removidas (calendar, general) não causam erros 404
+- Testar em mobile (Sheet) e desktop (hover expand)
+
+### Deploy
+- Commit + push para `main` → build automático na Vercel

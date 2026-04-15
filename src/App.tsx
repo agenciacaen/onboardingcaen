@@ -20,7 +20,7 @@ import { AuthLoadingScreen } from './components/ui/AuthLoadingScreen';
 import { AgencyDashboard } from './app/agency/page';
 import { AgencyClientsPage } from './app/agency/clients/page';
 import { AgencyClientDetailPage } from './app/agency/clients/[id]/page';
-import { AgencyCalendarPage } from './app/agency/calendar/page';
+// AgencyCalendarPage removido - calendário agora é sub-item de Tarefas
 import { AgencyTasksPage } from './app/agency/tasks/page';
 import { AgencyFlowsPage } from './app/agency/flows/page';
 import { AgencyTeamPage } from './app/agency/team/page';
@@ -33,7 +33,7 @@ import AgencySocialPage from './app/agency/social/page';
 import AgencyTrafficPage from './app/agency/traffic/page';
 import AgencyWebPage from './app/agency/web/page';
 import AgencyCRMPage from './app/agency/crm/page';
-import { AgencyGeneralPage } from './app/agency/general/page';
+// AgencyGeneralPage removido - módulo Geral eliminado
 import AIAgentPage from './app/agency/ai-agent/page';
 
 // Cliente
@@ -51,8 +51,7 @@ import { ClientSupportPage } from './app/client/support/page';
 import { ClientTicketDetailPage } from './app/client/support/[ticketId]/page';
 import { ClientFinancialPage } from './app/client/financial/page';
 import { ClientDocumentsPage } from './app/client/documents/page';
-import { ClientGeneralPage } from './app/client/general/page';
-import { ClientCalendarPage } from './app/client/calendar/page';
+// ClientGeneralPage e ClientCalendarPage removidos - módulos eliminados
 
 function RootRedirect() {
   const { role, isLoading } = useAuth();
@@ -200,7 +199,7 @@ export default function App() {
               <Route path="/agency" element={<AgencyDashboard />} />
               <Route path="/agency/clients" element={<AgencyClientsPage />} />
               <Route path="/agency/clients/:id" element={<AgencyClientDetailPage />} />
-              <Route path="/agency/calendar" element={<AgencyCalendarPage />} />
+              {/* Calendário agora é sub-item de Tarefas (?tab=calendar) */}
               <Route path="/agency/approvals" element={<AgencyApprovalsPage />} />
               <Route path="/agency/tasks" element={<AgencyTasksPage />} />
               <Route path="/agency/flows" element={<AgencyFlowsPage />} />
@@ -214,7 +213,7 @@ export default function App() {
               <Route path="/agency/web" element={<AgencyWebPage />} />
               <Route path="/agency/crm" element={<AgencyCRMPage />} />
               <Route path="/agency/ai-agent" element={<AIAgentPage />} />
-              <Route path="/agency/general" element={<AgencyGeneralPage />} />
+              {/* Módulo Geral eliminado */}
             </Route>
           </Route>
           
@@ -222,7 +221,7 @@ export default function App() {
             <Route element={<ClientLayout />}>
               <Route path="/client" element={<ClientDashboard />} />
               <Route path="/client/onboarding" element={<ClientOnboardingPage />} />
-              <Route path="/client/calendar" element={<ClientCalendarPage />} />
+              {/* Calendário do cliente eliminado - vive dentro de Social Media */}
               <Route path="/client/traffic" element={<ClientTrafficPage />} />
               <Route path="/client/traffic/campaigns" element={<ClientCampaignsPage />} />
               <Route path="/client/traffic/campaigns/:id" element={<ClientCampaignDetailPage />} />
@@ -235,7 +234,7 @@ export default function App() {
               <Route path="/client/support/:ticketId" element={<ClientTicketDetailPage />} />
               <Route path="/client/documents" element={<ClientDocumentsPage />} />
               <Route path="/client/financial" element={<ClientFinancialPage />} />
-              <Route path="/client/general" element={<ClientGeneralPage />} />
+              {/* Módulo Geral do cliente eliminado */}
             </Route>
           </Route>
           

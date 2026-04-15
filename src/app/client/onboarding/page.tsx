@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { PageHeader } from '../../../components/ui/PageHeader';
 import { EmptyState } from '../../../components/ui/EmptyState';
 import { Rocket, Loader2, LayoutGrid, List, Milestone } from 'lucide-react';
@@ -17,7 +18,9 @@ export function ClientOnboardingPage() {
   const [client, setClient] = useState<Client | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [viewMode, setViewMode] = useState<'roadmap' | 'kanban' | 'list'>('roadmap');
+  const [searchParams] = useSearchParams();
+  const viewParam = searchParams.get('view') as 'roadmap' | 'kanban' | 'list' | null;
+  const [viewMode, setViewMode] = useState<'roadmap' | 'kanban' | 'list'>(viewParam || 'roadmap');
 
   const loadData = useCallback(async () => {
     if (!clientId) return;
@@ -73,7 +76,7 @@ export function ClientOnboardingPage() {
   if (client?.onboarding_completed) {
     return (
       <div className="space-y-6">
-        <PageHeader title="Onboarding Concluído" description="Todas as etapas foram finalizadas." />
+        <PageHeader title="Estratégia Concluída" description="Todas as etapas foram finalizadas." />
         <CompletionScreen clientName={client.name || 'Cliente'} />
       </div>
     );
@@ -82,7 +85,7 @@ export function ClientOnboardingPage() {
   if (tasks.length === 0) {
     return (
       <div className="space-y-6">
-        <PageHeader title="Onboarding" description="Acompanhe a implantação dos seus serviços." />
+        <PageHeader title="Estratégia" description="Acompanhe a implantação dos seus serviços." />
         <EmptyState
           icon={Rocket}
           title="Nenhum plano ativo"
@@ -96,7 +99,7 @@ export function ClientOnboardingPage() {
     <div className="space-y-6 max-w-6xl mx-auto pb-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <PageHeader
-          title="Roadmap de Ativação"
+          title="Plano Estratégico"
           description="Acompanhe cada etapa da implementação dos seus serviços."
         />
         

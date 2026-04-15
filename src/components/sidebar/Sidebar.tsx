@@ -7,9 +7,10 @@ import { SidebarItem } from "./SidebarItem";
 import { NotificationBadge } from "./NotificationBadge";
 import { cn } from "../../lib/utils";
 import {
-  LayoutDashboard, Users, UserCheck, CalendarDays, CheckSquare, GitBranch,
-  FileText, BarChart2, Rocket, TrendingUp, Share2, Globe, ThumbsUp,
-  MessageCircle, DollarSign, LogOut, Hexagon, ShieldCheck, Database
+  LayoutDashboard, Users, UserCheck, CheckSquare, GitBranch,
+  FileText, BarChart2, TrendingUp, Share2, Globe, ThumbsUp,
+  MessageCircle, DollarSign, LogOut, Hexagon, ShieldCheck, Database,
+  Target, Brain
 } from "lucide-react";
 import { supabase } from "../../services/supabase";
 import { useAuthStore } from "../../store/authStore";
@@ -47,20 +48,81 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
         <SidebarItem icon={LayoutDashboard} label="Dashboard" href="/agency" onNavigate={onNavigate} />
       </SidebarGroup>
       <SidebarGroup label="Gestão">
-        <SidebarItem icon={Users} label="Clientes" href="/agency/clients" onNavigate={onNavigate} />
-        <SidebarItem icon={ShieldCheck} label="Acessos" href="/agency/access" onNavigate={onNavigate} />
-        <SidebarItem icon={ThumbsUp} label="Aprovações" href="/agency/approvals" onNavigate={onNavigate} />
-        <SidebarItem icon={DollarSign} label="Financeiro" href="/agency/financial" onNavigate={onNavigate} />
+        <SidebarItem 
+          icon={Users} 
+          label="Clientes" 
+          href="/agency/clients" 
+          onNavigate={onNavigate}
+          subItems={[
+            { label: "Overview", href: "/agency/clients?tab=overview" },
+            { label: "Pipeline", href: "/agency/clients?tab=pipeline" },
+          ]}
+        />
         <SidebarItem icon={UserCheck} label="Equipe" href="/agency/team" onNavigate={onNavigate} />
+        <SidebarItem icon={ShieldCheck} label="Acessos" href="/agency/access" onNavigate={onNavigate} />
       </SidebarGroup>
       <SidebarGroup label="Operacional">
-        <SidebarItem icon={CalendarDays} label="Calendário" href="/agency/calendar" onNavigate={onNavigate} />
-        <SidebarItem icon={CheckSquare} label="Tarefas" href="/agency/tasks" onNavigate={onNavigate} />
-        <SidebarItem icon={GitBranch} label="Fluxos" href="/agency/flows" onNavigate={onNavigate} />
-      </SidebarGroup>
-      <SidebarGroup label="Módulos">
         <SidebarItem 
-          icon={MessageCircle} 
+          icon={CheckSquare} 
+          label="Tarefas" 
+          href="/agency/tasks?tab=kanban" 
+          onNavigate={onNavigate}
+          subItems={[
+            { label: "Kanban", href: "/agency/tasks?tab=kanban" },
+            { label: "Lista", href: "/agency/tasks?tab=list" },
+            { label: "Calendário", href: "/agency/tasks?tab=calendar" },
+          ]}
+        />
+        <SidebarItem icon={GitBranch} label="Fluxos" href="/agency/flows" onNavigate={onNavigate} />
+        <SidebarItem icon={ThumbsUp} label="Aprovações" href="/agency/approvals" onNavigate={onNavigate} />
+      </SidebarGroup>
+      <SidebarGroup label="Serviços">
+        <SidebarItem 
+          icon={TrendingUp} 
+          label="Tráfego Pago" 
+          href="/agency/traffic" 
+          onNavigate={onNavigate}
+          subItems={[
+            { label: "Dashboard", href: "/agency/traffic?tab=dashboard" },
+            { label: "Campanhas", href: "/agency/traffic?tab=campaigns" },
+            { label: "Otimizações", href: "/agency/traffic?tab=optimizations" },
+          ]}
+        />
+        <SidebarItem 
+          icon={Share2} 
+          label="Social Media" 
+          href="/agency/social" 
+          onNavigate={onNavigate}
+          subItems={[
+            { label: "Calendário", href: "/agency/social?tab=calendar" },
+            { label: "Produção", href: "/agency/social?tab=production" },
+            { label: "Aprovações", href: "/agency/social?tab=approvals" },
+          ]}
+        />
+        <SidebarItem 
+          icon={Globe} 
+          label="Web" 
+          href="/agency/web" 
+          onNavigate={onNavigate}
+          subItems={[
+            { label: "Projetos", href: "/agency/web?tab=projects" },
+            { label: "Entregas", href: "/agency/web?tab=deliveries" },
+          ]}
+        />
+        <SidebarItem 
+          icon={Database} 
+          label="CRM & Tech" 
+          href="/agency/crm" 
+          onNavigate={onNavigate}
+          subItems={[
+            { label: "Integrações", href: "/agency/crm?tab=integrations" },
+            { label: "Automações", href: "/agency/crm?tab=automations" },
+          ]}
+        />
+      </SidebarGroup>
+      <SidebarGroup label="Inteligência">
+        <SidebarItem 
+          icon={Brain} 
           label="Agente IA" 
           href="/agency/ai-agent?tab=instances" 
           onNavigate={onNavigate} 
@@ -70,31 +132,21 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
           ]}
         />
         <SidebarItem 
-          icon={CheckSquare} 
-          label="Geral" 
-          href="/agency/general" 
+          icon={BarChart2} 
+          label="Relatórios" 
+          href="/agency/reports" 
           onNavigate={onNavigate}
+          subItems={[
+            { label: "Gerar", href: "/agency/reports?tab=generate" },
+            { label: "Histórico", href: "/agency/reports?tab=history" },
+          ]}
         />
-        <SidebarItem 
-          icon={TrendingUp} 
-          label="Tráfego Pago" 
-          href="/agency/traffic" 
-          onNavigate={onNavigate} 
-        />
-        <SidebarItem 
-          icon={Share2} 
-          label="Social Media" 
-          href="/agency/social" 
-          onNavigate={onNavigate} 
-        />
-        <SidebarItem icon={Globe} label="Web" href="/agency/web" onNavigate={onNavigate} />
-        <SidebarItem icon={Database} label="CRM e Tecnologia" href="/agency/crm" onNavigate={onNavigate} />
+      </SidebarGroup>
+      <SidebarGroup label="Financeiro">
+        <SidebarItem icon={DollarSign} label="Financeiro" href="/agency/financial" onNavigate={onNavigate} />
       </SidebarGroup>
       <SidebarGroup label="Conteúdo">
         <SidebarItem icon={FileText} label="Documentos" href="/agency/documents" onNavigate={onNavigate} />
-      </SidebarGroup>
-      <SidebarGroup label="Análise">
-        <SidebarItem icon={BarChart2} label="Relatórios" href="/agency/reports" onNavigate={onNavigate} />
       </SidebarGroup>
     </>
   );
@@ -103,72 +155,60 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
     <>
       <SidebarGroup label="Principal">
         <SidebarItem icon={LayoutDashboard} label="Dashboard" href="/client" onNavigate={onNavigate} />
-        <SidebarItem icon={CalendarDays} label="Calendário" href="/client/calendar" onNavigate={onNavigate} />
       </SidebarGroup>
-      <SidebarGroup label="Início">
+      <SidebarGroup label="Estratégia">
         <SidebarItem 
-          icon={Rocket} 
-          label="Onboarding" 
+          icon={Target} 
+          label="Estratégia" 
           href="/client/onboarding" 
           endDecorator={<NotificationBadge type="task" />}
-          onNavigate={onNavigate} 
-        />
-      </SidebarGroup>
-      <SidebarGroup label="Módulos">
-        <SidebarItem 
-          icon={CheckSquare} 
-          label="Geral" 
-          href="/client/general?tab=dashboard" 
           onNavigate={onNavigate}
           subItems={[
-            { label: "Dashboard", href: "/client/general?tab=dashboard" },
-            { label: "Quadro Kanban", href: "/client/general?tab=kanban" },
-            { label: "Lista de Tarefas", href: "/client/general?tab=list" },
+            { label: "Timeline", href: "/client/onboarding?view=roadmap" },
+            { label: "Kanban", href: "/client/onboarding?view=kanban" },
+            { label: "Lista", href: "/client/onboarding?view=list" },
           ]}
         />
+      </SidebarGroup>
+      <SidebarGroup label="Serviços">
         <SidebarItem 
           icon={TrendingUp} 
           label="Tráfego Pago" 
           href="/client/traffic?tab=dashboard" 
           onNavigate={onNavigate}
           subItems={[
-            { label: "Dashboard", href: "/client/traffic?tab=dashboard" },
-            { label: "Quadro Kanban", href: "/client/traffic?tab=kanban" },
-            { label: "Lista de Tarefas", href: "/client/traffic?tab=list" },
-            { label: "Configurações", href: "/client/traffic?tab=settings" },
+            { label: "Resultados", href: "/client/traffic?tab=dashboard" },
+            { label: "Campanhas", href: "/client/traffic?tab=campaigns" },
           ]}
         />
         <SidebarItem 
           icon={Share2} 
           label="Social Media" 
-          href="/client/social?tab=kanban" 
+          href="/client/social?tab=calendar" 
           onNavigate={onNavigate}
           subItems={[
-            { label: "Quadro Kanban", href: "/client/social?tab=kanban" },
-            { label: "Lista de Tarefas", href: "/client/social?tab=list" },
-            { label: "Dashboard", href: "/client/social?tab=dashboard" },
+            { label: "Calendário", href: "/client/social?tab=calendar" },
+            { label: "Aprovações", href: "/client/social?tab=approvals" },
           ]}
         />
         <SidebarItem 
           icon={Globe} 
           label="Web" 
-          href="/client/web?tab=kanban" 
+          href="/client/web?tab=projects" 
           onNavigate={onNavigate}
           subItems={[
-            { label: "Quadro Kanban", href: "/client/web?tab=kanban" },
-            { label: "Lista de Tarefas", href: "/client/web?tab=list" },
-            { label: "Dashboard", href: "/client/web?tab=dashboard" },
+            { label: "Projetos", href: "/client/web?tab=projects" },
+            { label: "Entregas", href: "/client/web?tab=deliveries" },
           ]}
         />
         <SidebarItem 
           icon={Database} 
-          label="CRM e Tecnologia" 
-          href="/client/crm?tab=kanban" 
+          label="CRM & Tecnologia" 
+          href="/client/crm?tab=dashboard" 
           onNavigate={onNavigate}
           subItems={[
-            { label: "Quadro Kanban", href: "/client/crm?tab=kanban" },
-            { label: "Lista de Tarefas", href: "/client/crm?tab=list" },
-            { label: "Dashboard", href: "/client/crm?tab=dashboard" },
+            { label: "Status", href: "/client/crm?tab=dashboard" },
+            { label: "Integrações", href: "/client/crm?tab=integrations" },
           ]}
         />
       </SidebarGroup>
@@ -180,8 +220,10 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
           endDecorator={<NotificationBadge type="approval" />}
           onNavigate={onNavigate}
         />
+        <SidebarItem icon={DollarSign} label="Financeiro" href="/client/financial" onNavigate={onNavigate} />
       </SidebarGroup>
-      <SidebarGroup label="Suporte">
+      <SidebarGroup label="Recursos">
+        <SidebarItem icon={FileText} label="Documentos" href="/client/documents" onNavigate={onNavigate} />
         <div className="relative">
           <div className={cn(
             "absolute -top-2 left-8 z-10",
@@ -192,12 +234,6 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
           </div>
           <SidebarItem icon={MessageCircle} label="Suporte" href="/client/support" onNavigate={onNavigate} disabled />
         </div>
-      </SidebarGroup>
-      <SidebarGroup label="Financeiro">
-        <SidebarItem icon={DollarSign} label="Financeiro" href="/client/financial" onNavigate={onNavigate} />
-      </SidebarGroup>
-      <SidebarGroup label="Conteúdo">
-        <SidebarItem icon={FileText} label="Documentos" href="/client/documents" onNavigate={onNavigate} />
       </SidebarGroup>
     </>
   );
