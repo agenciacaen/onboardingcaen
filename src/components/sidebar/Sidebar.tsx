@@ -69,7 +69,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
           onNavigate={onNavigate}
           subItems={[
             { label: "Kanban", href: "/agency/tasks?tab=kanban" },
-            { label: "Lista", href: "/agency/tasks?tab=list" },
+            { label: "Histórico", href: "/agency/tasks?tab=history" },
             { label: "Calendário", href: "/agency/tasks?tab=calendar" },
           ]}
         />

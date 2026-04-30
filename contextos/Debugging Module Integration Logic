@@ -1,0 +1,91 @@
+# Correção de Integração entre Módulos — Sidebar ↔ Páginas
+
+Análise completa de todos os módulos do sistema. Identifiquei **9 problemas de integração** entre a Sidebar (que envia parâmetros `?tab=` ou `?view=`) e as páginas que deveriam lê-los.
+
+---
+
+## Problemas Encontrados
+
+### 🔴 Problemas Críticos (módulo não funcional via sidebar)
+
+| # | Módulo | Perfil | Problema | Causa |
+|---|--------|--------|----------|-------|
+| 1 | **CRM (Cliente)** | Cliente | Sidebar envia `?tab=dashboard` (Status) mas a página tem tab `kanban`, não `dashboard` renderizado por padrão | Tab padrão é `dashboard` ✅ mas o conteúdo kanban só é renderizado quando `tab=kanban` — a sidebar NÃO tem link para `kanban`. O "Status" deveria mostrar o dashboard mas era o único link funcional. O sub-item `Integrações` funciona. |
+| 2 | **Tráfego (Agência)** | Agência | Sidebar tem sub-items `Dashboard`, `Campanhas`, `Otimizações` com `?tab=` — mas a página **NÃO lê `useSearchParams`** | Página mostra apenas KanbanBoard fixo, sem suporte a tabs |
+| 3 | **Social (Agência)** | Agência | Sidebar tem sub-items `Calendário`, `Produção`, `Aprovações` com `?tab=` — mas a página **NÃO lê `useSearchParams`** | Página mostra apenas KanbanBoard fixo, sem suporte a tabs |
+| 4 | **Web (Agência)** | Agência | Sidebar tem sub-items `Projetos`, `Entregas` com `?tab=` — mas a página **NÃO lê `useSearchParams`** | Página mostra apenas KanbanBoard fixo, sem suporte a tabs |
+| 5 | **CRM (Agência)** | Agência | Sidebar tem sub-items `Integrações`, `Automações` com `?tab=` — mas a página **NÃO lê `useSearchParams`** | Página mostra apenas KanbanBoard fixo, sem suporte a tabs |
+| 6 | **Clientes (Agência)** | Agência | Sidebar tem sub-items `Overview`, `Pipeline` com `?tab=` — mas a página **NÃO lê `useSearchParams`** | ClientListPage não tem suporte a tabs |
+| 7 | **Relatórios (Agência)** | Agência | Sidebar tem sub-items `Gerar`, `Histórico` com `?tab=` — mas a página **NÃO lê `useSearchParams`** | Página fixa, sem Tabs |
+
+### 🟡 Problemas Menores (funcional mas com UX inconsistente)
+
+| # | Módulo | Perfil | Problema |
+|---|--------|--------|----------|
+| 8 | **Onboarding (Cliente)** | Cliente | `viewMode` é setado apenas no mount inicial. Se o usuário navega entre sub-items da sidebar (Timeline→Kanban→Lista), o `viewParam` muda no URL mas o `useState` não re-sincroniza |
+| 9 | **SidebarItem** | Ambos | O `isCurrentlyActive` usa `location.pathname.startsWith(href)` mas o `href` de itens com sub-items contém `?tab=` (ex: `/agency/traffic`). A comparação funciona OK para o pathname, mas o item pai fica "ativo" mesmo quando nenhum sub-item está selecionado, criando inconsistência visual |
+
+---
+
+## Mudanças Propostas
+
+### Módulos da Agência — Padrão Unificado com Tabs
+
+Todas as 5 páginas da agência que têm sub-items na sidebar precisam do **mesmo padrão**: `useSearchParams` + `<Tabs>` com `TabsContent` para cada sub-item.
+
+---
+
+### [MODIFY] [agency/traffic/page.tsx](file:///c:/Users/Henrique%20de%20Souza/Desktop/Apps/ONBOARDING%20-%20CAEN/src/app/agency/traffic/page.tsx)
+- Adicionar `useSearchParams` para ler `?tab=`
+- Tab `dashboard` (padrão): manter KanbanBoard com moduleFilter
+- Tab `campaigns`: mostrar KanbanBoard em view filtrada (ou placeholder)
+- Tab `optimizations`: placeholder com texto "Em desenvolvimento"
+
+### [MODIFY] [agency/social/page.tsx](file:///c:/Users/Henrique%20de%20Souza/Desktop/Apps/ONBOARDING%20-%20CAEN/src/app/agency/social/page.tsx)
+- Adicionar `useSearchParams` para ler `?tab=`
+- Tab `calendar` (padrão): KanbanBoard com moduleFilter social
+- Tab `production`: placeholder
+- Tab `approvals`: placeholder
+
+### [MODIFY] [agency/web/page.tsx](file:///c:/Users/Henrique%20de%20Souza/Desktop/Apps/ONBOARDING%20-%20CAEN/src/app/agency/web/page.tsx)
+- Adicionar `useSearchParams` para ler `?tab=`
+- Tab `projects` (padrão): KanbanBoard com moduleFilter web
+- Tab `deliveries`: placeholder
+
+### [MODIFY] [agency/crm/page.tsx](file:///c:/Users/Henrique%20de%20Souza/Desktop/Apps/ONBOARDING%20-%20CAEN/src/app/agency/crm/page.tsx)
+- Adicionar `useSearchParams` para ler `?tab=`
+- Tab `integrations` (padrão): KanbanBoard com moduleFilter crm
+- Tab `automations`: placeholder
+
+### [MODIFY] [agency/clients/page.tsx](file:///c:/Users/Henrique%20de%20Souza/Desktop/Apps/ONBOARDING%20-%20CAEN/src/app/agency/clients/page.tsx)
+- Adicionar `useSearchParams` para ler `?tab=`
+- Tab `overview` (padrão): ClientListPage (já existente)
+- Tab `pipeline`: placeholder visual com layout de pipeline
+
+### [MODIFY] [agency/reports/page.tsx](file:///c:/Users/Henrique%20de%20Souza/Desktop/Apps/ONBOARDING%20-%20CAEN/src/app/agency/reports/page.tsx)
+- Adicionar `useSearchParams` para ler `?tab=`
+- Tab `generate` (padrão): conteúdo já existente
+- Tab `history`: placeholder de histórico
+
+---
+
+### Módulos do Cliente
+
+### [MODIFY] [client/crm/page.tsx](file:///c:/Users/Henrique%20de%20Souza/Desktop/Apps/ONBOARDING%20-%20CAEN/src/app/client/crm/page.tsx)
+- Renomear o tab value de `kanban` → `dashboard` no TabsContent (linha 93) para alinhar com o link da sidebar que envia `?tab=dashboard`
+
+### [MODIFY] [client/onboarding/page.tsx](file:///c:/Users/Henrique%20de%20Souza/Desktop/Apps/ONBOARDING%20-%20CAEN/src/app/client/onboarding/page.tsx)
+- Adicionar `useEffect` que sincroniza `viewMode` com `viewParam` quando o `searchParams` muda, para que clicar nos sub-items da sidebar (Timeline/Kanban/Lista) realmente troque a view
+
+---
+
+## Plano de Verificação
+
+### Testes Automatizados
+- `npm run build` — zero erros TypeScript
+
+### Verificação Manual
+Para cada módulo verificar:
+1. **Sidebar → Sub-item**: clicar em cada sub-item e confirmar que a tab correta é exibida
+2. **URL direto**: navegar diretamente para `/agency/traffic?tab=campaigns` e confirmar renderização
+3. **Highlight ativo**: o sub-item ativo deve ficar com highlight visual correto

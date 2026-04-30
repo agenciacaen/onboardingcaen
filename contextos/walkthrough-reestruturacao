@@ -1,0 +1,38 @@
+# Reestruturação da Navegação e Sidebar Concluída
+
+Implementei com sucesso o plano de ação definido. O código rodou limpo (sem erros de TypeScript) e o build foi concluído com exito.
+
+## Resumo das Modificações Realizadas
+
+### 1. Reestruturação do Componente Core (`Sidebar.tsx`)
+A reorganização estrutural do componente principal de navegação foi efetuada conforme a proposta.
+
+**Para o Cliente:**
+*   A aba "Calendário" foi removida da categoria "Principal".
+*   "Onboarding" foi renomeado para "Estratégia" e modificado para conter os sub-itens `Timeline`, `Kanban` e `Lista`. O ícone também foi atualizado de um foguete para um alvo (`Target`).
+*   O antigo módulo "Geral" foi completamente eliminado da sidebar deste perfil.
+*   Nas opções de "Serviços" os links foram remapeados para navegar diretamente para abas (por exemplo, `Resultados` agora aponta para `/client/traffic?tab=dashboard`).
+*   O módulo "Financeiro" foi consolidado dentro na categoria "Ações".
+*   As abas "Documentos" e "Suporte" foram movidas e agrupadas dentro nova categoria "Recursos".
+
+**Para a Agência:**
+*   A página e os sub-itens de "Clientes" ganharam divisões por abas (`Overview` e `Pipeline`).
+*   "Aprovações" foi realocada da seção de Gestão para a seção "Operacional".
+*   O "Calendário" independente foi desativado e agora aparece como sub-item e aba dentro de "Tarefas".
+*   O título "Módulos" foi modernizado para "Serviços".
+*   Criada nova categoria "Inteligência" que passou a agrupar e organizar o "Agente de IA" e os "Relatórios".
+*   "Financeiro" ganhou categoria própria.
+
+### 2. Ajuste das Configurações de Rota Global (`App.tsx`)
+*   As rotas que ficaram "órfãs" (sem suporte das barras de navegação) como `/client/calendar`, `/client/general`, `/agency/general`, e `/agency/calendar` foram totalmente inativadas.
+
+### 3. Ajuste Dinâmicos para os "Sub-menus"
+As páginas que foram alvo dos novos sub-menus também tiveram seu código adaptado:
+*   **Tráfego, Social, Web e CRM:** A leitura via `searchParams` dos links passadas via sidebar já está apontando para as abas ou componentes esperados. O comportamento padrão ao clicar também já é direcionado a aba certa. Exemplo: Web agora já inicia mostrando os `Projetos` (`kanban`) ao invés do antigo `Dashboard` via `?tab=projects`.
+
+### 4. Página de Tarefas da Agência (`agency/tasks/page.tsx`)
+A infraestrutura para abrigar o quadro `Kanban`, `Lista` e o agora unificado `Calendário` já existe e está responsiva ao hook `useSearchParams` da barra lateral.
+
+## Próximos Passos
+> [!NOTE]
+> A Fase 1 — Reestruturação da Sidebar — está totalmente operacional. Com a conclusão disto, recomendo acessarmos o app e realizarmos uma dupla verificação manual da experiência clicando via mouse nas abas e opções garantindo a fluidez entre todos as etapas recém formatadas da aplicação web. Seguimos a disposição para próximas validações e os próximos passos.

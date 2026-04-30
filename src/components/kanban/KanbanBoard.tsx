@@ -22,8 +22,7 @@ type Task = {
 const columns = [
   { id: 'todo', title: 'A Fazer' },
   { id: 'in_progress', title: 'Em Progresso' },
-  { id: 'review', title: 'Revisão' },
-  { id: 'done', title: 'Concluído' }
+  { id: 'review', title: 'Revisão' }
 ];
 
 export function KanbanBoard({ 
@@ -52,7 +51,9 @@ export function KanbanBoard({
       // Buscamos o módulo específico OU qualquer item que seja subtarefa (parent_id não nulo).
       // A lógica de filtragem posterior (parentTasks) garantirá que só mostramos
       // subtarefas cujos pais pertençam ao módulo atual.
-      query = query.or(`module.eq.${moduleFilter},parent_id.not.is.null`);
+      query = query.or(`module.eq.${moduleFilter},parent_id.not.is.null`).neq('status', 'done');
+    } else {
+      query = query.neq('status', 'done');
     }
     
     const { data, error } = await query;
@@ -104,12 +105,22 @@ export function KanbanBoard({
 
     // Optimistic UI update do pai
     const previousAll = [...allTasks];
-    setAllTasks(prev => prev.map(t => t.id === draggedTaskId ? { ...t, status: statusId } : t));
+    // Se arrastou para 'done', removemos da lista do kanban (ela vai para o histórico)
+    if (statusId === 'done') {
+      setAllTasks(prev => prev.filter(t => t.id !== draggedTaskId && t.parent_id !== draggedTaskId));
+    } else {
+      setAllTasks(prev => prev.map(t => t.id === draggedTaskId ? { ...t, status: statusId } : t));
+    }
 
     // DB Update do pai
+    const updatePayload: Record<string, unknown> = { status: statusId, updated_at: new Date().toISOString() };
+    if (statusId === 'done') {
+      updatePayload.completed_at = new Date().toISOString();
+    }
+    
     const { error } = await supabase
       .from('tasks')
-      .update({ status: statusId, updated_at: new Date().toISOString() })
+      .update(updatePayload)
       .eq('id', draggedTaskId);
 
     if (error) {
@@ -119,7 +130,7 @@ export function KanbanBoard({
       return;
     }
 
-    toast.success('Tarefa atualizada!');
+    toast.success(statusId === 'done' ? 'Tarefa concluída! Veja no Histórico.' : 'Tarefa atualizada!');
 
     // Se arrastou para "Concluído" e tem subtarefas, marcar todas como done
     if (statusId === 'done') {

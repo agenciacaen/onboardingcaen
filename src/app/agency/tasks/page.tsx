@@ -6,6 +6,7 @@ import { Plus } from "lucide-react";
 import { ClientFilterBar } from "@/components/calendar/ClientFilterBar";
 import { TaskCreateModal } from "@/components/modals/TaskCreateModal";
 import { KanbanBoard } from "@/components/kanban/KanbanBoard";
+import { TaskHistory } from "@/components/kanban/TaskHistory";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 
 export function AgencyTasksPage() {
@@ -40,10 +41,8 @@ export function AgencyTasksPage() {
           <KanbanBoard clientIdFilter={clientIdFilter} key={`kanban-${refreshKey}`} />
         </TabsContent>
 
-        <TabsContent value="list" className="flex-1 overflow-auto pb-4 mt-0">
-          <div className="bg-card rounded-lg border border-border p-6">
-            <p className="text-muted-foreground text-center py-12">Visão de lista em desenvolvimento</p>
-          </div>
+        <TabsContent value="history" className="flex-1 overflow-auto pb-4 mt-0">
+          <TaskHistory clientIdFilter={clientIdFilter} key={`history-${refreshKey}`} />
         </TabsContent>
 
         <TabsContent value="calendar" className="flex-1 overflow-auto pb-4 mt-0">

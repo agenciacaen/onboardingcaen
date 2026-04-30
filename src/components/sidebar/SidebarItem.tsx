@@ -73,10 +73,11 @@ export function SidebarItem({
     );
   }
 
-  const handleToggle = (e: React.MouseEvent) => {
+  const handleToggle = () => {
     if (hasSubItems) {
-      e.preventDefault();
-      setIsOpen(!isOpen);
+      // Permite a navegação natural (sem preventDefault)
+      // E garante que o menu fique aberto ao ser clicado
+      setIsOpen(true);
     }
   };
 
@@ -84,12 +85,12 @@ export function SidebarItem({
     <div className="flex flex-col">
       <NavLink
         to={href}
-        onClick={(e) => {
+        onClick={() => {
           if (hasSubItems) {
-            handleToggle(e);
-          } else {
-            onNavigate?.();
+            handleToggle();
           }
+          // Sempre chama onNavigate para fechar o menu mobile, etc.
+          onNavigate?.();
         }}
         className={cn(
           "flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors mb-1 whitespace-nowrap overflow-hidden transition-all duration-300",

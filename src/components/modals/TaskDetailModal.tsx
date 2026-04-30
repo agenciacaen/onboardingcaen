@@ -322,9 +322,20 @@ export function TaskDetailModal({
   const updateTaskField = async (field: string, value: string) => {
     if (!taskData) return;
     
+    const updatePayload: Record<string, unknown> = { [field]: value, updated_at: new Date().toISOString() };
+    
+    // Se o campo é status e o novo valor é 'done', registrar completed_at
+    if (field === 'status' && value === 'done') {
+      updatePayload.completed_at = new Date().toISOString();
+    }
+    // Se o campo é status e o novo valor NÃO é 'done', limpar completed_at
+    if (field === 'status' && value !== 'done') {
+      updatePayload.completed_at = null;
+    }
+
     const { error } = await supabase
       .from('tasks')
-      .update({ [field]: value, updated_at: new Date().toISOString() })
+      .update(updatePayload)
       .eq('id', taskData.id);
     
     if (error) { 
@@ -338,6 +349,20 @@ export function TaskDetailModal({
         .from('tasks')
         .update({ [field]: value, updated_at: new Date().toISOString() })
         .eq('parent_id', taskData.id);
+    }
+
+    // Se marcou como 'done', também completar todas as subtarefas pendentes
+    if (field === 'status' && value === 'done' && subtasks.length > 0) {
+      const pendingSubs = subtasks.filter(s => s.status !== 'done');
+      if (pendingSubs.length > 0) {
+        const pendingIds = pendingSubs.map(s => s.id);
+        await supabase
+          .from('tasks')
+          .update({ status: 'done', completed_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+          .in('id', pendingIds);
+        setSubtasks(prev => prev.map(s => pendingIds.includes(s.id) ? { ...s, status: 'done' } : s));
+        toast.success(`${pendingSubs.length} subtarefa(s) concluída(s) automaticamente!`);
+      }
     }
 
     setTaskData(prev => prev ? { ...prev, [field]: value } : prev);
