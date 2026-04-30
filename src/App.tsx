@@ -85,7 +85,7 @@ export default function App() {
       try {
         const { data, error } = await supabase
           .from('profiles')
-          .select('*, client:clients(*)')
+          .select('*')
           .eq('id', userId)
           .maybeSingle();
 
@@ -96,6 +96,21 @@ export default function App() {
           setProfile(null);
         } else {
           console.log('[Auth] Perfil carregado:', data?.role);
+          
+          // Se tiver client_id, buscamos os dados do cliente separadamente
+          if (data?.client_id) {
+            console.log('[Auth] Buscando dados do cliente:', data.client_id);
+            const { data: clientData, error: clientError } = await supabase
+              .from('clients')
+              .select('*')
+              .eq('id', data.client_id)
+              .maybeSingle();
+            
+            if (!clientError && clientData) {
+              data.client = clientData;
+            }
+          }
+          
           setProfile(data);
         }
       } catch (err) {

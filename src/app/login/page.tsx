@@ -101,7 +101,7 @@ export function LoginPage() {
       if (authData.user) {
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
-          .select('*, client:clients(*)')
+          .select('*')
           .eq('id', authData.user.id)
           .maybeSingle();
           
@@ -111,8 +111,20 @@ export function LoginPage() {
           setLoading(false);
           return;
         }
-
+        
         if (profile) {
+          // Se tiver client_id, buscamos os dados do cliente separadamente
+          if (profile.client_id) {
+            const { data: clientData } = await supabase
+              .from('clients')
+              .select('*')
+              .eq('id', profile.client_id)
+              .maybeSingle();
+            
+            if (clientData) {
+              profile.client = clientData;
+            }
+          }
           // Pré-popular o store ANTES de navegar.
           // Isso garante que o ProtectedRoute não rejeite e
           // que o onAuthStateChange no App.tsx encontre o profile já setado.

@@ -255,6 +255,27 @@ export function AgencyClientDetailPage() {
                 <span>{client.profiles?.full_name || "Ninguém"}</span>
               </div>
             </div>
+            
+            <div className="mt-6">
+              <h4 className="text-sm font-medium text-muted-foreground mb-3">Módulos Ativos no Portal do Cliente</h4>
+              <div className="flex flex-wrap gap-2">
+                {Object.entries(client.modules_enabled).map(([key, enabled]) => (
+                  enabled && (
+                    <span key={key} className="px-2 py-1 bg-primary/10 text-primary rounded-md text-xs font-medium border border-primary/20 capitalize">
+                      {key === 'traffic' ? 'Tráfego Pago' : 
+                       key === 'crm' ? 'CRM & Tech' :
+                       key === 'approvals' ? 'Aprovações' :
+                       key === 'financial' ? 'Financeiro' :
+                       key === 'documents' ? 'Documentos' :
+                       key === 'support' ? 'Suporte' : key}
+                    </span>
+                  )
+                ))}
+                {!Object.values(client.modules_enabled).some(Boolean) && (
+                  <span className="text-sm text-muted-foreground italic">Nenhum módulo ativo</span>
+                )}
+              </div>
+            </div>
           </div>
         </TabsContent>
 
