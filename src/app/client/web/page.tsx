@@ -64,35 +64,35 @@ export function ClientWebPage() {
         <TabsContent value="dashboard" className="mt-0 space-y-6">
           <div className={isLoading ? "opacity-50 pointer-events-none transition-opacity duration-300" : "transition-opacity duration-300"}>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="bg-white p-6 rounded-lg border shadow-sm">
-                <h3 className="text-sm font-medium text-gray-500 mb-2">Páginas Ativas</h3>
-                <p className="text-3xl font-bold">{overviewData.active_pages}</p>
+              <div className="bg-card p-6 rounded-lg border border-border shadow-sm">
+                <h3 className="text-sm font-medium text-muted-foreground mb-2">Páginas Ativas</h3>
+                <p className="text-3xl font-bold text-foreground">{overviewData.active_pages}</p>
               </div>
-              <div className="bg-white p-6 rounded-lg border shadow-sm">
-                <h3 className="text-sm font-medium text-gray-500 mb-2">SEO Score Médio</h3>
-                <p className={`text-3xl font-bold ${overviewData.avg_seo_score >= 80 ? 'text-green-600' : 'text-amber-500'}`}>
+              <div className="bg-card p-6 rounded-lg border border-border shadow-sm">
+                <h3 className="text-sm font-medium text-muted-foreground mb-2">SEO Score Médio</h3>
+                <p className={`text-3xl font-bold ${overviewData.avg_seo_score >= 80 ? 'text-green-600 dark:text-green-500' : 'text-amber-500 dark:text-amber-400'}`}>
                   {overviewData.avg_seo_score}
                 </p>
               </div>
-              <div className="bg-white p-6 rounded-lg border shadow-sm">
-                <h3 className="text-sm font-medium text-gray-500 mb-2">Entregas Concluídas</h3>
-                <p className="text-3xl font-bold text-blue-600">{overviewData.deliveries_completed}</p>
+              <div className="bg-card p-6 rounded-lg border border-border shadow-sm">
+                <h3 className="text-sm font-medium text-muted-foreground mb-2">Entregas Concluídas</h3>
+                <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">{overviewData.deliveries_completed}</p>
               </div>
-              <div className="bg-white p-6 rounded-lg border shadow-sm">
-                <h3 className="text-sm font-medium text-gray-500 mb-2">Entregas em Andamento</h3>
-                <p className="text-3xl font-bold text-purple-600">{overviewData.deliveries_in_progress}</p>
+              <div className="bg-card p-6 rounded-lg border border-border shadow-sm">
+                <h3 className="text-sm font-medium text-muted-foreground mb-2">Entregas em Andamento</h3>
+                <p className="text-3xl font-bold text-purple-600 dark:text-purple-400">{overviewData.deliveries_in_progress}</p>
               </div>
             </div>
 
             <div className="mt-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
-               <div className="lg:col-span-5 bg-white p-6 rounded-lg border shadow-sm min-h-[400px] flex items-center justify-center">
-                 <p className="text-gray-400">Audit Score Radar Placeholder</p>
+               <div className="lg:col-span-5 bg-card p-6 rounded-lg border border-border shadow-sm min-h-[400px] flex items-center justify-center">
+                 <p className="text-muted-foreground">Audit Score Radar Placeholder</p>
                </div>
                
-               <div className="lg:col-span-7 bg-white p-6 rounded-lg border shadow-sm min-h-[400px]">
-                 <h2 className="text-lg font-semibold mb-4">Progresso de Entregas</h2>
+               <div className="lg:col-span-7 bg-card p-6 rounded-lg border border-border shadow-sm min-h-[400px]">
+                 <h2 className="text-lg font-semibold mb-4 text-foreground">Progresso de Entregas</h2>
                  <div className="flex items-center justify-center py-12">
-                   <p className="text-gray-400">Delivery Progress Widget Placeholder</p>
+                   <p className="text-muted-foreground">Delivery Progress Widget Placeholder</p>
                  </div>
                </div>
             </div>

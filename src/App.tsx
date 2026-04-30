@@ -85,7 +85,7 @@ export default function App() {
       try {
         const { data, error } = await supabase
           .from('profiles')
-          .select('*')
+          .select('*, client:clients(*)')
           .eq('id', userId)
           .maybeSingle();
 

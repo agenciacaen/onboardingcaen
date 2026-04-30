@@ -4,6 +4,11 @@ export interface ModulesEnabled {
   traffic: boolean;
   social: boolean;
   web: boolean;
+  crm: boolean;
+  approvals: boolean;
+  financial: boolean;
+  documents: boolean;
+  support: boolean;
 }
 
 export interface Client {

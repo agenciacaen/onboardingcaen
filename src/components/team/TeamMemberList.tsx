@@ -57,8 +57,8 @@ export function TeamMemberList() {
                </AvatarFallback>
             </Avatar>
             <div>
-              <div className="font-medium text-slate-800">{row.original.full_name}</div>
-              <div className="text-xs text-slate-500">{row.original.email}</div>
+              <div className="font-medium text-foreground">{row.original.full_name}</div>
+              <div className="text-xs text-muted-foreground">{row.original.email}</div>
             </div>
           </div>
         );
@@ -79,9 +79,9 @@ export function TeamMemberList() {
   ];
 
   return (
-    <div className="bg-white rounded-lg border shadow-sm">
+    <div className="bg-card rounded-lg border border-border shadow-sm">
       {loading ? (
-        <div className="p-8 text-center text-slate-500">Carregando membros...</div>
+        <div className="p-8 text-center text-muted-foreground">Carregando membros...</div>
       ) : (
         <DataTable columns={columns} data={members} />
       )}

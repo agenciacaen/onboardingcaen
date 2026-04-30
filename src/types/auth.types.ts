@@ -1,3 +1,5 @@
+import { Client } from './client.types';
+
 export type Role = 'admin' | 'client' | 'member';
 
 export interface Permissions {
@@ -15,6 +17,7 @@ export interface Profile {
   email: string;
   role: Role;
   client_id?: string;
+  client?: Client;
   avatar_url?: string;
   phone?: string;
   is_active: boolean;

@@ -103,6 +103,11 @@ export function ClientListPage() {
         if (mods.traffic) parts.push("Tráfego");
         if (mods.social) parts.push("Social");
         if (mods.web) parts.push("Web");
+        if (mods.crm) parts.push("CRM");
+        if (mods.approvals) parts.push("Aprovações");
+        if (mods.financial) parts.push("Financeiro");
+        if (mods.documents) parts.push("Docs");
+        if (mods.support) parts.push("Suporte");
         return parts.join(", ");
       },
     },

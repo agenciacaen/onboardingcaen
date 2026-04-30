@@ -240,11 +240,11 @@ export function KanbanBoard({
             key={col.id}
             onDragOver={handleDragOver}
             onDrop={(e) => handleDrop(e, col.id)}
-            className="flex-shrink-0 w-80 bg-slate-100 rounded-lg p-4 flex flex-col max-h-[80vh]"
+            className="flex-shrink-0 w-80 bg-muted/50 border border-border/50 rounded-lg p-4 flex flex-col max-h-[80vh]"
           >
             <div className="flex justify-between items-center mb-4">
-              <h3 className="font-semibold text-slate-700">{col.title}</h3>
-              <span className="bg-slate-200 text-slate-600 text-xs py-1 px-2 rounded-full font-medium">
+              <h3 className="font-semibold text-foreground">{col.title}</h3>
+              <span className="bg-muted text-muted-foreground text-xs py-1 px-2 rounded-full font-medium">
                 {parentTasks.filter(t => t.status === col.id).length}
               </span>
             </div>
@@ -270,7 +270,7 @@ export function KanbanBoard({
                 );
               })}
               {parentTasks.filter(t => t.status === col.id).length === 0 && (
-                 <div className="text-center text-sm text-slate-400 py-10 border-2 border-dashed border-slate-200 rounded-lg">
+                 <div className="text-center text-sm text-muted-foreground py-10 border-2 border-dashed border-border rounded-lg">
                     Arraste tarefas para cá
                  </div>
               )}

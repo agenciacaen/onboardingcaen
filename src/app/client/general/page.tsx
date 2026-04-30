@@ -30,13 +30,13 @@ export function ClientGeneralPage() {
         </TabsContent>
 
         <TabsContent value="dashboard" className="mt-0 pt-2">
-          <div className="bg-white p-12 rounded-xl border border-dashed flex flex-col items-center justify-center text-center space-y-4">
-             <div className="p-4 bg-slate-50 rounded-full">
-               <LayoutDashboard className="w-8 h-8 text-slate-300" />
+          <div className="bg-card p-12 rounded-xl border border-dashed border-border flex flex-col items-center justify-center text-center space-y-4">
+             <div className="p-4 bg-muted rounded-full">
+               <LayoutDashboard className="w-8 h-8 text-muted-foreground/50" />
              </div>
              <div>
-               <h3 className="text-lg font-semibold text-slate-900">Dashboard Geral</h3>
-               <p className="text-sm text-slate-500 max-w-xs">Estatísticas e indicadores consolidados das atividades de apoio estão sendo configurados.</p>
+               <h3 className="text-lg font-semibold text-foreground">Dashboard Geral</h3>
+               <p className="text-sm text-muted-foreground max-w-xs">Estatísticas e indicadores consolidados das atividades de apoio estão sendo configurados.</p>
              </div>
           </div>
         </TabsContent>

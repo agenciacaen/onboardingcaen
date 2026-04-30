@@ -262,7 +262,7 @@ export default function AIAgentPage() {
 
         <TabsContent value="instances" className="space-y-6 pt-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="md:col-span-1 border rounded-xl p-6 bg-white shadow-sm h-fit">
+            <div className="md:col-span-1 border border-border rounded-xl p-6 bg-card shadow-sm h-fit">
               <h3 className="font-semibold mb-4">Nova Instância</h3>
               <div className="space-y-4">
                 <div className="space-y-2">
@@ -283,9 +283,9 @@ export default function AIAgentPage() {
                 </Button>
                 
                 {qrCode && (
-                  <div className="mt-6 p-4 border rounded-lg bg-zinc-50 flex flex-col items-center">
+                  <div className="mt-6 p-4 border border-border rounded-lg bg-muted/50 flex flex-col items-center">
                     <img src={qrCode} alt="WhatsApp QR Code" className="w-full aspect-square mb-4 shadow-sm" />
-                    <p className="text-xs text-center text-zinc-500 animate-pulse">Aguardando leitura do WhatsApp...</p>
+                    <p className="text-xs text-center text-muted-foreground animate-pulse">Aguardando leitura do WhatsApp...</p>
                     <Button variant="ghost" size="sm" className="mt-2" onClick={() => { setQrCode(null); setPollingId(null); }}>Cancelar</Button>
                   </div>
                 )}
@@ -296,24 +296,24 @@ export default function AIAgentPage() {
               <h3 className="font-semibold px-1 flex items-center gap-2">
                 Suas Instâncias Conectadas
                 <Button variant="ghost" size="icon" onClick={fetchData} className="h-6 w-6">
-                  <RefreshCw className="w-3 h-3 text-zinc-400" />
+                  <RefreshCw className="w-3 h-3 text-muted-foreground" />
                 </Button>
               </h3>
               
               <div className="grid gap-4">
                 {(instances || []).length === 0 ? (
-                  <div className="text-center py-12 border border-dashed rounded-xl bg-muted/10">
-                    <MessageCircle className="w-12 h-12 text-zinc-200 mx-auto mb-2" />
-                    <p className="text-zinc-500 text-sm">Nenhuma instância cadastrada ainda.</p>
+                  <div className="text-center py-12 border border-dashed border-border rounded-xl bg-muted/30">
+                    <MessageCircle className="w-12 h-12 text-muted-foreground/30 mx-auto mb-2" />
+                    <p className="text-muted-foreground text-sm">Nenhuma instância cadastrada ainda.</p>
                   </div>
                 ) : (
                   (instances || []).map((inst) => (
-                    <div key={inst.id} className="flex items-center justify-between p-4 bg-white border rounded-xl shadow-sm">
+                    <div key={inst.id} className="flex items-center justify-between p-4 bg-card border border-border rounded-xl shadow-sm">
                       <div className="flex items-center gap-4">
-                        <div className={`w-3 h-3 rounded-full ${inst.status === 'open' ? 'bg-green-500' : 'bg-zinc-300'} animate-pulse`} />
+                        <div className={`w-3 h-3 rounded-full ${inst.status === 'open' ? 'bg-green-500' : 'bg-muted'} animate-pulse`} />
                         <div>
-                          <p className="font-medium text-sm">{inst.name}</p>
-                          <p className="text-[10px] text-zinc-400 uppercase tracking-widest">{inst.instance_name}</p>
+                          <p className="font-medium text-sm text-foreground">{inst.name}</p>
+                          <p className="text-[10px] text-muted-foreground uppercase tracking-widest">{inst.instance_name}</p>
                         </div>
                       </div>
 
@@ -338,7 +338,7 @@ export default function AIAgentPage() {
                           variant="ghost" 
                           size="icon" 
                           onClick={() => handleLogout(inst.id)}
-                          className="text-zinc-400 hover:text-red-500 ml-2"
+                          className="text-muted-foreground hover:text-red-500 ml-2"
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
@@ -352,7 +352,7 @@ export default function AIAgentPage() {
         </TabsContent>
 
         <TabsContent value="clients" className="pt-4">
-          <div className="border rounded-xl bg-white shadow-sm overflow-hidden">
+          <div className="border border-border rounded-xl bg-card shadow-sm overflow-hidden">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -405,7 +405,7 @@ export default function AIAgentPage() {
                       </div>
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button variant="ghost" size="sm" onClick={handleManualTrigger} className="h-8 flex items-center gap-2 text-zinc-500 hover:text-blue-500">
+                      <Button variant="ghost" size="sm" onClick={handleManualTrigger} className="h-8 flex items-center gap-2 text-muted-foreground hover:text-primary">
                         <Rocket className="w-3 h-3" />
                         Testar
                       </Button>
@@ -428,7 +428,7 @@ export default function AIAgentPage() {
 
           <div className="px-6 pb-4">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input 
                 placeholder="Pesquisar por nome do grupo..." 
                 className="pl-9"
@@ -440,34 +440,34 @@ export default function AIAgentPage() {
 
           <div className="flex-1 overflow-y-auto px-6 pb-6 text-sm">
             {loadingGroups ? (
-              <div className="flex flex-col items-center justify-center h-full gap-2 text-zinc-500">
-                <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+              <div className="flex flex-col items-center justify-center h-full gap-2 text-muted-foreground">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
                 <p className="text-xs">Buscando grupos na Evolution API...</p>
               </div>
             ) : filteredGroups.length === 0 ? (
-              <div className="text-center py-12 text-zinc-400">
+              <div className="text-center py-12 text-muted-foreground">
                 <p className="text-sm">Nenhum grupo encontrado.</p>
               </div>
             ) : (
-              <div className="grid gap-2 text-zinc-700">
+              <div className="grid gap-2 text-foreground">
                 {filteredGroups.map((group) => (
                   <div
                     key={group.id}
-                    className="flex flex-col p-3 border rounded-lg bg-zinc-50 hover:bg-zinc-100 transition-all gap-1"
+                    className="flex flex-col p-3 border border-border rounded-lg bg-muted/50 hover:bg-muted transition-all gap-1"
                   >
                     <div className="flex justify-between items-start">
-                      <span className="font-semibold text-zinc-900 line-clamp-1">{group.subject || "Sem Nome"}</span>
+                      <span className="font-semibold text-foreground line-clamp-1">{group.subject || "Sem Nome"}</span>
                       <Button 
                         variant="ghost" 
                         size="sm" 
-                        className="h-7 px-2 text-blue-600 hover:text-blue-700"
+                        className="h-7 px-2 text-primary hover:text-primary/80"
                         onClick={() => copyToClipboard(group.id)}
                       >
                         {copiedJid === group.id ? <Check className="w-3 h-3 mr-1" /> : <Copy className="w-3 h-3 mr-1" />}
                         Copiar JID
                       </Button>
                     </div>
-                    <span className="text-[10px] text-zinc-400 font-mono break-all">{group.id}</span>
+                    <span className="text-[10px] text-muted-foreground font-mono break-all">{group.id}</span>
                   </div>
                 ))}
               </div>

@@ -201,7 +201,7 @@ export function MetaAccountManager({ clientId }: MetaAccountManagerProps) {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="border-blue-500 text-blue-600 hover:bg-blue-50 gap-2">
+        <Button variant="outline" className="border-primary/50 text-primary hover:bg-primary/10 gap-2">
           <Link2 className="h-4 w-4" />
           Gerenciar Contas Meta
         </Button>
@@ -237,7 +237,7 @@ export function MetaAccountManager({ clientId }: MetaAccountManagerProps) {
                 </SelectContent>
               </Select>
               {!selectedClientId && (
-                <p className="text-xs text-amber-600 bg-amber-50 px-3 py-2 rounded-md border border-amber-100">
+                <p className="text-xs text-amber-600 dark:text-amber-400 bg-amber-500/10 px-3 py-2 rounded-md border border-amber-500/20">
                   ⚠️ Selecione um cliente acima para gerenciar as contas de anúncio.
                 </p>
               )}
@@ -279,7 +279,7 @@ export function MetaAccountManager({ clientId }: MetaAccountManagerProps) {
                       size="sm" 
                       onClick={handleSyncNow} 
                       disabled={isSyncing}
-                      className="h-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50 text-xs gap-1"
+                      className="h-8 text-primary hover:text-primary hover:bg-primary/10 text-xs gap-1"
                     >
                       <RefreshCw className={`h-3 w-3 ${isSyncing ? 'animate-spin' : ''}`} />
                       {isSyncing ? 'Sincronizando...' : 'Sincronizar Agora'}
@@ -289,26 +289,26 @@ export function MetaAccountManager({ clientId }: MetaAccountManagerProps) {
                 {isLoading ? (
                   <div className="flex justify-center p-4"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
                 ) : accounts.length === 0 ? (
-                  <div className="text-sm text-center py-6 text-muted-foreground bg-slate-50 rounded-md border border-dashed">
+                  <div className="text-sm text-center py-6 text-muted-foreground bg-muted/30 rounded-md border border-dashed border-border">
                     Nenhuma conta conectada para este cliente.
                   </div>
                 ) : (
                   <ul className="space-y-2">
                     {accounts.map((account) => (
-                      <li key={account.id} className="flex items-center justify-between p-3 rounded-md border text-sm bg-white">
+                      <li key={account.id} className="flex items-center justify-between p-3 rounded-md border border-border text-sm bg-card">
                         <div className="flex items-center gap-2">
-                          <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0" />
+                          <CheckCircle2 className="h-4 w-4 text-emerald-500 flex-shrink-0" />
                           <div>
-                            <p className="font-medium text-slate-900">{account.ad_account_name || account.ad_account_id}</p>
+                            <p className="font-medium text-foreground">{account.ad_account_name || account.ad_account_id}</p>
                             <p className="text-xs text-muted-foreground">ID: {account.ad_account_id}</p>
                             {account.last_sync_at && (
-                              <p className="text-xs text-blue-500">
+                              <p className="text-xs text-primary/80">
                                 Último sync: {new Date(account.last_sync_at).toLocaleString('pt-BR')}
                               </p>
                             )}
                           </div>
                         </div>
-                        <Button variant="ghost" size="icon" onClick={() => handleRemove(account.id)} className="text-red-500 hover:text-red-600 hover:bg-red-50">
+                        <Button variant="ghost" size="icon" onClick={() => handleRemove(account.id)} className="text-red-500 hover:text-red-600 hover:bg-red-500/10">
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </li>

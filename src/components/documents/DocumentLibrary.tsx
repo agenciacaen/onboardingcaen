@@ -90,14 +90,14 @@ export function DocumentLibrary({ clientIdFilter }: { clientIdFilter?: string })
 
         return (
           <div className="flex items-center space-x-3 max-w-[300px]">
-            <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${isLink ? 'bg-indigo-100' : 'bg-orange-100'}`}>
+            <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${isLink ? 'bg-indigo-500/10' : 'bg-orange-500/10'}`}>
                {isLink ? (
-                 <LinkIcon className="w-4 h-4 text-indigo-600" />
+                 <LinkIcon className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
                ) : (
-                 isDraft ? <FileSignature className="w-4 h-4 text-orange-600" /> : <FileText className="w-4 h-4 text-orange-600" />
+                 isDraft ? <FileSignature className="w-4 h-4 text-orange-600 dark:text-orange-400" /> : <FileText className="w-4 h-4 text-orange-600 dark:text-orange-400" />
                )}
             </div>
-            <div className="truncate font-medium text-slate-800" title={doc.title}>
+            <div className="truncate font-medium text-foreground" title={doc.title}>
               {doc.title}
             </div>
           </div>
@@ -107,7 +107,7 @@ export function DocumentLibrary({ clientIdFilter }: { clientIdFilter?: string })
     isAdmin ? {
       accessorKey: "clients.name",
       header: "Cliente",
-      cell: ({ row }: CellContext<DocumentItem, unknown>) => <span className="text-slate-500">{row.original.clients?.name || 'Geral'}</span>
+      cell: ({ row }: CellContext<DocumentItem, unknown>) => <span className="text-muted-foreground">{row.original.clients?.name || 'Geral'}</span>
     } : {
       id: "client_name_hidden",
       header: "",
@@ -118,7 +118,7 @@ export function DocumentLibrary({ clientIdFilter }: { clientIdFilter?: string })
       accessorKey: "category",
       header: "Categoria",
       cell: ({ row }: CellContext<DocumentItem, unknown>) => (
-        <span className="text-xs font-semibold px-2 py-1 bg-slate-100 text-slate-600 rounded-full">
+        <span className="text-xs font-semibold px-2 py-1 bg-muted text-muted-foreground rounded-full border border-border/50">
           {CATEGORY_LABELS[row.original.category] || row.original.category}
         </span>
       )
@@ -145,7 +145,7 @@ export function DocumentLibrary({ clientIdFilter }: { clientIdFilter?: string })
                   download={row.original.title} 
                   target="_blank" 
                   rel="noopener noreferrer" 
-                  className="text-indigo-600 hover:text-indigo-700"
+                  className="text-primary hover:text-primary/80"
                 >
                    <Download className="w-4 h-4" />
                 </a>
@@ -154,7 +154,7 @@ export function DocumentLibrary({ clientIdFilter }: { clientIdFilter?: string })
                <Button 
                 variant="outline" 
                 size="sm" 
-                className="text-red-500 border-red-200 hover:bg-red-50 hover:text-red-600" 
+                className="text-red-500 border-red-500/20 hover:bg-red-500/10 hover:text-red-600" 
                 onClick={() => handleDelete(row.original.id)} 
                 title="Excluir documento"
               >
@@ -168,9 +168,9 @@ export function DocumentLibrary({ clientIdFilter }: { clientIdFilter?: string })
   ];
 
   return (
-    <div className="bg-white rounded-lg border shadow-sm">
+    <div className="bg-card rounded-lg border border-border shadow-sm">
       {loading ? (
-        <div className="p-8 text-center text-slate-500">Buscando repositório...</div>
+        <div className="p-8 text-center text-muted-foreground">Buscando repositório...</div>
       ) : (
         <DataTable columns={columns} data={documents} />
       )}

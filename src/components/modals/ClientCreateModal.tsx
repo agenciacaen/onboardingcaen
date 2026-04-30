@@ -27,6 +27,11 @@ const createClientSchema = z.object({
   traffic: z.boolean().optional(),
   social: z.boolean().optional(),
   web: z.boolean().optional(),
+  crm: z.boolean().optional(),
+  approvals: z.boolean().optional(),
+  financial: z.boolean().optional(),
+  documents: z.boolean().optional(),
+  support: z.boolean().optional(),
 });
 
 type CreateClientFormValues = z.infer<typeof createClientSchema>;
@@ -61,6 +66,11 @@ export function ClientCreateModal({
       traffic: false,
       social: false,
       web: false,
+      crm: false,
+      approvals: false,
+      financial: false,
+      documents: false,
+      support: false,
     },
   });
 
@@ -82,6 +92,11 @@ export function ClientCreateModal({
   const traffic = watch("traffic");
   const social = watch("social");
   const web = watch("web");
+  const crm = watch("crm");
+  const approvals = watch("approvals");
+  const financial = watch("financial");
+  const documents = watch("documents");
+  const support = watch("support");
   const assigned_to = watch("assigned_to");
 
   const onSubmit = async (data: CreateClientFormValues) => {
@@ -102,6 +117,11 @@ export function ClientCreateModal({
             traffic: data.traffic,
             social: data.social,
             web: data.web,
+            crm: data.crm,
+            approvals: data.approvals,
+            financial: data.financial,
+            documents: data.documents,
+            support: data.support,
           },
           onboarding_step: 0,
           onboarding_completed: false,
@@ -170,20 +190,40 @@ export function ClientCreateModal({
             </Select>
           </div>
 
-          <div className="space-y-2 mt-4">
+          <div className="space-y-3 mt-4">
             <Label>Módulos Ativos</Label>
-            <div className="flex gap-4">
+            <div className="grid grid-cols-2 gap-3">
               <div className="flex items-center space-x-2">
                 <Checkbox id="traffic" checked={traffic} onCheckedChange={(val) => setValue("traffic", val as boolean)} />
-                <label htmlFor="traffic" className="text-sm font-medium leading-none">Tráfego</label>
+                <label htmlFor="traffic" className="text-sm font-medium leading-none">Tráfego Pago</label>
               </div>
               <div className="flex items-center space-x-2">
                 <Checkbox id="social" checked={social} onCheckedChange={(val) => setValue("social", val as boolean)} />
-                <label htmlFor="social" className="text-sm font-medium leading-none">Social</label>
+                <label htmlFor="social" className="text-sm font-medium leading-none">Social Media</label>
               </div>
               <div className="flex items-center space-x-2">
                 <Checkbox id="web" checked={web} onCheckedChange={(val) => setValue("web", val as boolean)} />
                 <label htmlFor="web" className="text-sm font-medium leading-none">Web</label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox id="crm" checked={crm} onCheckedChange={(val) => setValue("crm", val as boolean)} />
+                <label htmlFor="crm" className="text-sm font-medium leading-none">CRM & Tech</label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox id="approvals" checked={approvals} onCheckedChange={(val) => setValue("approvals", val as boolean)} />
+                <label htmlFor="approvals" className="text-sm font-medium leading-none">Aprovações</label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox id="financial" checked={financial} onCheckedChange={(val) => setValue("financial", val as boolean)} />
+                <label htmlFor="financial" className="text-sm font-medium leading-none">Financeiro</label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox id="documents" checked={documents} onCheckedChange={(val) => setValue("documents", val as boolean)} />
+                <label htmlFor="documents" className="text-sm font-medium leading-none">Documentos</label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox id="support" checked={support} onCheckedChange={(val) => setValue("support", val as boolean)} />
+                <label htmlFor="support" className="text-sm font-medium leading-none">Suporte</label>
               </div>
             </div>
           </div>

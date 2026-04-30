@@ -1,17 +1,36 @@
+import { useEffect } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import { Sidebar } from "../components/sidebar/Sidebar";
 import { TopBar } from "../components/ui/TopBar";
 import { useAuthStore } from "../store/authStore";
 import { Button } from "../components/ui/button";
 import { XCircle } from "lucide-react";
+import { supabase } from "../services/supabase";
 
 export function ClientLayout() {
-  const { impersonatedClientId, setImpersonatedClientId } = useAuthStore();
+  const { impersonatedClientId, setImpersonatedClientId, setActiveClient, profile } = useAuthStore();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchImpersonatedClient = async () => {
+      if (impersonatedClientId) {
+        const { data } = await supabase
+          .from('clients')
+          .select('*')
+          .eq('id', impersonatedClientId)
+          .single();
+        if (data) setActiveClient(data);
+      } else if (profile?.client) {
+        setActiveClient(profile.client);
+      }
+    };
+    fetchImpersonatedClient();
+  }, [impersonatedClientId, profile, setActiveClient]);
 
   const handleStopImpersonating = () => {
     const id = impersonatedClientId;
     setImpersonatedClientId(null);
+    setActiveClient(profile?.client || null);
     navigate(`/agency/clients/${id}`);
   };
   

@@ -113,9 +113,9 @@ export function AgencyApprovalsTab({ clientId }: { clientId: string }) {
   };
 
   const statusMap = {
-    pending: { label: "Pendente", icon: Clock, color: "text-amber-500 bg-amber-50" },
-    approved: { label: "Aprovado", icon: CheckCircle, color: "text-emerald-600 bg-emerald-50" },
-    rejected: { label: "Reprovado", icon: XCircle, color: "text-red-500 bg-red-50" },
+    pending: { label: "Pendente", icon: Clock, color: "text-amber-500 bg-amber-50 dark:bg-amber-500/10 dark:text-amber-400" },
+    approved: { label: "Aprovado", icon: CheckCircle, color: "text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10 dark:text-emerald-400" },
+    rejected: { label: "Reprovado", icon: XCircle, color: "text-red-500 bg-red-50 dark:bg-red-500/10 dark:text-red-400" },
   };
 
   if (loading) {
@@ -135,14 +135,14 @@ export function AgencyApprovalsTab({ clientId }: { clientId: string }) {
             <button
               title="Visualização em Grade"
               onClick={() => setViewMode('grid')}
-              className={`p-1.5 rounded-sm transition-colors ${viewMode === 'grid' ? 'bg-white shadow' : 'text-muted-foreground hover:text-foreground'}`}
+              className={`p-1.5 rounded-sm transition-colors ${viewMode === 'grid' ? 'bg-background shadow text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
             >
               <Grid className="w-4 h-4" />
             </button>
             <button
               title="Visualização em Lista"
               onClick={() => setViewMode('list')}
-              className={`p-1.5 rounded-sm transition-colors ${viewMode === 'list' ? 'bg-white shadow' : 'text-muted-foreground hover:text-foreground'}`}
+              className={`p-1.5 rounded-sm transition-colors ${viewMode === 'list' ? 'bg-background shadow text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
             >
               <List className="w-4 h-4" />
             </button>
@@ -185,18 +185,18 @@ export function AgencyApprovalsTab({ clientId }: { clientId: string }) {
       </div>
 
       {creatives.length === 0 ? (
-        <div className="text-center py-12 border-2 border-dashed rounded-xl bg-slate-50">
-          <ImageIcon className="w-12 h-12 mx-auto text-slate-300 mb-3" />
-          <h4 className="text-lg font-medium text-slate-600">Nenhum criativo enviado</h4>
-          <p className="text-sm text-slate-500 max-w-sm mx-auto mt-1">Faça o upload do primeiro material para o cliente aprovar.</p>
+        <div className="text-center py-12 border-2 border-dashed rounded-xl bg-muted/30 border-border">
+          <ImageIcon className="w-12 h-12 mx-auto text-muted-foreground/30 mb-3" />
+          <h4 className="text-lg font-medium text-foreground">Nenhum criativo enviado</h4>
+          <p className="text-sm text-muted-foreground max-w-sm mx-auto mt-1">Faça o upload do primeiro material para o cliente aprovar.</p>
         </div>
       ) : viewMode === 'grid' ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {creatives.map(creative => {
             const StatusIcon = statusMap[creative.status].icon;
             return (
-              <div key={creative.id} className="border rounded-xl overflow-hidden bg-white shadow-sm hover:shadow transition-shadow flex flex-col">
-                <div className="aspect-square bg-slate-100 flex items-center justify-center relative overflow-hidden group">
+              <div key={creative.id} className="border border-border rounded-xl overflow-hidden bg-card shadow-sm hover:shadow transition-shadow flex flex-col">
+                <div className="aspect-square bg-muted flex items-center justify-center relative overflow-hidden group">
                   {creative.file_type === 'image' ? (
                     <img src={creative.file_url} alt={creative.title} className="w-full h-full object-cover" />
                   ) : (
@@ -208,15 +208,15 @@ export function AgencyApprovalsTab({ clientId }: { clientId: string }) {
                   </div>
                 </div>
                 <div className="p-4 flex flex-col flex-1">
-                  <h4 className="font-semibold text-slate-800 line-clamp-1">{creative.title}</h4>
-                  <p className="text-xs text-slate-500 mt-1 line-clamp-2">{creative.description || "Sem descrição"}</p>
+                  <h4 className="font-semibold text-foreground line-clamp-1">{creative.title}</h4>
+                  <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{creative.description || "Sem descrição"}</p>
                   
                   {creative.feedback && (
-                    <div className="mt-3 p-2 bg-slate-50 rounded border border-slate-100 flex gap-2">
-                      <MessageSquare className="w-4 h-4 mt-0.5 text-slate-400 shrink-0" />
+                    <div className="mt-3 p-2 bg-muted/50 rounded border border-border flex gap-2">
+                      <MessageSquare className="w-4 h-4 mt-0.5 text-muted-foreground shrink-0" />
                       <div>
-                        <span className="text-xs font-semibold text-slate-600 block">Feedback do Cliente:</span>
-                        <p className="text-xs text-slate-700 italic">{creative.feedback}</p>
+                        <span className="text-xs font-semibold text-foreground block">Feedback do Cliente:</span>
+                        <p className="text-xs text-muted-foreground italic">{creative.feedback}</p>
                       </div>
                     </div>
                   )}
@@ -226,9 +226,9 @@ export function AgencyApprovalsTab({ clientId }: { clientId: string }) {
           })}
         </div>
       ) : (
-        <div className="bg-white rounded-xl border overflow-hidden">
+        <div className="bg-card rounded-xl border border-border overflow-hidden">
           <table className="w-full text-sm text-left">
-            <thead className="bg-slate-50 border-b text-slate-500 font-medium">
+            <thead className="bg-muted border-b border-border text-muted-foreground font-medium">
               <tr>
                 <th className="px-4 py-3">Arquivo</th>
                 <th className="px-4 py-3">Título / Descrição</th>
@@ -237,23 +237,23 @@ export function AgencyApprovalsTab({ clientId }: { clientId: string }) {
                 <th className="px-4 py-3">Data</th>
               </tr>
             </thead>
-            <tbody className="divide-y">
+            <tbody className="divide-y divide-border">
               {creatives.map(creative => {
                 const StatusIcon = statusMap[creative.status].icon;
                 return (
-                  <tr key={creative.id} className="hover:bg-slate-50/50">
+                  <tr key={creative.id} className="hover:bg-muted/50">
                     <td className="px-4 py-3 w-16">
-                      <div className="w-12 h-12 bg-slate-100 rounded overflow-hidden flex items-center justify-center">
+                      <div className="w-12 h-12 bg-muted rounded overflow-hidden flex items-center justify-center">
                         {creative.file_type === 'image' ? (
                           <img src={creative.file_url} alt={creative.title} className="w-full h-full object-cover" />
                         ) : (
-                          <FileVideo className="w-5 h-5 text-slate-400" />
+                          <FileVideo className="w-5 h-5 text-muted-foreground" />
                         )}
                       </div>
                     </td>
                     <td className="px-4 py-3">
-                      <p className="font-medium text-slate-800">{creative.title}</p>
-                      <p className="text-xs text-slate-500 line-clamp-1 truncate max-w-[200px]">{creative.description}</p>
+                      <p className="font-medium text-foreground">{creative.title}</p>
+                      <p className="text-xs text-muted-foreground line-clamp-1 truncate max-w-[200px]">{creative.description}</p>
                     </td>
                     <td className="px-4 py-3">
                       <div className={`inline-flex px-2 py-1 rounded-full text-xs font-semibold items-center gap-1 ${statusMap[creative.status].color}`}>
@@ -262,9 +262,9 @@ export function AgencyApprovalsTab({ clientId }: { clientId: string }) {
                       </div>
                     </td>
                     <td className="px-4 py-3 max-w-xs">
-                       <p className="text-xs text-slate-600 italic line-clamp-2">{creative.feedback || "-"}</p>
+                       <p className="text-xs text-muted-foreground italic line-clamp-2">{creative.feedback || "-"}</p>
                     </td>
-                    <td className="px-4 py-3 text-slate-500 text-xs">
+                    <td className="px-4 py-3 text-muted-foreground text-xs">
                       {new Date(creative.created_at).toLocaleDateString()}
                     </td>
                   </tr>

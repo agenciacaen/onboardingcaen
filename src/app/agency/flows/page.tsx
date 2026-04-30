@@ -70,10 +70,10 @@ function FireFlowModal({
           <DialogTitle>Disparar Fluxo para Cliente</DialogTitle>
         </DialogHeader>
         <div className="py-2">
-          <p className="text-sm text-slate-500 mb-3">
+          <p className="text-sm text-muted-foreground mb-3">
             Selecione o cliente que receberá as tarefas geradas pelo fluxo <strong>"{flow?.name}"</strong>.
           </p>
-          <p className="text-xs text-amber-600 bg-amber-50 rounded-lg px-3 py-2 mb-4 border border-amber-100">
+          <p className="text-xs text-amber-600 dark:text-amber-400 bg-amber-500/10 rounded-lg px-3 py-2 mb-4 border border-amber-500/20">
             ⚠️ As tarefas existentes nos mesmos stages serão substituídas.
           </p>
           <Select value={selectedClient} onValueChange={setSelectedClient}>
@@ -117,25 +117,25 @@ function FlowCard({
 
   return (
     <div className={cn(
-      'bg-white rounded-xl border p-5 hover:shadow-md transition-all group',
-      isActive ? 'border-green-200' : 'border-slate-200'
+      'bg-card rounded-xl border p-5 hover:shadow-md transition-all group',
+      isActive ? 'border-green-500/30' : 'border-border'
     )}>
       <div className="flex items-start justify-between gap-3 mb-3">
         <div className="flex items-center gap-3">
           <div className={cn(
             'w-10 h-10 rounded-xl flex items-center justify-center shrink-0',
-            isActive ? 'bg-green-100' : 'bg-slate-100'
+            isActive ? 'bg-green-500/10' : 'bg-muted'
           )}>
-            <Zap className={cn('w-5 h-5', isActive ? 'text-green-600' : 'text-slate-400')} />
+            <Zap className={cn('w-5 h-5', isActive ? 'text-green-500' : 'text-muted-foreground')} />
           </div>
           <div>
-            <h3 className="font-bold text-slate-800 text-sm">{flow.name}</h3>
-            <p className="text-xs text-slate-500 mt-0.5 line-clamp-1">{flow.description || 'Sem descrição'}</p>
+            <h3 className="font-bold text-foreground text-sm">{flow.name}</h3>
+            <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{flow.description || 'Sem descrição'}</p>
           </div>
         </div>
         <span className={cn(
           'text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-full shrink-0',
-          isActive ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'
+          isActive ? 'bg-green-500/10 text-green-600 dark:text-green-400' : 'bg-muted text-muted-foreground'
         )}>
           {isActive ? 'Ativo' : 'Rascunho'}
         </span>
@@ -143,16 +143,16 @@ function FlowCard({
 
       {/* Stats */}
       <div className="flex items-center gap-4 mb-4">
-        <div className="flex items-center gap-1.5 text-xs text-slate-500">
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <Settings2 className="w-3.5 h-3.5" />
           <span>{actionCount} ação{actionCount !== 1 ? 'ões' : ''}</span>
         </div>
-        <div className="flex items-center gap-1.5 text-xs text-slate-500">
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <CheckCircle2 className="w-3.5 h-3.5" />
           <span>{subCount} subtarefa{subCount !== 1 ? 's' : ''}</span>
         </div>
         {flow.updated_at && (
-          <div className="flex items-center gap-1.5 text-xs text-slate-400 ml-auto">
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground/60 ml-auto">
             <Clock className="w-3 h-3" />
             <span>{format(new Date(flow.updated_at), "dd/MM/yy", { locale: ptBR })}</span>
           </div>
@@ -160,14 +160,14 @@ function FlowCard({
       </div>
 
       {/* Actions */}
-      <div className="flex items-center gap-2 pt-3 border-t border-slate-100">
+      <div className="flex items-center gap-2 pt-3 border-t border-border">
         <Button variant="outline" size="sm" className="flex-1" onClick={onConfigure}>
           <Settings2 className="w-3.5 h-3.5 mr-1.5" />
           Configurar
         </Button>
         <Button
           size="sm"
-          className={cn('flex-1', isActive ? 'bg-green-600 hover:bg-green-700' : '')}
+          className={cn('flex-1', isActive ? 'bg-green-600 hover:bg-green-700 text-white' : '')}
           onClick={onFire}
           disabled={!isActive}
           title={!isActive ? 'Ative o fluxo para disparar' : 'Disparar para um cliente'}
@@ -179,7 +179,7 @@ function FlowCard({
           variant="ghost"
           size="sm"
           onClick={onToggleStatus}
-          className="text-xs text-slate-500"
+          className="text-xs text-muted-foreground hover:text-foreground"
         >
           {isActive ? 'Pausar' : 'Ativar'}
         </Button>
@@ -242,21 +242,21 @@ export function AgencyFlowsPage() {
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4">
         {[
-          { label: 'Total de Fluxos', value: flows.length, color: 'text-slate-800' },
-          { label: 'Ativos', value: activeFlows.length, color: 'text-green-600' },
-          { label: 'Rascunhos', value: draftFlows.length, color: 'text-amber-600' },
+          { label: 'Total de Fluxos', value: flows.length, color: 'text-foreground' },
+          { label: 'Ativos', value: activeFlows.length, color: 'text-green-500' },
+          { label: 'Rascunhos', value: draftFlows.length, color: 'text-amber-500' },
         ].map(stat => (
-          <div key={stat.label} className="bg-white rounded-xl border border-slate-200 p-4 text-center">
+          <div key={stat.label} className="bg-card rounded-xl border border-border p-4 text-center">
             <p className={cn('text-2xl font-bold', stat.color)}>{stat.value}</p>
-            <p className="text-xs text-slate-500 mt-0.5">{stat.label}</p>
+            <p className="text-xs text-muted-foreground mt-0.5">{stat.label}</p>
           </div>
         ))}
       </div>
 
       {/* Info banner */}
-      <div className="bg-blue-50 border border-blue-100 rounded-xl px-5 py-4">
-        <h4 className="text-sm font-bold text-blue-700 mb-1">💡 Como usar os Fluxos</h4>
-        <p className="text-xs text-blue-600">
+      <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl px-5 py-4">
+        <h4 className="text-sm font-bold text-blue-600 dark:text-blue-400 mb-1">💡 Como usar os Fluxos</h4>
+        <p className="text-xs text-blue-600 dark:text-blue-400/80">
           1. Crie um fluxo e configure os <strong>Steps</strong> com as tarefas que devem ser geradas.
           2. Ative o fluxo e clique em <strong>Disparar</strong> para aplicá-lo a um cliente.
           3. As tarefas aparecem automaticamente no <strong>Kanban da equipe</strong> e no <strong>Roadmap do cliente</strong>.
@@ -265,12 +265,12 @@ export function AgencyFlowsPage() {
 
       {/* Flow list */}
       {loading ? (
-        <div className="flex items-center justify-center py-16 text-slate-400">
+        <div className="flex items-center justify-center py-16 text-muted-foreground">
           <Loader2 className="w-6 h-6 animate-spin mr-2" />
           <span>Carregando fluxos...</span>
         </div>
       ) : flows.length === 0 ? (
-        <div className="text-center py-16 text-slate-400 border-2 border-dashed border-slate-200 rounded-xl">
+        <div className="text-center py-16 text-muted-foreground border-2 border-dashed border-border rounded-xl">
           <Zap className="w-10 h-10 mx-auto mb-3 opacity-30" />
           <p className="font-semibold">Nenhum fluxo criado.</p>
           <p className="text-sm mt-1">Clique em "Novo Fluxo" para começar.</p>
@@ -279,7 +279,7 @@ export function AgencyFlowsPage() {
         <div className="space-y-6">
           {activeFlows.length > 0 && (
             <div>
-              <h2 className="text-xs font-bold uppercase text-slate-400 tracking-wider mb-3">Ativos</h2>
+              <h2 className="text-xs font-bold uppercase text-muted-foreground tracking-wider mb-3">Ativos</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                 {activeFlows.map(flow => (
                   <FlowCard
@@ -295,7 +295,7 @@ export function AgencyFlowsPage() {
           )}
           {draftFlows.length > 0 && (
             <div>
-              <h2 className="text-xs font-bold uppercase text-slate-400 tracking-wider mb-3">Rascunhos</h2>
+              <h2 className="text-xs font-bold uppercase text-muted-foreground tracking-wider mb-3">Rascunhos</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                 {draftFlows.map(flow => (
                   <FlowCard

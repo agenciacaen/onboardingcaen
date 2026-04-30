@@ -101,7 +101,7 @@ export function LoginPage() {
       if (authData.user) {
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
-          .select('*')
+          .select('*, client:clients(*)')
           .eq('id', authData.user.id)
           .maybeSingle();
           

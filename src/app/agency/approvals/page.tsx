@@ -280,9 +280,9 @@ export function AgencyApprovalsPage() {
 
 
   const statusMap = {
-    pending: { label: "Pendente", icon: Clock, color: "text-amber-500 bg-amber-50" },
-    approved: { label: "Aprovado", icon: CheckCircle, color: "text-emerald-600 bg-emerald-50" },
-    rejected: { label: "Reprovado", icon: XCircle, color: "text-red-500 bg-red-50" },
+    pending: { label: "Pendente", icon: Clock, color: "text-amber-600 dark:text-amber-400 bg-amber-500/10" },
+    approved: { label: "Aprovado", icon: CheckCircle, color: "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10" },
+    rejected: { label: "Reprovado", icon: XCircle, color: "text-red-600 dark:text-red-400 bg-red-500/10" },
   };
 
   return (
@@ -298,14 +298,14 @@ export function AgencyApprovalsPage() {
             <button
               title="Visualização em Grade"
               onClick={() => setViewMode('grid')}
-              className={`p-1.5 rounded-sm transition-colors ${viewMode === 'grid' ? 'bg-white shadow' : 'text-muted-foreground hover:text-foreground'}`}
+              className={`p-1.5 rounded-sm transition-colors ${viewMode === 'grid' ? 'bg-card shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
             >
               <Grid className="w-4 h-4" />
             </button>
             <button
               title="Visualização em Lista"
               onClick={() => setViewMode('list')}
-              className={`p-1.5 rounded-sm transition-colors ${viewMode === 'list' ? 'bg-white shadow' : 'text-muted-foreground hover:text-foreground'}`}
+              className={`p-1.5 rounded-sm transition-colors ${viewMode === 'list' ? 'bg-card shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
             >
               <List className="w-4 h-4" />
             </button>
@@ -370,22 +370,22 @@ export function AgencyApprovalsPage() {
       {loading ? (
         <div className="flex justify-center p-12"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>
       ) : creatives.length === 0 ? (
-        <div className="text-center py-12 border-2 border-dashed rounded-xl bg-slate-50">
-          <ImageIcon className="w-12 h-12 mx-auto text-slate-300 mb-3" />
-          <h4 className="text-lg font-medium text-slate-600">Nenhum criativo enviado</h4>
-          <p className="text-sm text-slate-500 max-w-sm mx-auto mt-1">Faça o upload do primeiro material para envio aos clientes.</p>
+        <div className="text-center py-12 border-2 border-dashed rounded-xl bg-muted/30">
+          <ImageIcon className="w-12 h-12 mx-auto text-muted-foreground/30 mb-3" />
+          <h4 className="text-lg font-medium text-foreground">Nenhum criativo enviado</h4>
+          <p className="text-sm text-muted-foreground max-w-sm mx-auto mt-1">Faça o upload do primeiro material para envio aos clientes.</p>
         </div>
       ) : viewMode === 'grid' ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {creatives.map(creative => {
             const StatusIcon = statusMap[creative.status].icon;
             return (
-              <div key={creative.id} className="border rounded-xl overflow-hidden bg-white shadow-sm hover:shadow transition-shadow flex flex-col relative group">
+              <div key={creative.id} className="border rounded-xl overflow-hidden bg-card shadow-sm hover:shadow transition-shadow flex flex-col relative group">
                 {/* Lixeira pra delete rapido */}
                 <button 
                   title="Excluir"
                   onClick={() => handleDelete(creative.id, creative.file_path)}
-                  className="absolute top-2 left-2 z-10 w-7 h-7 bg-white/90 shadow-md text-red-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-50 hover:text-red-700"
+                  className="absolute top-2 left-2 z-10 w-7 h-7 bg-background/90 shadow-md text-red-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500/10 hover:text-red-600"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
@@ -394,13 +394,13 @@ export function AgencyApprovalsPage() {
                 <button 
                   title="Editar / Substituir"
                   onClick={() => openEditModal(creative)}
-                  className="absolute top-2 left-10 z-10 w-7 h-7 bg-white/90 shadow-md text-slate-600 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-slate-50 hover:text-primary"
+                  className="absolute top-2 left-10 z-10 w-7 h-7 bg-background/90 shadow-md text-muted-foreground rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-muted hover:text-primary"
                 >
                   <Pencil className="w-3.5 h-3.5" />
                 </button>
 
                 <div 
-                  className="aspect-square bg-slate-100 flex items-center justify-center relative overflow-hidden group/media cursor-pointer"
+                  className="aspect-square bg-muted flex items-center justify-center relative overflow-hidden group/media cursor-pointer"
                   onClick={() => setSelectedCreative(creative)}
                 >
                   <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/media:opacity-100 flex items-center justify-center transition-opacity z-10">
@@ -409,7 +409,7 @@ export function AgencyApprovalsPage() {
                   {creative.file_type === 'image' ? (
                     <img src={creative.file_url} alt={creative.title} className="w-full h-full object-cover" />
                   ) : (
-                    <video src={creative.file_url} className="w-full h-full object-cover" controls />
+                    <video src={creative.file_url} className="w-full h-full object-cover" />
                   )}
                   <div className={`absolute top-2 right-2 px-2 py-1 rounded-full text-[10px] font-bold uppercase flex items-center gap-1 shadow-sm ${statusMap[creative.status].color}`}>
                     <StatusIcon className="w-3.5 h-3.5" />
@@ -417,16 +417,16 @@ export function AgencyApprovalsPage() {
                   </div>
                 </div>
                 <div className="p-4 flex flex-col flex-1">
-                  <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-1">{creative.clients?.name || 'Cliente Removido'}</span>
-                  <h4 className="font-semibold text-slate-800 line-clamp-1">{creative.title}</h4>
-                  <p className="text-xs text-slate-500 mt-1 line-clamp-2">{creative.description || "Sem descrição"}</p>
+                  <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider mb-1">{creative.clients?.name || 'Cliente Removido'}</span>
+                  <h4 className="font-semibold text-foreground line-clamp-1">{creative.title}</h4>
+                  <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{creative.description || "Sem descrição"}</p>
                   
                   {creative.feedback && (
-                    <div className="mt-3 p-2 bg-slate-50 rounded border border-slate-100 flex gap-2 w-full">
-                      <MessageSquare className="w-4 h-4 mt-0.5 text-slate-400 shrink-0" />
+                    <div className="mt-3 p-2 bg-muted/50 rounded border border-border/50 flex gap-2 w-full">
+                      <MessageSquare className="w-4 h-4 mt-0.5 text-muted-foreground/50 shrink-0" />
                       <div>
-                        <span className="text-xs font-semibold text-slate-600 block">Feedback do Cliente:</span>
-                        <p className="text-xs text-slate-700 italic">{creative.feedback}</p>
+                        <span className="text-xs font-semibold text-foreground block">Feedback do Cliente:</span>
+                        <p className="text-xs text-muted-foreground italic">{creative.feedback}</p>
                       </div>
                     </div>
                   )}
@@ -436,9 +436,9 @@ export function AgencyApprovalsPage() {
           })}
         </div>
       ) : (
-        <div className="bg-white rounded-xl border overflow-hidden">
+        <div className="bg-card rounded-xl border border-border overflow-hidden">
           <table className="w-full text-sm text-left">
-            <thead className="bg-slate-50 border-b text-slate-500 font-medium whitespace-nowrap">
+            <thead className="bg-muted border-b border-border text-muted-foreground font-medium whitespace-nowrap">
               <tr>
                 <th className="px-4 py-3">Arquivo</th>
                 <th className="px-4 py-3">Cliente</th>
@@ -448,14 +448,14 @@ export function AgencyApprovalsPage() {
                 <th className="px-4 py-3 text-right">Ação</th>
               </tr>
             </thead>
-            <tbody className="divide-y">
+            <tbody className="divide-y divide-border">
               {creatives.map(creative => {
                 const StatusIcon = statusMap[creative.status].icon;
                 return (
-                  <tr key={creative.id} className="hover:bg-slate-50/50">
+                  <tr key={creative.id} className="hover:bg-muted/50">
                     <td className="px-4 py-3 w-16">
                       <div 
-                        className="w-12 h-12 bg-slate-100 rounded overflow-hidden flex items-center justify-center relative cursor-pointer group"
+                        className="w-12 h-12 bg-muted rounded overflow-hidden flex items-center justify-center relative cursor-pointer group"
                         onClick={() => setSelectedCreative(creative)}
                       >
                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity z-10">
@@ -464,16 +464,16 @@ export function AgencyApprovalsPage() {
                         {creative.file_type === 'image' ? (
                           <img src={creative.file_url} alt={creative.title} className="w-full h-full object-cover" />
                         ) : (
-                          <FileVideo className="w-5 h-5 text-slate-400" />
+                          <FileVideo className="w-5 h-5 text-muted-foreground/50" />
                         )}
                       </div>
                     </td>
-                    <td className="px-4 py-3 font-medium text-slate-700 truncate max-w-[150px]">
+                    <td className="px-4 py-3 font-medium text-foreground truncate max-w-[150px]">
                       {creative.clients?.name || '---'}
                     </td>
                     <td className="px-4 py-3">
-                      <p className="font-medium text-slate-800">{creative.title}</p>
-                      <p className="text-xs text-slate-500 line-clamp-1 max-w-[200px]">{creative.description}</p>
+                      <p className="font-medium text-foreground">{creative.title}</p>
+                      <p className="text-xs text-muted-foreground line-clamp-1 max-w-[200px]">{creative.description}</p>
                     </td>
                     <td className="px-4 py-3">
                       <div className={`inline-flex px-2 py-1 rounded-full text-[10px] uppercase font-bold items-center gap-1 ${statusMap[creative.status].color}`}>
@@ -482,20 +482,20 @@ export function AgencyApprovalsPage() {
                       </div>
                     </td>
                     <td className="px-4 py-3 max-w-[200px]">
-                       <p className="text-xs text-slate-600 italic line-clamp-2">{creative.feedback || "-"}</p>
+                       <p className="text-xs text-muted-foreground italic line-clamp-2">{creative.feedback || "-"}</p>
                     </td>
                     <td className="px-4 py-3 text-right">
                         <button 
                           title="Excluir arte"
                           onClick={() => handleDelete(creative.id, creative.file_path)}
-                          className="p-1.5 rounded text-slate-400 hover:bg-red-50 hover:text-red-500 transition-colors inline-block"
+                          className="p-1.5 rounded text-muted-foreground/50 hover:bg-red-500/10 hover:text-red-500 transition-colors inline-block"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
                         <button 
                           title="Editar arte"
                           onClick={() => openEditModal(creative)}
-                          className="p-1.5 rounded text-slate-400 hover:bg-blue-50 hover:text-blue-500 transition-colors inline-block ml-1"
+                          className="p-1.5 rounded text-muted-foreground/50 hover:bg-primary/10 hover:text-primary transition-colors inline-block ml-1"
                         >
                           <Pencil className="w-4 h-4" />
                         </button>
@@ -510,11 +510,11 @@ export function AgencyApprovalsPage() {
 
       {/* Modal Expansion / Visualização */}
       <Dialog open={!!selectedCreative} onOpenChange={(open) => !open && setSelectedCreative(null)}>
-        <DialogContent className="max-w-4xl p-0 overflow-hidden bg-slate-50 gap-0">
+        <DialogContent className="max-w-4xl p-0 overflow-hidden bg-background gap-0 border-border">
           <DialogTitle className="sr-only">Visualização do Criativo</DialogTitle>
           <div className="flex flex-col md:flex-row h-full max-h-[90vh]">
             {/* Esquerda: Mídia View */}
-            <div className="flex-1 bg-[#0f172a] flex items-center justify-center relative p-4 md:p-8 min-h-[400px]">
+            <div className="flex-1 bg-zinc-950 flex items-center justify-center relative p-4 md:p-8 min-h-[400px]">
               {selectedCreative?.file_type === 'image' ? (
                 <img 
                   src={selectedCreative.file_url} 
@@ -543,26 +543,26 @@ export function AgencyApprovalsPage() {
             </div>
             
             {/* Direita: Interações e Infos */}
-            <div className="w-full md:w-[380px] bg-white flex flex-col border-l">
-              <div className="p-6 border-b">
+            <div className="w-full md:w-[380px] bg-card flex flex-col border-l border-border">
+              <div className="p-6 border-b border-border">
                 <div className="flex justify-between items-start gap-2 mb-2">
-                  <h3 className="font-bold text-xl text-slate-800">{selectedCreative?.title}</h3>
+                  <h3 className="font-bold text-xl text-foreground">{selectedCreative?.title}</h3>
                 </div>
                 <div className="mb-4">
-                  <span className="text-xs uppercase font-bold text-slate-400 tracking-wider">Cliente: {selectedCreative?.clients?.name || 'Desconhecido'}</span>
+                  <span className="text-xs uppercase font-bold text-muted-foreground tracking-wider">Cliente: {selectedCreative?.clients?.name || 'Desconhecido'}</span>
                 </div>
                 {selectedCreative?.description ? (
-                  <p className="text-sm text-slate-600 bg-slate-50 p-3 rounded-lg border italic">
+                  <p className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-lg border border-border/50 italic">
                     "{selectedCreative.description}"
                   </p>
                 ) : (
-                  <p className="text-sm text-slate-400 italic">Sem legenda ou descrição.</p>
+                  <p className="text-sm text-muted-foreground/50 italic">Sem legenda ou descrição.</p>
                 )}
               </div>
 
               <div className="p-6 flex-1 overflow-y-auto">
                 <div className="mb-6">
-                  <h4 className="text-sm font-semibold text-slate-700 mb-2">Status Atual:</h4>
+                  <h4 className="text-sm font-semibold text-foreground mb-2">Status Atual:</h4>
                   {selectedCreative && (
                     <div className={`inline-flex px-3 py-1.5 rounded-full text-xs font-bold items-center gap-1.5 ${statusMap[selectedCreative.status].color}`}>
                       {React.createElement(statusMap[selectedCreative.status].icon, { className: "w-4 h-4" })}
@@ -573,16 +573,16 @@ export function AgencyApprovalsPage() {
 
                 {selectedCreative?.feedback && (
                   <div className="space-y-2 mb-6">
-                    <label className="text-sm font-semibold text-slate-700">
+                    <label className="text-sm font-semibold text-foreground">
                       Comentário / Sugestão do Cliente
                     </label>
-                    <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
-                      <p className="text-sm text-slate-700 italic">{selectedCreative.feedback}</p>
+                    <div className="bg-muted/50 p-4 rounded-xl border border-border/50">
+                      <p className="text-sm text-muted-foreground italic">{selectedCreative.feedback}</p>
                     </div>
                   </div>
                 )}
 
-                <div className="pt-6 border-t mt-auto space-y-3">
+                <div className="pt-6 border-t border-border mt-auto space-y-3">
                   <input 
                     type="file" 
                     ref={fileInputRef} 
@@ -595,7 +595,7 @@ export function AgencyApprovalsPage() {
                     }}
                   />
                   <Button 
-                    className="w-full bg-indigo-600 hover:bg-indigo-700 text-white"
+                    className="w-full bg-indigo-600 hover:bg-indigo-700 text-white border-none"
                     disabled={uploading}
                     onClick={() => fileInputRef.current?.click()}
                   >
@@ -608,7 +608,7 @@ export function AgencyApprovalsPage() {
                   </Button>
                   {selectedCreative?.status !== 'pending' && (
                     <Button 
-                      className="w-full bg-amber-500 hover:bg-amber-600 text-white"
+                      className="w-full bg-amber-500 hover:bg-amber-600 text-white border-none"
                       onClick={async () => {
                         if (!selectedCreative) return;
                         const { error } = await supabase
@@ -629,7 +629,7 @@ export function AgencyApprovalsPage() {
                   )}
                   <Button 
                     variant="outline" 
-                    className="w-full border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
+                    className="w-full border-red-500/20 text-red-500 hover:bg-red-500/10 hover:text-red-600"
                     onClick={() => {
                       if (selectedCreative) {
                         handleDelete(selectedCreative.id, selectedCreative.file_path);

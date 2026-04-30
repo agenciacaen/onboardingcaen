@@ -23,9 +23,11 @@ import {
 
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const { role } = useAuth();
-  const { profile } = useAuthStore();
+  const { profile, activeClient } = useAuthStore();
   const { isMobile } = useSidebarStore();
   const navigate = useNavigate();
+
+  const modules = activeClient?.modules_enabled;
 
   const handleLogout = async () => {
     try {
@@ -174,69 +176,76 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
         />
       </SidebarGroup>
       <SidebarGroup label="Serviços">
-        <SidebarItem 
-          icon={TrendingUp} 
-          label="Tráfego Pago" 
-          href="/client/traffic?tab=dashboard" 
-          onNavigate={onNavigate}
-          subItems={[
-            { label: "Resultados", href: "/client/traffic?tab=dashboard" },
-            { label: "Campanhas", href: "/client/traffic?tab=campaigns" },
-          ]}
-        />
-        <SidebarItem 
-          icon={Share2} 
-          label="Social Media" 
-          href="/client/social?tab=calendar" 
-          onNavigate={onNavigate}
-          subItems={[
-            { label: "Calendário", href: "/client/social?tab=calendar" },
-            { label: "Aprovações", href: "/client/social?tab=approvals" },
-          ]}
-        />
-        <SidebarItem 
-          icon={Globe} 
-          label="Web" 
-          href="/client/web?tab=projects" 
-          onNavigate={onNavigate}
-          subItems={[
-            { label: "Projetos", href: "/client/web?tab=projects" },
-            { label: "Entregas", href: "/client/web?tab=deliveries" },
-          ]}
-        />
-        <SidebarItem 
-          icon={Database} 
-          label="CRM & Tecnologia" 
-          href="/client/crm?tab=dashboard" 
-          onNavigate={onNavigate}
-          subItems={[
-            { label: "Status", href: "/client/crm?tab=dashboard" },
-            { label: "Integrações", href: "/client/crm?tab=integrations" },
-          ]}
-        />
+        {modules?.traffic && (
+          <SidebarItem 
+            icon={TrendingUp} 
+            label="Tráfego Pago" 
+            href="/client/traffic?tab=dashboard" 
+            onNavigate={onNavigate}
+            subItems={[
+              { label: "Resultados", href: "/client/traffic?tab=dashboard" },
+              { label: "Campanhas", href: "/client/traffic?tab=campaigns" },
+            ]}
+          />
+        )}
+        {modules?.social && (
+          <SidebarItem 
+            icon={Share2} 
+            label="Social Media" 
+            href="/client/social?tab=calendar" 
+            onNavigate={onNavigate}
+            subItems={[
+              { label: "Calendário", href: "/client/social?tab=calendar" },
+              { label: "Aprovações", href: "/client/social?tab=approvals" },
+            ]}
+          />
+        )}
+        {modules?.web && (
+          <SidebarItem 
+            icon={Globe} 
+            label="Web" 
+            href="/client/web?tab=projects" 
+            onNavigate={onNavigate}
+            subItems={[
+              { label: "Projetos", href: "/client/web?tab=projects" },
+              { label: "Entregas", href: "/client/web?tab=deliveries" },
+            ]}
+          />
+        )}
+        {modules?.crm && (
+          <SidebarItem 
+            icon={Database} 
+            label="CRM & Tecnologia" 
+            href="/client/crm?tab=dashboard" 
+            onNavigate={onNavigate}
+            subItems={[
+              { label: "Status", href: "/client/crm?tab=dashboard" },
+              { label: "Integrações", href: "/client/crm?tab=integrations" },
+            ]}
+          />
+        )}
       </SidebarGroup>
       <SidebarGroup label="Ações">
-        <SidebarItem 
-          icon={ThumbsUp} 
-          label="Aprovações" 
-          href="/client/approvals" 
-          endDecorator={<NotificationBadge type="approval" />}
-          onNavigate={onNavigate}
-        />
-        <SidebarItem icon={DollarSign} label="Financeiro" href="/client/financial" onNavigate={onNavigate} />
+        {modules?.approvals && (
+          <SidebarItem 
+            icon={ThumbsUp} 
+            label="Aprovações" 
+            href="/client/approvals" 
+            endDecorator={<NotificationBadge type="approval" />}
+            onNavigate={onNavigate}
+          />
+        )}
+        {modules?.financial && (
+          <SidebarItem icon={DollarSign} label="Financeiro" href="/client/financial" onNavigate={onNavigate} />
+        )}
       </SidebarGroup>
       <SidebarGroup label="Recursos">
-        <SidebarItem icon={FileText} label="Documentos" href="/client/documents" onNavigate={onNavigate} />
-        <div className="relative">
-          <div className={cn(
-            "absolute -top-2 left-8 z-10",
-            "bg-primary text-[9px] font-bold text-primary-foreground px-1.5 py-0.5 rounded-full shadow-sm uppercase tracking-wider animate-pulse",
-            !isMobile && "hidden group-hover:block"
-          )}>
-            Em Breve
-          </div>
-          <SidebarItem icon={MessageCircle} label="Suporte" href="/client/support" onNavigate={onNavigate} disabled />
-        </div>
+        {modules?.documents && (
+          <SidebarItem icon={FileText} label="Documentos" href="/client/documents" onNavigate={onNavigate} />
+        )}
+        {modules?.support && (
+          <SidebarItem icon={MessageCircle} label="Suporte" href="/client/support" onNavigate={onNavigate} />
+        )}
       </SidebarGroup>
     </>
   );

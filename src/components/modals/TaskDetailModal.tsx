@@ -62,25 +62,25 @@ interface TaskDetailModalProps {
 // CONSTANTS
 // ============================================================
 const STATUS_OPTIONS = [
-  { value: 'todo',        label: 'A Fazer',      bg: 'bg-slate-100',   text: 'text-slate-700' },
-  { value: 'in_progress', label: 'Em Progresso',  bg: 'bg-blue-100',    text: 'text-blue-700' },
-  { value: 'review',      label: 'Revisão',       bg: 'bg-amber-100',   text: 'text-amber-700' },
-  { value: 'done',        label: 'Concluído',     bg: 'bg-emerald-100', text: 'text-emerald-700' },
+  { value: 'todo',        label: 'A Fazer',      bg: 'bg-slate-100 dark:bg-slate-800',   text: 'text-slate-700 dark:text-slate-300' },
+  { value: 'in_progress', label: 'Em Progresso',  bg: 'bg-blue-100 dark:bg-blue-900/30',  text: 'text-blue-700 dark:text-blue-400' },
+  { value: 'review',      label: 'Revisão',       bg: 'bg-amber-100 dark:bg-amber-900/30', text: 'text-amber-700 dark:text-amber-400' },
+  { value: 'done',        label: 'Concluído',     bg: 'bg-emerald-100 dark:bg-emerald-900/30', text: 'text-emerald-700 dark:text-emerald-400' },
 ];
 
 const PRIORITY_OPTIONS = [
-  { value: 'low',    label: 'Baixa',   bg: 'bg-slate-100',  text: 'text-slate-600' },
-  { value: 'medium', label: 'Média',   bg: 'bg-yellow-100', text: 'text-yellow-700' },
-  { value: 'high',   label: 'Alta',    bg: 'bg-orange-100', text: 'text-orange-700' },
-  { value: 'urgent', label: 'Urgente', bg: 'bg-red-100',    text: 'text-red-700' },
+  { value: 'low',    label: 'Baixa',   bg: 'bg-slate-100 dark:bg-slate-800',  text: 'text-slate-600 dark:text-slate-400' },
+  { value: 'medium', label: 'Média',   bg: 'bg-yellow-100 dark:bg-yellow-900/30', text: 'text-yellow-700 dark:text-yellow-400' },
+  { value: 'high',   label: 'Alta',    bg: 'bg-orange-100 dark:bg-orange-900/30', text: 'text-orange-700 dark:text-orange-400' },
+  { value: 'urgent', label: 'Urgente', bg: 'bg-red-100 dark:bg-red-900/30',    text: 'text-red-700 dark:text-red-400' },
 ];
 
 const MODULE_OPTIONS = [
-  { value: 'social',  label: 'Redes Sociais',   bg: 'bg-pink-100',    text: 'text-pink-700' },
-  { value: 'traffic', label: 'Tráfego Pago',    bg: 'bg-indigo-100',  text: 'text-indigo-700' },
-  { value: 'web',     label: 'Web & SEO',       bg: 'bg-emerald-100', text: 'text-emerald-700' },
-  { value: 'crm',     label: 'CRM e Tecnologia',bg: 'bg-purple-100',  text: 'text-purple-700' },
-  { value: 'general', label: 'Geral',           bg: 'bg-slate-100',   text: 'text-slate-700' },
+  { value: 'social',  label: 'Redes Sociais',   bg: 'bg-pink-100 dark:bg-pink-900/30',    text: 'text-pink-700 dark:text-pink-400' },
+  { value: 'traffic', label: 'Tráfego Pago',    bg: 'bg-indigo-100 dark:bg-indigo-900/30',  text: 'text-indigo-700 dark:text-indigo-400' },
+  { value: 'web',     label: 'Web & SEO',       bg: 'bg-emerald-100 dark:bg-emerald-900/30', text: 'text-emerald-700 dark:text-emerald-400' },
+  { value: 'crm',     label: 'CRM e Tecnologia',bg: 'bg-purple-100 dark:bg-purple-900/30',  text: 'text-purple-700 dark:text-purple-400' },
+  { value: 'general', label: 'Geral',           bg: 'bg-slate-100 dark:bg-slate-800',   text: 'text-slate-700 dark:text-slate-300' },
 ];
 
 // ============================================================
@@ -123,7 +123,7 @@ function InlineEdit({
         if (e.key === 'Enter' && !multiline) save();
         if (e.key === 'Enter' && multiline && e.ctrlKey) save();
       },
-      className: cn('text-sm bg-white border border-blue-300 rounded px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-blue-200', className),
+      className: cn('text-sm bg-background border border-primary/30 rounded px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-primary/20', className),
       disabled: saving,
     };
 
@@ -136,15 +136,15 @@ function InlineEdit({
     <div
       className={cn(
         'group flex items-start gap-1 rounded px-1 -mx-1 transition-colors',
-        !readOnly && 'cursor-pointer hover:bg-slate-50',
+        !readOnly && 'cursor-pointer hover:bg-accent/50',
         className
       )}
       onClick={() => !readOnly && setEditing(true)}
     >
-      <span className={cn('flex-1 min-w-0', !value && 'text-slate-400 italic text-sm')}>
+      <span className={cn('flex-1 min-w-0', !value && 'text-muted-foreground italic text-sm')}>
         {value || placeholder}
       </span>
-      {!readOnly && <Pencil className="w-3 h-3 text-slate-300 group-hover:text-slate-400 shrink-0 mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity" />}
+      {!readOnly && <Pencil className="w-3 h-3 text-muted-foreground/50 group-hover:text-muted-foreground shrink-0 mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity" />}
     </div>
   );
 }
@@ -187,18 +187,18 @@ function BadgeSelect({
         {!readOnly && <ChevronDown className="w-3 h-3" />}
       </button>
       {open && (
-        <div className="absolute top-full mt-1 left-0 bg-white border border-slate-200 rounded-lg shadow-xl z-50 py-1 min-w-[140px]">
+        <div className="absolute top-full mt-1 left-0 bg-popover border border-border rounded-lg shadow-xl z-50 py-1 min-w-[140px]">
           {options.map(opt => (
             <button
               key={opt.value}
               type="button"
               className={cn(
-                'w-full text-left px-3 py-1.5 text-xs hover:bg-slate-50 flex items-center gap-2 transition-colors',
+                'w-full text-left px-3 py-1.5 text-xs hover:bg-accent flex items-center gap-2 transition-colors',
                 opt.value === value && 'font-semibold'
               )}
               onClick={() => handle(opt.value)}
             >
-              <span className={cn('w-2 h-2 rounded-full', opt.bg.replace('bg-', 'bg-').replace('-100', '-400'))} />
+              <span className={cn('w-2 h-2 rounded-full', opt.bg.split(' ')[0].replace('bg-', 'bg-').replace('-100', '-400'))} />
               {opt.label}
               {opt.value === value && <Check className="w-3 h-3 ml-auto text-emerald-500" />}
             </button>
@@ -472,7 +472,7 @@ export function TaskDetailModal({
       <DialogContent className="sm:max-w-[740px] max-h-[92vh] overflow-hidden p-0 gap-0 rounded-xl">
 
         {/* ── HEADER ── */}
-        <div className="px-6 pt-5 pb-4 border-b border-slate-100 bg-white">
+        <div className="px-6 pt-5 pb-4 border-b border-border bg-card">
           <div className="flex items-start gap-3">
             <div className="flex-1 min-w-0">
 
@@ -503,12 +503,12 @@ export function TaskDetailModal({
                 value={taskData.title}
                 onSave={v => updateTaskField('title', v)}
                 placeholder="Título da tarefa..."
-                className="text-lg font-bold text-slate-800 leading-tight"
+                className="text-lg font-bold text-foreground leading-tight"
                 readOnly={readOnly}
               />
 
               {/* Editable description */}
-              <div className="mt-2 text-sm text-slate-500 leading-relaxed">
+              <div className="mt-2 text-sm text-muted-foreground leading-relaxed">
                 <InlineEdit
                   value={taskData.description || ''}
                   onSave={v => updateTaskField('description', v)}
@@ -526,7 +526,7 @@ export function TaskDetailModal({
           </div>
 
           {/* Meta info */}
-          <div className="flex items-center gap-4 mt-3 text-xs text-slate-500 flex-wrap">
+          <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground flex-wrap">
             {taskData.clients?.name && (
               <div className="flex items-center gap-1">
                 <User className="w-3.5 h-3.5" />
@@ -552,13 +552,13 @@ export function TaskDetailModal({
         <div className="overflow-y-auto" style={{ maxHeight: 'calc(92vh - 200px)' }}>
 
           {/* ─ SUBTAREFAS ─ */}
-          <div className="px-6 py-4 border-b border-slate-100">
+          <div className="px-6 py-4 border-b border-border">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
-                <ListChecks className="w-4 h-4 text-slate-500" />
-                <h3 className="text-sm font-semibold text-slate-700">Subtarefas</h3>
+                <ListChecks className="w-4 h-4 text-muted-foreground" />
+                <h3 className="text-sm font-semibold text-foreground">Subtarefas</h3>
                 {subtasks.length > 0 && (
-                  <span className="text-xs text-slate-400 font-medium">
+                  <span className="text-xs text-muted-foreground font-medium">
                     {completedSubs}/{subtasks.length} · {progressPct}%
                   </span>
                 )}
@@ -577,7 +577,7 @@ export function TaskDetailModal({
 
             {/* Progress bar */}
             {subtasks.length > 0 && (
-              <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden mb-3">
+              <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden mb-3">
                 <div
                   className="h-full rounded-full transition-all duration-500"
                   style={{
@@ -602,7 +602,7 @@ export function TaskDetailModal({
                     key={sub.id}
                     className={cn(
                       'flex items-center gap-2 py-1.5 px-2 rounded-lg group transition-colors',
-                      isDone ? 'opacity-60' : 'hover:bg-slate-50'
+                      isDone ? 'opacity-60' : 'hover:bg-accent/50'
                     )}
                   >
                     {/* Checkbox */}
@@ -617,7 +617,7 @@ export function TaskDetailModal({
                       ) : isDone ? (
                         <CheckSquare className="w-4 h-4 text-emerald-500" />
                       ) : (
-                        <Square className="w-4 h-4 text-slate-300 group-hover:text-slate-500" />
+                        <Square className="w-4 h-4 text-muted-foreground/50 group-hover:text-muted-foreground" />
                       )}
                     </button>
 
@@ -626,7 +626,7 @@ export function TaskDetailModal({
                       <InlineEdit
                         value={sub.title}
                         onSave={v => handleEditSubtaskTitle(sub.id, v)}
-                        className={cn(isDone ? 'text-slate-400 line-through' : 'text-slate-700')}
+                        className={cn(isDone ? 'text-muted-foreground line-through' : 'text-foreground')}
                         readOnly={readOnly}
                       />
                     </div>
@@ -642,7 +642,7 @@ export function TaskDetailModal({
                       >
                         {isDeleting
                           ? <Loader2 className="w-3.5 h-3.5 animate-spin text-red-400" />
-                          : <Trash2 className="w-3.5 h-3.5 text-slate-300 hover:text-red-400 transition-colors" />
+                          : <Trash2 className="w-3.5 h-3.5 text-muted-foreground/50 hover:text-red-400 transition-colors" />
                         }
                       </button>
                     )}
@@ -651,7 +651,7 @@ export function TaskDetailModal({
               })}
 
               {subtasks.length === 0 && !showAddSubtask && (
-                <p className="text-xs text-slate-400 text-center py-3">
+                <p className="text-xs text-muted-foreground text-center py-3">
                   Nenhuma subtarefa. Clique em "Adicionar" para criar.
                 </p>
               )}
@@ -695,44 +695,44 @@ export function TaskDetailModal({
           {/* ─ NOTAS / COMENTÁRIOS ─ */}
           <div className="px-6 py-4">
             <div className="flex items-center gap-2 mb-4">
-              <MessageSquare className="w-4 h-4 text-slate-500" />
-              <h3 className="text-sm font-semibold text-slate-700">Notas & Comentários</h3>
-              <span className="text-xs text-slate-400">({comments.length})</span>
+              <MessageSquare className="w-4 h-4 text-muted-foreground" />
+              <h3 className="text-sm font-semibold text-foreground">Notas & Comentários</h3>
+              <span className="text-xs text-muted-foreground">({comments.length})</span>
             </div>
 
             {loadingComments ? (
               <div className="flex justify-center py-6">
-                <Loader2 className="w-5 h-5 animate-spin text-slate-300" />
+                <Loader2 className="w-5 h-5 animate-spin text-muted-foreground/30" />
               </div>
             ) : comments.length === 0 ? (
-              <p className="text-center py-6 text-sm text-slate-400">
+              <p className="text-center py-6 text-sm text-muted-foreground">
                 Nenhuma nota ainda. As notas são visíveis para o cliente.
               </p>
             ) : (
               <div className="space-y-3 mb-4">
                 {comments.map(c => (
-                  <div key={c.id} className="bg-slate-50 rounded-lg px-4 py-3 relative group">
+                  <div key={c.id} className="bg-muted/50 rounded-lg px-4 py-3 relative group">
                     <div className="flex items-center justify-between mb-1">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-semibold text-slate-700">
+                        <span className="text-xs font-semibold text-foreground">
                           {c.author?.full_name || 'Equipe'}
                         </span>
                         {!readOnly && (
                           <button
                             type="button"
                             onClick={() => handleDeleteComment(c.id)}
-                            className="p-1 hover:bg-red-50 text-slate-300 hover:text-red-500 rounded transition-colors"
+                            className="p-1 hover:bg-red-500/10 text-muted-foreground/50 hover:text-red-500 rounded transition-colors"
                             title="Excluir nota"
                           >
                             <Trash2 className="w-3 h-3" />
                           </button>
                         )}
                       </div>
-                      <span className="text-[10px] text-slate-400">
+                      <span className="text-[10px] text-muted-foreground/60">
                         {format(new Date(c.created_at), "dd/MM 'às' HH:mm", { locale: ptBR })}
                       </span>
                     </div>
-                    <p className="text-sm text-slate-600 whitespace-pre-wrap">{c.content}</p>
+                    <p className="text-sm text-muted-foreground whitespace-pre-wrap">{c.content}</p>
                   </div>
                 ))}
               </div>
@@ -758,12 +758,12 @@ export function TaskDetailModal({
                 {sendingComment ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
               </Button>
             </div>
-            <p className="text-[10px] text-slate-400 mt-1.5">
+            <p className="text-[10px] text-muted-foreground/60 mt-1.5">
               Ctrl+Enter para enviar • Visível para o cliente no Roadmap
             </p>
             {/* Delete entire task footer */}
             {!readOnly && (
-              <div className="pt-4 mt-6 border-t border-slate-100 flex justify-end">
+              <div className="pt-4 mt-6 border-t border-border flex justify-end">
                 <Button
                   type="button"
                   variant="destructive"

@@ -109,31 +109,31 @@ export function ClientFinancialPage() {
       ) : invoices.length > 0 ? (
         <div className="grid gap-4">
           {invoices.map((invoice) => (
-            <Card key={invoice.id} className={`overflow-hidden hover:border-primary/30 transition-colors ${invoice.status === 'disputed' ? 'border-orange-200 bg-orange-50/10' : ''}`}>
+            <Card key={invoice.id} className={`overflow-hidden hover:border-primary/30 transition-colors ${invoice.status === 'disputed' ? 'border-orange-500/30 bg-orange-500/5' : ''}`}>
               <CardContent className="p-0">
                 <div className="flex flex-col md:flex-row items-center p-6 gap-6">
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-muted">
                     {getStatusIcon(invoice.status)}
                   </div>
                   
                   <div className="flex-1 text-center md:text-left space-y-1">
                     <div className="flex items-center gap-2 justify-center md:justify-start">
-                      <h3 className="font-bold text-lg">{invoice.title || "Fatura CAEN"}</h3>
+                      <h3 className="font-bold text-lg text-foreground">{invoice.title || "Fatura CAEN"}</h3>
                       {invoice.client_notes && <StickyNote className="h-4 w-4 text-primary opacity-50" />}
                     </div>
                     <p className="text-sm text-muted-foreground">{invoice.description || "Pagamento referente a serviços de agência."}</p>
-                    <div className="flex flex-wrap justify-center md:justify-start gap-3 mt-2 text-xs font-medium uppercase tracking-wider text-slate-500">
-                       <span className="bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded">
+                    <div className="flex flex-wrap justify-center md:justify-start gap-3 mt-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                       <span className="bg-muted px-2 py-1 rounded border border-border/50">
                          Vence em: {format(new Date(invoice.due_date), "dd/MM/yyyy")}
                        </span>
-                       <span className="bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded">
+                       <span className="bg-muted px-2 py-1 rounded border border-border/50">
                          Categoria: {invoice.category === 'ads' ? 'Tráfego Pago' : 'Mão de Obra'}
                        </span>
                     </div>
                   </div>
 
                   <div className="flex flex-col items-center md:items-end gap-2">
-                    <div className="text-2xl font-black text-slate-900 dark:text-white">
+                    <div className="text-2xl font-black text-foreground">
                       {formatCurrency(invoice.amount)}
                     </div>
                     <StatusBadge status={invoice.status} />
@@ -143,7 +143,7 @@ export function ClientFinancialPage() {
                     {invoice.status !== 'paid' && (
                       <Button 
                         variant="default" 
-                        className="shadow-md bg-green-600 hover:bg-green-700" 
+                        className="shadow-md bg-emerald-600 hover:bg-emerald-700 text-white" 
                         onClick={() => handleUpdateInvoice(invoice.id, { status: 'paid', paid_at: new Date().toISOString() })}
                         disabled={submitting}
                       >
@@ -154,7 +154,7 @@ export function ClientFinancialPage() {
                     {invoice.status === 'paid' && (
                       <Button 
                         variant="outline" 
-                        className="border-amber-200 text-amber-700 hover:bg-amber-50"
+                        className="border-amber-500/20 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10"
                         onClick={() => {
                           if (window.confirm("Deseja marcar esta fatura como pendente novamente?")) {
                             handleUpdateInvoice(invoice.id, { status: 'pending', paid_at: null });

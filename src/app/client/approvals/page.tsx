@@ -128,14 +128,14 @@ export function ClientApprovalsPage() {
           <button
             title="Visualização em Grade"
             onClick={() => setViewMode('grid')}
-            className={`p-1.5 rounded-sm transition-colors ${viewMode === 'grid' ? 'bg-white shadow' : 'text-muted-foreground hover:text-foreground'}`}
+            className={`p-1.5 rounded-sm transition-colors ${viewMode === 'grid' ? 'bg-background shadow text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
           >
             <Grid className="w-4 h-4" />
           </button>
           <button
             title="Visualização em Lista"
             onClick={() => setViewMode('list')}
-            className={`p-1.5 rounded-sm transition-colors ${viewMode === 'list' ? 'bg-white shadow' : 'text-muted-foreground hover:text-foreground'}`}
+            className={`p-1.5 rounded-sm transition-colors ${viewMode === 'list' ? 'bg-background shadow text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
           >
             <List className="w-4 h-4" />
           </button>
@@ -147,19 +147,19 @@ export function ClientApprovalsPage() {
           <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
         </div>
       ) : creatives.length === 0 ? (
-        <div className="text-center py-16 border-2 border-dashed rounded-xl bg-slate-50">
-          <CheckCircle className="w-16 h-16 mx-auto text-emerald-400 mb-4" />
-          <h4 className="text-xl font-medium text-slate-700">Tudo Atualizado!</h4>
-          <p className="text-slate-500 mt-2">Você não possui criativos ou posts aguardando aprovação no momento.</p>
+        <div className="text-center py-16 border-2 border-dashed rounded-xl bg-muted/30 border-border">
+          <CheckCircle className="w-16 h-16 mx-auto text-emerald-500/50 mb-4" />
+          <h4 className="text-xl font-medium text-foreground">Tudo Atualizado!</h4>
+          <p className="text-muted-foreground mt-2">Você não possui criativos ou posts aguardando aprovação no momento.</p>
         </div>
       ) : (
         <>
           {viewMode === 'grid' ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {creatives.map(creative => (
-                <div key={creative.id} className="border rounded-2xl overflow-hidden bg-white shadow-sm flex flex-col">
+                <div key={creative.id} className="border border-border rounded-2xl overflow-hidden bg-card shadow-sm flex flex-col">
                   {/* Arquivo / Mídia */}
-                  <div className="aspect-[4/3] bg-slate-100 relative group overflow-hidden cursor-pointer" onClick={() => setSelectedCreative(creative)}>
+                  <div className="aspect-[4/3] bg-muted relative group overflow-hidden cursor-pointer" onClick={() => setSelectedCreative(creative)}>
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity z-10">
                       <Expand className="w-8 h-8 text-white drop-shadow" />
                     </div>
@@ -177,16 +177,16 @@ export function ClientApprovalsPage() {
 
                   {/* Informações */}
                   <div className="p-5 flex-1 flex flex-col">
-                    <h3 className="font-bold text-lg text-slate-800 line-clamp-1">{creative.title}</h3>
+                    <h3 className="font-bold text-lg text-foreground line-clamp-1">{creative.title}</h3>
                     {creative.description && (
-                      <p className="text-sm text-slate-600 mt-2 bg-slate-50 p-3 rounded-lg border italic line-clamp-3">
+                      <p className="text-sm text-muted-foreground mt-2 bg-muted/50 p-3 rounded-lg border border-border italic line-clamp-3">
                         "{creative.description}"
                       </p>
                     )}
 
                     <div className="mt-4 pt-4 border-t space-y-4">
                       {creative.status === 'approved' && (
-                        <div className="bg-emerald-50 text-emerald-700 p-3 flex items-center justify-center gap-2 rounded-lg font-medium text-sm border border-emerald-100">
+                        <div className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 p-3 flex items-center justify-center gap-2 rounded-lg font-medium text-sm border border-emerald-500/20">
                           <CheckCircle className="w-5 h-5" />
                           Arte Aprovada
                         </div>
@@ -194,17 +194,17 @@ export function ClientApprovalsPage() {
 
                       {creative.status === 'rejected' && (
                         <div className="space-y-3">
-                          <div className="bg-amber-50 text-amber-700 p-3 flex items-center justify-center gap-2 rounded-lg font-medium text-sm border border-amber-100/50">
+                          <div className="bg-amber-500/10 text-amber-600 dark:text-amber-400 p-3 flex items-center justify-center gap-2 rounded-lg font-medium text-sm border border-amber-500/20">
                             <Clock className="w-5 h-5" />
                             Aguardando Ajustes da Agência
                           </div>
-                          <div className="text-xs text-slate-500 bg-slate-50 p-2 rounded border italic">
+                          <div className="text-xs text-muted-foreground bg-muted/50 p-2 rounded border border-border italic">
                             Sua sugestão: "{creative.feedback}"
                           </div>
                           <Button 
                             variant="ghost" 
                             size="sm" 
-                            className="w-full text-slate-400 hover:text-slate-600 text-[10px] uppercase font-bold"
+                            className="w-full text-muted-foreground hover:text-foreground text-[10px] uppercase font-bold"
                             onClick={() => setCreatives(prev => prev.map(c => c.id === creative.id ? { ...c, status: 'pending' } : c))}
                           >
                             Editar Sugestão
@@ -215,7 +215,7 @@ export function ClientApprovalsPage() {
                       {creative.status === 'pending' && (
                         <>
                           <div className="space-y-1">
-                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                               Tenho uma sugestão / Correção
                             </label>
                             <Textarea 
@@ -230,7 +230,7 @@ export function ClientApprovalsPage() {
                           <div className="flex gap-2">
                             <Button 
                               variant="outline" 
-                              className="w-full border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 font-medium"
+                              className="w-full border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/10 font-medium"
                               onClick={() => handleAction(creative.id, "rejected")}
                               disabled={processingId === creative.id || !canManage}
                             >
@@ -247,7 +247,7 @@ export function ClientApprovalsPage() {
                             </Button>
                           </div>
                           {!canManage && (
-                            <p className="text-[10px] text-center text-slate-400 mt-2 italic">
+                            <p className="text-[10px] text-center text-muted-foreground mt-2 italic">
                               Seu acesso é apenas para visualização.
                             </p>
                           )}
@@ -259,10 +259,10 @@ export function ClientApprovalsPage() {
               ))}
             </div>
           ) : (
-             <div className="bg-white rounded-xl border overflow-hidden shadow-sm">
+             <div className="bg-card rounded-xl border border-border overflow-hidden shadow-sm">
                <div className="overflow-x-auto">
                  <table className="w-full text-sm text-left">
-                   <thead className="bg-slate-50 border-b text-slate-500 font-medium whitespace-nowrap">
+                   <thead className="bg-muted border-b border-border text-muted-foreground font-medium whitespace-nowrap">
                      <tr>
                        <th className="px-6 py-4">Prévia</th>
                        <th className="px-6 py-4">Detalhes</th>
@@ -284,20 +284,20 @@ export function ClientApprovalsPage() {
                              {creative.file_type === 'image' ? (
                                <img src={creative.file_url} alt={creative.title} className="w-full h-full object-cover" />
                              ) : (
-                               <div className="bg-slate-200 w-full h-full flex items-center justify-center">
-                                 <FileVideo className="w-8 h-8 text-slate-400" />
+                               <div className="bg-muted w-full h-full flex items-center justify-center">
+                                 <FileVideo className="w-8 h-8 text-muted-foreground" />
                                </div>
                              )}
                            </div>
                          </td>
                          <td className="px-6 py-4">
                            <div className="flex items-center gap-2 mb-1">
-                             <h4 className="font-bold text-slate-800 text-base">{creative.title}</h4>
-                             {creative.status === 'pending' && <span className="text-[10px] bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">Aguardando</span>}
-                             {creative.status === 'approved' && <span className="text-[10px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">Aprovado</span>}
-                             {creative.status === 'rejected' && <span className="text-[10px] bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">Ajustes</span>}
+                             <h4 className="font-bold text-foreground text-base">{creative.title}</h4>
+                             {creative.status === 'pending' && <span className="text-[10px] bg-amber-500/10 text-amber-600 dark:text-amber-400 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">Aguardando</span>}
+                             {creative.status === 'approved' && <span className="text-[10px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">Aprovado</span>}
+                             {creative.status === 'rejected' && <span className="text-[10px] bg-red-500/10 text-red-600 dark:text-red-400 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">Ajustes</span>}
                            </div>
-                           <p className="text-sm text-slate-500 line-clamp-2 max-w-sm">{creative.description || "Sem descrição"}</p>
+                           <p className="text-sm text-muted-foreground line-clamp-2 max-w-sm">{creative.description || "Sem descrição"}</p>
                          </td>
                          <td className="px-6 py-4">
                            {creative.status === 'pending' ? (
@@ -309,8 +309,8 @@ export function ClientApprovalsPage() {
                                disabled={!canManage}
                              />
                            ) : (
-                             <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
-                                <p className="text-xs text-slate-600 italic">"{creative.feedback || "Sem comentário adicionado."}"</p>
+                             <div className="bg-muted/50 p-3 rounded-lg border border-border">
+                                <p className="text-xs text-muted-foreground italic">"{creative.feedback || "Sem comentário adicionado."}"</p>
                              </div>
                            )}
                          </td>
@@ -320,7 +320,7 @@ export function ClientApprovalsPage() {
                                <div className="flex flex-col gap-2 max-w-[140px] mx-auto">
                                  <Button 
                                    size="sm"
-                                   className="bg-emerald-600 hover:bg-emerald-700"
+                                   className="bg-emerald-600 hover:bg-emerald-700 dark:text-white"
                                    onClick={() => handleAction(creative.id, "approved")}
                                    disabled={processingId === creative.id}
                                  >
@@ -329,7 +329,7 @@ export function ClientApprovalsPage() {
                                  <Button 
                                    size="sm"
                                    variant="outline"
-                                   className="text-red-600 hover:bg-red-50 border-red-200"
+                                   className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/10 border-red-200 dark:border-red-900/50"
                                    onClick={() => handleAction(creative.id, "rejected")}
                                    disabled={processingId === creative.id}
                                  >
@@ -337,8 +337,8 @@ export function ClientApprovalsPage() {
                                  </Button>
                                </div>
                              ) : (
-                               <div className="flex flex-col items-center text-slate-400 group" title="Você não tem permissão para realizar ações">
-                                 <Shield className="w-6 h-6 mb-1 text-slate-300 group-hover:text-amber-500 transition-colors" />
+                               <div className="flex flex-col items-center text-muted-foreground group" title="Você não tem permissão para realizar ações">
+                                 <Shield className="w-6 h-6 mb-1 text-muted-foreground/30 group-hover:text-amber-500 transition-colors" />
                                  <span className="text-[10px] font-bold uppercase tracking-tight">Visualização</span>
                                </div>
                              )
@@ -348,7 +348,7 @@ export function ClientApprovalsPage() {
                                <span className="text-[10px] font-bold uppercase tracking-tight">Aprovado</span>
                              </div>
                            ) : (
-                             <div className="flex flex-col items-center gap-1 text-amber-500" title="Aguardando Ajustes">
+                             <div className="flex flex-col items-center gap-1 text-amber-500 dark:text-amber-400" title="Aguardando Ajustes">
                                <Clock className="w-8 h-8" />
                                <span className="text-[10px] font-bold uppercase tracking-tight text-center leading-none">Aguardando<br/>Ajuste</span>
                              </div>
@@ -366,7 +366,7 @@ export function ClientApprovalsPage() {
 
       {/* Modal Expansion / Visualização */}
       <Dialog open={!!selectedCreative} onOpenChange={(open) => !open && setSelectedCreative(null)}>
-        <DialogContent className="max-w-4xl p-0 overflow-hidden bg-slate-50 gap-0">
+        <DialogContent className="max-w-4xl p-0 overflow-hidden bg-background border-border gap-0">
           <DialogTitle className="sr-only">Visualização do Criativo</DialogTitle>
           <div className="flex flex-col md:flex-row h-full max-h-[90vh]">
             {/* Esquerda: Mídia View */}
@@ -399,23 +399,23 @@ export function ClientApprovalsPage() {
             </div>
             
             {/* Direita: Interações e Infos */}
-            <div className="w-full md:w-[380px] bg-white flex flex-col border-l">
-              <div className="p-6 border-b">
+            <div className="w-full md:w-[380px] bg-card flex flex-col border-l border-border">
+              <div className="p-6 border-b border-border">
                 <div className="flex justify-between items-start gap-2 mb-2">
-                  <h3 className="font-bold text-xl text-slate-800">{selectedCreative?.title}</h3>
+                  <h3 className="font-bold text-xl text-foreground">{selectedCreative?.title}</h3>
                 </div>
                 {selectedCreative?.description ? (
-                  <p className="text-sm text-slate-600 bg-slate-50 p-3 rounded-lg border italic">
+                  <p className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-lg border border-border italic">
                     "{selectedCreative.description}"
                   </p>
                 ) : (
-                  <p className="text-sm text-slate-400 italic">Sem legenda ou descrição.</p>
+                  <p className="text-sm text-muted-foreground/50 italic">Sem legenda ou descrição.</p>
                 )}
               </div>
 
               <div className="p-6 flex-1 overflow-y-auto">
                 {selectedCreative?.status === 'approved' ? (
-                  <div className="bg-emerald-50 text-emerald-700 p-4 flex flex-col items-center justify-center gap-2 rounded-xl border border-emerald-100 text-center">
+                  <div className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 p-4 flex flex-col items-center justify-center gap-2 rounded-xl border border-emerald-500/20 text-center">
                     <CheckCircle className="w-8 h-8 mb-1" />
                     <div>
                       <span className="font-bold block text-lg">Arte Aprovada</span>
@@ -425,14 +425,14 @@ export function ClientApprovalsPage() {
                 ) : (
                   <div className="space-y-4">
                     {selectedCreative?.status === 'rejected' && (
-                      <div className="bg-amber-50 text-amber-700 p-4 flex flex-col gap-1 rounded-xl border border-amber-100 text-sm mb-4 text-center">
+                      <div className="bg-amber-500/10 text-amber-600 dark:text-amber-400 p-4 flex flex-col gap-1 rounded-xl border border-amber-500/20 text-sm mb-4 text-center">
                         <Clock className="w-8 h-8 mx-auto mb-1 opacity-50" />
                         <span className="font-bold block">Aguardando Agência</span>
                         <span className="opacity-80 italic">"{selectedCreative.feedback}"</span>
                         <Button 
                           variant="outline" 
                           size="sm" 
-                          className="mt-2 text-xs h-7 border-amber-200 bg-white"
+                          className="mt-2 text-xs h-7 border-amber-500/20 bg-background text-foreground hover:bg-muted"
                           onClick={() => {
                             if (selectedCreative) {
                               setCreatives(prev => prev.map(c => c.id === selectedCreative.id ? { ...c, status: 'pending' } : c));
@@ -448,7 +448,7 @@ export function ClientApprovalsPage() {
                     {selectedCreative?.status === 'pending' && (
                       <>
                         <div className="space-y-2">
-                          <label className="text-sm font-semibold text-slate-700">
+                          <label className="text-sm font-semibold text-foreground">
                             Sua Sugestão / Correção
                           </label>
                           <Textarea 
@@ -462,12 +462,9 @@ export function ClientApprovalsPage() {
                             }}
                             disabled={!canManage}
                           />
-                        </div>
-
-                        <div className="flex flex-col gap-3 pt-4 border-t">
-                          <Button 
+                                                   <Button 
                             size="lg"
-                            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold"
+                            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold shadow-lg shadow-emerald-500/10"
                             onClick={() => {
                               if (selectedCreative) {
                                 handleAction(selectedCreative.id, "approved");
@@ -481,7 +478,7 @@ export function ClientApprovalsPage() {
                           <Button 
                             size="lg"
                             variant="outline" 
-                            className="w-full border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
+                            className="w-full border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/10"
                             onClick={() => {
                               if (selectedCreative) {
                                 handleAction(selectedCreative.id, "rejected");
@@ -493,7 +490,7 @@ export function ClientApprovalsPage() {
                             Recusar e Sugerir
                           </Button>
                           {!canManage && (
-                            <p className="text-xs text-center text-slate-400 italic bg-slate-50 p-2 rounded-lg border border-dashed">
+                            <p className="text-xs text-center text-muted-foreground italic bg-muted/50 p-2 rounded-lg border border-dashed border-border">
                               Apenas usuários com permissão de gerenciamento podem aprovar ou solicitar ajustes.
                             </p>
                           )}

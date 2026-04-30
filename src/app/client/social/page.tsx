@@ -81,38 +81,38 @@ export function ClientSocialPage() {
         <TabsContent value="dashboard" className="mt-0 space-y-6">
           <div className={isLoading ? "opacity-50 pointer-events-none transition-opacity duration-300" : "transition-opacity duration-300"}>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="bg-white p-6 rounded-lg border shadow-sm">
-                <h3 className="text-sm font-medium text-gray-500 mb-2">Total de Posts</h3>
-                <p className="text-3xl font-bold">{overviewData.total_posts}</p>
+              <div className="bg-card p-6 rounded-lg border border-border shadow-sm">
+                <h3 className="text-sm font-medium text-muted-foreground mb-2">Total de Posts</h3>
+                <p className="text-3xl font-bold text-foreground">{overviewData.total_posts}</p>
               </div>
-              <div className="bg-white p-6 rounded-lg border shadow-sm">
-                <h3 className="text-sm font-medium text-gray-500 mb-2">Publicados</h3>
-                <p className="text-3xl font-bold text-green-600">{overviewData.published}</p>
+              <div className="bg-card p-6 rounded-lg border border-border shadow-sm">
+                <h3 className="text-sm font-medium text-muted-foreground mb-2">Publicados</h3>
+                <p className="text-3xl font-bold text-green-600 dark:text-green-500">{overviewData.published}</p>
               </div>
-              <div className="bg-white p-6 rounded-lg border shadow-sm">
-                <h3 className="text-sm font-medium text-gray-500 mb-2">Agendados</h3>
-                <p className="text-3xl font-bold text-blue-600">{overviewData.scheduled}</p>
+              <div className="bg-card p-6 rounded-lg border border-border shadow-sm">
+                <h3 className="text-sm font-medium text-muted-foreground mb-2">Agendados</h3>
+                <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">{overviewData.scheduled}</p>
               </div>
-              <div className="bg-white p-6 rounded-lg border shadow-sm">
-                <h3 className="text-sm font-medium text-gray-500 mb-2">Aprovações Pendentes</h3>
-                <p className="text-3xl font-bold text-amber-500">{overviewData.pending_approvals}</p>
+              <div className="bg-card p-6 rounded-lg border border-border shadow-sm">
+                <h3 className="text-sm font-medium text-muted-foreground mb-2">Aprovações Pendentes</h3>
+                <p className="text-3xl font-bold text-amber-500 dark:text-amber-400">{overviewData.pending_approvals}</p>
               </div>
             </div>
 
             <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
-               <div className="bg-white p-6 rounded-lg border shadow-sm min-h-[300px] flex items-center justify-center">
-                 <p className="text-gray-400">Posts by Platform Chart Placeholder</p>
+               <div className="bg-card p-6 rounded-lg border border-border shadow-sm min-h-[300px] flex items-center justify-center">
+                 <p className="text-muted-foreground">Posts by Platform Chart Placeholder</p>
                </div>
                
-               <div className="bg-white p-6 rounded-lg border shadow-sm min-h-[300px] flex flex-col items-center justify-center">
-                 <p className="text-gray-400">Content Status Donut Placeholder</p>
+               <div className="bg-card p-6 rounded-lg border border-border shadow-sm min-h-[300px] flex flex-col items-center justify-center">
+                 <p className="text-muted-foreground">Content Status Donut Placeholder</p>
                </div>
             </div>
 
             <div className="mt-6">
-              <h2 className="text-lg font-semibold mb-4">Últimas Aprovações Pendentes</h2>
-              <div className="bg-white p-6 rounded-lg border shadow-sm">
-                 <p className="text-gray-400 text-center py-8">Recent Approvals Widget Placeholder</p>
+              <h2 className="text-lg font-semibold mb-4 text-foreground">Últimas Aprovações Pendentes</h2>
+              <div className="bg-card p-6 rounded-lg border border-border shadow-sm">
+                 <p className="text-muted-foreground text-center py-8">Recent Approvals Widget Placeholder</p>
               </div>
             </div>
           </div>

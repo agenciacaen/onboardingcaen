@@ -131,14 +131,14 @@ export function OnboardingRoadmap({ tasks, onToggleSubtask, isToggling, readOnly
   return (
     <div className="space-y-8">
       {/* Barra de progresso global */}
-      <div className="bg-white shadow-sm border border-slate-200 rounded-2xl p-5">
+      <div className="bg-card shadow-sm border border-border rounded-2xl p-5">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-semibold text-slate-500 tracking-wide uppercase">
+          <h3 className="text-sm font-semibold text-muted-foreground tracking-wide uppercase">
             Progresso Geral
           </h3>
-          <span className="text-2xl font-bold text-slate-800">{globalProgress}%</span>
+          <span className="text-2xl font-bold text-foreground">{globalProgress}%</span>
         </div>
-        <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden">
+        <div className="w-full h-3 bg-muted rounded-full overflow-hidden">
           <div
             className="h-full rounded-full transition-all duration-700 ease-out"
             style={{
@@ -149,7 +149,7 @@ export function OnboardingRoadmap({ tasks, onToggleSubtask, isToggling, readOnly
             }}
           />
         </div>
-        <p className="text-xs text-slate-500 mt-2">
+        <p className="text-xs text-muted-foreground mt-2">
           {completedItems} de {totalItems} entregáveis concluídos
         </p>
       </div>
@@ -161,11 +161,11 @@ export function OnboardingRoadmap({ tasks, onToggleSubtask, isToggling, readOnly
         return (
           <div key={stage} className="space-y-4">
             <div className="flex items-center gap-3">
-              <div className="h-px flex-1 bg-gradient-to-r from-slate-200 to-transparent" />
-              <h2 className="text-sm font-bold uppercase tracking-widest text-slate-400">
+              <div className="h-px flex-1 bg-gradient-to-r from-border to-transparent" />
+              <h2 className="text-sm font-bold uppercase tracking-widest text-muted-foreground/60">
                 {getPhaseLabel(stage)}
               </h2>
-              <div className="h-px flex-1 bg-gradient-to-l from-slate-200 to-transparent" />
+              <div className="h-px flex-1 bg-gradient-to-l from-border to-transparent" />
             </div>
 
             <div className="grid gap-4">
@@ -184,15 +184,15 @@ export function OnboardingRoadmap({ tasks, onToggleSubtask, isToggling, readOnly
                     className={cn(
                       'rounded-2xl border transition-all duration-300 overflow-hidden',
                       phaseProgress === 100
-                        ? 'border-emerald-200 bg-emerald-50'
-                        : 'border-slate-200 bg-white shadow-sm'
+                        ? 'border-emerald-200/50 bg-emerald-50 dark:bg-emerald-500/10 dark:border-emerald-500/20'
+                        : 'border-border bg-card shadow-sm'
                     )}
                   >
                     {/* Header do card */}
                     <button
                       type="button"
                       onClick={() => toggleExpand(parentTask.id)}
-                      className="w-full flex items-center gap-4 p-5 text-left hover:bg-slate-50 transition-colors"
+                      className="w-full flex items-center gap-4 p-5 text-left hover:bg-muted/50 transition-colors"
                     >
                       <div className={cn(
                         'w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br shrink-0',
@@ -207,20 +207,20 @@ export function OnboardingRoadmap({ tasks, onToggleSubtask, isToggling, readOnly
                             {config.label}
                           </span>
                         </div>
-                        <h3 className="text-slate-800 font-semibold text-base truncate">
+                        <h3 className="text-foreground font-semibold text-base truncate">
                           {parentTask.title}
                         </h3>
                         {parentTask.description && (
-                          <p className="text-slate-500 text-xs mt-0.5 truncate">{parentTask.description}</p>
+                          <p className="text-muted-foreground text-xs mt-0.5 truncate">{parentTask.description}</p>
                         )}
                       </div>
 
                       <div className="flex items-center gap-3 shrink-0">
                         <div className="text-right">
-                          <span className="text-xs font-medium text-slate-500">
+                          <span className="text-xs font-medium text-muted-foreground">
                             {completedSubs}/{totalSubs}
                           </span>
-                          <div className="w-16 h-1.5 bg-slate-200 rounded-full mt-1 overflow-hidden">
+                          <div className="w-16 h-1.5 bg-muted rounded-full mt-1 overflow-hidden">
                             <div
                               className="h-full rounded-full transition-all duration-500"
                               style={{
@@ -236,16 +236,16 @@ export function OnboardingRoadmap({ tasks, onToggleSubtask, isToggling, readOnly
                           </div>
                         </div>
                         {isExpanded ? (
-                          <ChevronDown className="w-4 h-4 text-slate-400" />
+                          <ChevronDown className="w-4 h-4 text-muted-foreground/60" />
                         ) : (
-                          <ChevronRight className="w-4 h-4 text-slate-400" />
+                          <ChevronRight className="w-4 h-4 text-muted-foreground/60" />
                         )}
                       </div>
                     </button>
 
                     {/* Subtarefas */}
                     {isExpanded && subs.length > 0 && (
-                      <div className="border-t border-slate-100 px-5 py-3 space-y-1">
+                      <div className="border-t border-border px-5 py-3 space-y-1">
                         {subs.sort((a, b) => (a.order ?? 0) - (b.order ?? 0)).map(sub => {
                           const isDone = sub.status === 'done';
                           const isTogglingThis = isToggling === sub.id;
@@ -255,7 +255,7 @@ export function OnboardingRoadmap({ tasks, onToggleSubtask, isToggling, readOnly
                               key={sub.id}
                               className={cn(
                                 'flex items-center gap-3 py-2.5 px-3 rounded-lg transition-all group',
-                                isDone ? 'opacity-60' : 'hover:bg-slate-50',
+                                isDone ? 'opacity-60' : 'hover:bg-accent/50',
                                 !readOnly && !isDone && 'cursor-pointer'
                               )}
                               onClick={() => {
@@ -269,16 +269,16 @@ export function OnboardingRoadmap({ tasks, onToggleSubtask, isToggling, readOnly
                               ) : isDone ? (
                                 <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
                               ) : (
-                                <Circle className="w-4 h-4 text-slate-300 group-hover:text-slate-400 transition-colors shrink-0" />
+                                <Circle className="w-4 h-4 text-muted-foreground/40 group-hover:text-muted-foreground transition-colors shrink-0" />
                               )}
                               <span className={cn(
                                 'text-sm flex-1',
-                                isDone ? 'text-slate-400 line-through' : 'text-slate-700'
+                                isDone ? 'text-muted-foreground line-through' : 'text-foreground'
                               )}>
                                 {sub.title}
                               </span>
                               {sub.description && !isDone && (
-                                <span className="text-[10px] text-slate-400 hidden sm:block max-w-[200px] truncate">
+                                <span className="text-[10px] text-muted-foreground hidden sm:block max-w-[200px] truncate">
                                   {sub.description}
                                 </span>
                               )}
@@ -290,21 +290,21 @@ export function OnboardingRoadmap({ tasks, onToggleSubtask, isToggling, readOnly
 
                     {/* Comentários/Notas da equipe */}
                     {isExpanded && (commentsMap[parentTask.id] || []).length > 0 && (
-                      <div className="border-t border-slate-100 px-5 py-3">
+                      <div className="border-t border-border px-5 py-3">
                         <div className="flex items-center gap-1.5 mb-2">
-                          <MessageSquare className="w-3.5 h-3.5 text-blue-400" />
-                          <span className="text-[11px] font-semibold text-blue-500 uppercase tracking-wider">Notas da Equipe</span>
+                          <MessageSquare className="w-3.5 h-3.5 text-blue-400 dark:text-blue-500" />
+                          <span className="text-[11px] font-semibold text-blue-500 dark:text-blue-400 uppercase tracking-wider">Notas da Equipe</span>
                         </div>
                         <div className="space-y-2">
                           {(commentsMap[parentTask.id] || []).map(comment => (
-                            <div key={comment.id} className="bg-blue-50/60 rounded-lg px-3 py-2">
+                            <div key={comment.id} className="bg-blue-50/60 dark:bg-blue-900/20 rounded-lg px-3 py-2">
                               <div className="flex items-center justify-between mb-0.5">
-                                <span className="text-[10px] font-semibold text-blue-600">{comment.author}</span>
-                                <span className="text-[10px] text-blue-400">
+                                <span className="text-[10px] font-semibold text-blue-600 dark:text-blue-400">{comment.author}</span>
+                                <span className="text-[10px] text-blue-400 dark:text-blue-500/70">
                                   {format(new Date(comment.created_at), "dd/MM 'às' HH:mm", { locale: ptBR })}
                                 </span>
                               </div>
-                              <p className="text-xs text-slate-600 whitespace-pre-wrap">{comment.content}</p>
+                              <p className="text-xs text-muted-foreground whitespace-pre-wrap">{comment.content}</p>
                             </div>
                           ))}
                         </div>

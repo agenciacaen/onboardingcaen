@@ -19,11 +19,11 @@ export function CompletionScreen({ clientName }: CompletionScreenProps) {
         </div>
       </div>
 
-      <h1 className="text-3xl font-bold tracking-tight text-white mb-4">
+      <h1 className="text-3xl font-bold tracking-tight text-foreground mb-4">
         Parabéns, {clientName}!
       </h1>
       
-      <p className="text-lg text-zinc-400 mb-8 max-w-xl">
+      <p className="text-lg text-muted-foreground mb-8 max-w-xl">
         Você concluiu sua ativação com sucesso! Nossa equipe já foi notificada 
         e está pronta para acelerar os seus resultados. Comece a explorar seus módulos agora.
       </p>
@@ -31,35 +31,35 @@ export function CompletionScreen({ clientName }: CompletionScreenProps) {
       <div className="grid grid-cols-2 gap-4 w-full mb-8">
         <Button 
           variant="outline" 
-          className="h-24 flex flex-col items-center justify-center gap-3 bg-zinc-900/50 border-zinc-800 hover:bg-zinc-800 hover:border-zinc-700 transition-all hover:-translate-y-1"
+          className="h-24 flex flex-col items-center justify-center gap-3 bg-card border-border hover:bg-muted hover:border-border transition-all hover:-translate-y-1"
           onClick={() => navigate('/client')}
         >
-          <LayoutDashboard className="w-6 h-6 text-zinc-400" />
-          <span className="text-white">Dashboard Geral</span>
+          <LayoutDashboard className="w-6 h-6 text-muted-foreground" />
+          <span className="text-foreground">Dashboard Geral</span>
         </Button>
         <Button 
           variant="outline" 
-          className="h-24 flex flex-col items-center justify-center gap-3 bg-zinc-900/50 border-zinc-800 hover:bg-zinc-800 hover:border-zinc-700 transition-all hover:-translate-y-1"
+          className="h-24 flex flex-col items-center justify-center gap-3 bg-card border-border hover:bg-muted hover:border-border transition-all hover:-translate-y-1"
           onClick={() => navigate('/client/traffic')}
         >
-          <TrendingUp className="w-6 h-6 text-emerald-400" />
-          <span className="text-white">Tráfego Pago</span>
+          <TrendingUp className="w-6 h-6 text-emerald-500" />
+          <span className="text-foreground">Tráfego Pago</span>
         </Button>
         <Button 
           variant="outline" 
-          className="h-24 flex flex-col items-center justify-center gap-3 bg-zinc-900/50 border-zinc-800 hover:bg-zinc-800 hover:border-zinc-700 transition-all hover:-translate-y-1"
+          className="h-24 flex flex-col items-center justify-center gap-3 bg-card border-border hover:bg-muted hover:border-border transition-all hover:-translate-y-1"
           onClick={() => navigate('/client/social')}
         >
-          <Share2 className="w-6 h-6 text-purple-400" />
-          <span className="text-white">Social Media</span>
+          <Share2 className="w-6 h-6 text-purple-500" />
+          <span className="text-foreground">Social Media</span>
         </Button>
         <Button 
           variant="outline" 
-          className="h-24 flex flex-col items-center justify-center gap-3 bg-zinc-900/50 border-zinc-800 hover:bg-zinc-800 hover:border-zinc-700 transition-all hover:-translate-y-1"
+          className="h-24 flex flex-col items-center justify-center gap-3 bg-card border-border hover:bg-muted hover:border-border transition-all hover:-translate-y-1"
           onClick={() => navigate('/client/web')}
         >
-          <Globe className="w-6 h-6 text-blue-400" />
-          <span className="text-white">Web & SEO</span>
+          <Globe className="w-6 h-6 text-blue-500" />
+          <span className="text-foreground">Web & SEO</span>
         </Button>
       </div>
 

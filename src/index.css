@@ -81,11 +81,11 @@
     background: transparent;
   }
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: #e2e8f0;
+    background: hsl(var(--muted-foreground) / 0.2);
     border-radius: 10px;
   }
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: #cbd5e1;
+    background: hsl(var(--muted-foreground) / 0.3);
   }
 
   .calendar-card-item {

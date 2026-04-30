@@ -70,9 +70,9 @@ export function ClientProjectRoadmap({ clientId }: ClientProjectRoadmapProps) {
 
   if (isLoading) {
     return (
-      <Card className="border-slate-100 shadow-sm bg-white">
+      <Card className="border-border shadow-sm bg-card">
         <CardContent className="p-6">
-           <div className="h-2 w-full bg-slate-100 animate-pulse rounded-full" />
+           <div className="h-2 w-full bg-muted animate-pulse rounded-full" />
         </CardContent>
       </Card>
     );
@@ -81,16 +81,16 @@ export function ClientProjectRoadmap({ clientId }: ClientProjectRoadmapProps) {
   if (tasks.length === 0) return null;
 
   return (
-    <Card className="overflow-hidden border-slate-100 shadow-sm transition-all hover:shadow-md">
+    <Card className="overflow-hidden border-border shadow-sm transition-all hover:shadow-md">
       <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-semibold text-slate-500 uppercase tracking-wider flex items-center justify-between">
+        <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center justify-between">
           <span>Progresso do Projeto</span>
           <span className="text-primary text-xl font-bold">{globalProgress}%</span>
         </CardTitle>
       </CardHeader>
       <CardContent className="pb-6">
         <div className="space-y-4">
-          <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden">
+          <div className="w-full h-3 bg-muted rounded-full overflow-hidden">
             <div 
               className={cn(
                 "h-full rounded-full transition-all duration-1000 ease-out bg-gradient-to-r from-blue-500 to-indigo-600 relative",
@@ -98,11 +98,11 @@ export function ClientProjectRoadmap({ clientId }: ClientProjectRoadmapProps) {
               )}
               style={{ width: `${globalProgress}%` }}
             >
-              <div className="absolute inset-0 bg-gradient-to-b from-white/20 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-b from-white/10 to-transparent" />
             </div>
           </div>
           
-          <div className="flex justify-between items-center text-xs text-slate-500 font-medium">
+          <div className="flex justify-between items-center text-xs text-muted-foreground font-medium">
             <p>Acompanhe a evolução do seu projeto conosco.</p>
             <button 
               onClick={() => window.location.href = '/client/onboarding'}

@@ -213,12 +213,17 @@ export function AgencyClientDetailPage() {
           {client.modules_enabled.traffic && <TabsTrigger value="traffic">Tráfego</TabsTrigger>}
           {client.modules_enabled.social && <TabsTrigger value="social">Social</TabsTrigger>}
           {client.modules_enabled.web && <TabsTrigger value="web">Web</TabsTrigger>}
+          {client.modules_enabled.crm && <TabsTrigger value="crm">CRM</TabsTrigger>}
+          {client.modules_enabled.approvals && <TabsTrigger value="approvals">Aprovações</TabsTrigger>}
           <TabsTrigger value="tasks">Tarefas</TabsTrigger>
-          <TabsTrigger value="documents">
-             <FileText className="w-4 h-4 mr-2" />
-             Documentos
-          </TabsTrigger>
-          <TabsTrigger value="financial">Financeiro</TabsTrigger>
+          {client.modules_enabled.documents && (
+            <TabsTrigger value="documents">
+              <FileText className="w-4 h-4 mr-2" />
+              Documentos
+            </TabsTrigger>
+          )}
+          {client.modules_enabled.financial && <TabsTrigger value="financial">Financeiro</TabsTrigger>}
+          {client.modules_enabled.support && <TabsTrigger value="support">Suporte</TabsTrigger>}
         </TabsList>
 
         <TabsContent value="access">
@@ -307,19 +312,33 @@ export function AgencyClientDetailPage() {
         {client.modules_enabled.traffic && <TabsContent value="traffic">Preview de Tráfego Aqui</TabsContent>}
         {client.modules_enabled.social && <TabsContent value="social">Preview Social Aqui</TabsContent>}
         {client.modules_enabled.web && <TabsContent value="web">Preview Web Aqui</TabsContent>}
+        {client.modules_enabled.crm && <TabsContent value="crm">Preview CRM & Tech Aqui</TabsContent>}
+        {client.modules_enabled.approvals && <TabsContent value="approvals">Preview Aprovações Aqui</TabsContent>}
         <TabsContent value="tasks">Listagem de tarefas vinculadas</TabsContent>
-        <TabsContent value="documents" className="pt-4">
-          <DocumentLibrary clientIdFilter={id || ""} />
-        </TabsContent>
-        <TabsContent value="financial">
-          <div className="pt-4">
-            <h3 className="font-semibold text-lg mb-4">Gestão Financeira do Cliente</h3>
-            <p className="text-sm text-muted-foreground mb-4">Veja e gerencie as faturas e investimentos deste cliente.</p>
-            <div className="bg-muted/10 rounded-xl border p-4 text-center">
-               <p className="text-sm">Para gerenciar faturas, acesse o <Button variant="link" onClick={() => navigate('/agency/financial')}>Módulo Financeiro Geral</Button>.</p>
+        {client.modules_enabled.documents && (
+          <TabsContent value="documents" className="pt-4">
+            <DocumentLibrary clientIdFilter={id || ""} />
+          </TabsContent>
+        )}
+        {client.modules_enabled.financial && (
+          <TabsContent value="financial">
+            <div className="pt-4">
+              <h3 className="font-semibold text-lg mb-4">Gestão Financeira do Cliente</h3>
+              <p className="text-sm text-muted-foreground mb-4">Veja e gerencie as faturas e investimentos deste cliente.</p>
+              <div className="bg-muted/10 rounded-xl border p-4 text-center">
+                 <p className="text-sm">Para gerenciar faturas, acesse o <Button variant="link" onClick={() => navigate('/agency/financial')}>Módulo Financeiro Geral</Button>.</p>
+              </div>
             </div>
-          </div>
-        </TabsContent>
+          </TabsContent>
+        )}
+        {client.modules_enabled.support && (
+          <TabsContent value="support" className="pt-4">
+            <p className="text-sm text-muted-foreground">Histórico de tickets de suporte deste cliente.</p>
+            <div className="mt-4">
+               <Button onClick={() => navigate(`/agency/support?clientId=${client.id}`)}>Ver Tickets no Módulo de Suporte</Button>
+            </div>
+          </TabsContent>
+        )}
       </Tabs>
 
       <ClientEditModal 
