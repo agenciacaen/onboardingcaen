@@ -379,8 +379,20 @@ export function TaskDetailModal({
     try {
       const { error } = await supabase.from('tasks').update(payload).eq('id', subId);
       if (error) throw error;
-      setSubtasks(prev => prev.map(s => s.id === subId ? { ...s, status: newStatus } : s));
+      
+      const updatedSubtasks = subtasks.map(s => s.id === subId ? { ...s, status: newStatus } : s);
+      setSubtasks(updatedSubtasks);
       onSubtaskToggle?.(subId, newStatus);
+
+      // Se a subtarefa foi marcada como 'done', verificar se todas agora estão 'done'
+      if (newStatus === 'done' && updatedSubtasks.length > 0) {
+        const allDone = updatedSubtasks.every(s => s.status === 'done');
+        if (allDone) {
+          await updateTaskField('status', 'done');
+          toast.success('Todas as subtarefas concluídas! Tarefa pai finalizada.');
+        }
+      }
+      
       onTaskUpdated?.();
     } catch (error) { 
       console.error('Update task error:', error);

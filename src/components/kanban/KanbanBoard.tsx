@@ -22,7 +22,8 @@ type Task = {
 const columns = [
   { id: 'todo', title: 'A Fazer' },
   { id: 'in_progress', title: 'Em Progresso' },
-  { id: 'review', title: 'Revisão' }
+  { id: 'review', title: 'Revisão' },
+  { id: 'done', title: 'Concluído' }
 ];
 
 export function KanbanBoard({ 
@@ -49,11 +50,7 @@ export function KanbanBoard({
 
     if (moduleFilter) {
       // Buscamos o módulo específico OU qualquer item que seja subtarefa (parent_id não nulo).
-      // A lógica de filtragem posterior (parentTasks) garantirá que só mostramos
-      // subtarefas cujos pais pertençam ao módulo atual.
-      query = query.or(`module.eq.${moduleFilter},parent_id.not.is.null`).neq('status', 'done');
-    } else {
-      query = query.neq('status', 'done');
+      query = query.or(`module.eq.${moduleFilter},parent_id.not.is.null`);
     }
     
     const { data, error } = await query;
@@ -105,12 +102,8 @@ export function KanbanBoard({
 
     // Optimistic UI update do pai
     const previousAll = [...allTasks];
-    // Se arrastou para 'done', removemos da lista do kanban (ela vai para o histórico)
-    if (statusId === 'done') {
-      setAllTasks(prev => prev.filter(t => t.id !== draggedTaskId && t.parent_id !== draggedTaskId));
-    } else {
-      setAllTasks(prev => prev.map(t => t.id === draggedTaskId ? { ...t, status: statusId } : t));
-    }
+    // Atualizamos o status localmente
+    setAllTasks(prev => prev.map(t => t.id === draggedTaskId ? { ...t, status: statusId } : t));
 
     // DB Update do pai
     const updatePayload: Record<string, unknown> = { status: statusId, updated_at: new Date().toISOString() };
