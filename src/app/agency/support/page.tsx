@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { SupportService } from "@/modules/support/services/support.service";
-import { SupportTicket } from "@/modules/support/types";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Search, Clock, MessageCircle, User } from "lucide-react";
 import { Input } from "@/components/ui/input";

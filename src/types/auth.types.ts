@@ -1,4 +1,4 @@
-import { Client } from './client.types';
+import type { Client } from './client.types';
 
 export type Role = 'admin' | 'client' | 'member';
 

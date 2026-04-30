@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { SupportService } from '../services/support.service';
-import type { SupportTicket, SupportMessage } from '../types';
+import type { SupportMessage } from '../types';
 import { useAuthStore } from '@/store/authStore';
 import { toast } from 'sonner';
 import { Textarea } from '@/components/ui/textarea';
@@ -29,7 +29,7 @@ export function TicketChatView({ ticketId, onBack }: TicketChatViewProps) {
   const [isConverting, setIsConverting] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const isAgency = profile?.role === 'admin' || profile?.role === 'gestor' || profile?.role === 'membro';
+  const isAgency = profile?.role === 'admin' || profile?.role === 'member';
 
   useEffect(() => {
     if (ticketId) {
@@ -118,7 +118,7 @@ export function TicketChatView({ ticketId, onBack }: TicketChatViewProps) {
     if (!ticketId) return;
     try {
       await SupportService.updateTicketStatus(ticketId, 'resolved');
-      setTicket(prev => prev ? { ...prev, status: 'resolved' } : null);
+      setTicket((prev: any) => prev ? { ...prev, status: 'resolved' } : null);
       toast.success('Chamado marcado como resolvido.');
     } catch (error) {
       toast.error('Erro ao atualizar status do chamado.');

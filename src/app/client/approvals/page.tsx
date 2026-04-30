@@ -85,9 +85,7 @@ export function ClientApprovalsPage() {
         return;
       }
       
-      if (newStatus === "approved" ? "Arte aprovada com sucesso!" : "Alterações solicitadas com sucesso.") {
-        toast.success(newStatus === "approved" ? "Arte aprovada com sucesso!" : "Alterações solicitadas com sucesso.");
-      }
+      toast.success(newStatus === "approved" ? "Arte aprovada com sucesso!" : "Alterações solicitadas com sucesso.");
       
       // Se for reprovado, cria tarefa automática para a equipe
       if (newStatus === 'rejected' && clientId && profile?.id) {
