@@ -36,12 +36,11 @@ export function ClientOnboardingPage() {
       if (clientError) throw clientError;
       setClient(clientData as Client);
 
-      // Busca todas as tarefas de onboarding (pai + sub) desse cliente
+      // Busca todas as tarefas (pai + sub) desse cliente para atuar como timeline global
       const { data: taskData, error: taskError } = await supabase
         .from('tasks')
         .select('*')
         .eq('client_id', clientId)
-        .or(`stage.in.(onboarding_phase_1,onboarding_phase_2),module.in.(onboarding,general)`)
         .order('created_at', { ascending: true });
 
       if (taskError) throw taskError;
