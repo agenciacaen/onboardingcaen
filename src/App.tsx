@@ -35,6 +35,8 @@ import AgencyWebPage from './app/agency/web/page';
 import AgencyCRMPage from './app/agency/crm/page';
 // AgencyGeneralPage removido - módulo Geral eliminado
 import AIAgentPage from './app/agency/ai-agent/page';
+import AgencySupportPage from './app/agency/support/page';
+import AgencyTicketDetailPage from './app/agency/support/[ticketId]/page';
 
 // Cliente
 import { ClientDashboard } from './app/client/page';
@@ -213,6 +215,8 @@ export default function App() {
               <Route path="/agency/web" element={<AgencyWebPage />} />
               <Route path="/agency/crm" element={<AgencyCRMPage />} />
               <Route path="/agency/ai-agent" element={<AIAgentPage />} />
+              <Route path="/agency/support" element={<AgencySupportPage />} />
+              <Route path="/agency/support/:ticketId" element={<AgencyTicketDetailPage />} />
               {/* Módulo Geral eliminado */}
             </Route>
           </Route>

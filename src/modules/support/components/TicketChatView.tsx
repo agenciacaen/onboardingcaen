@@ -5,29 +5,34 @@ import { useAuthStore } from '@/store/authStore';
 import { toast } from 'sonner';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Send, User, Shield, Info, ArrowLeft, Paperclip, Loader2 } from 'lucide-react';
+import { Send, User, Shield, Info, ArrowLeft, Paperclip, Loader2, CheckSquare } from 'lucide-react';
 import { supabase } from '@/services/supabase';
+import { AutomationService } from '@/services/automation.service';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 interface TicketChatViewProps {
   ticketId: string;
+  onBack?: () => void;
 }
 
-export function TicketChatView({ ticketId }: TicketChatViewProps) {
-  const { clientId, profile } = useAuthStore();
+export function TicketChatView({ ticketId, onBack }: TicketChatViewProps) {
+  const { clientId: storeClientId, profile } = useAuthStore();
   const navigate = useNavigate();
   
-  const [ticket, setTicket] = useState<SupportTicket | null>(null);
+  const [ticket, setTicket] = useState<any | null>(null);
   const [messages, setMessages] = useState<SupportMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
+  const [isConverting, setIsConverting] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  const isAgency = profile?.role === 'admin' || profile?.role === 'gestor' || profile?.role === 'membro';
+
   useEffect(() => {
-    if (clientId && ticketId) {
+    if (ticketId) {
       loadData();
       
       const subscription = supabase
@@ -38,9 +43,7 @@ export function TicketChatView({ ticketId }: TicketChatViewProps) {
             table: 'support_messages',
             filter: `ticket_id=eq.${ticketId}`
         }, () => {
-            // Need to fetch full message with profile to display nicely
-            // For now, reload messages or append basic
-            loadData(false); // pass false to avoid loading spinner overlay
+            loadData(false);
         })
         .subscribe();
 
@@ -48,7 +51,7 @@ export function TicketChatView({ ticketId }: TicketChatViewProps) {
         supabase.removeChannel(subscription);
       };
     }
-  }, [clientId, ticketId]);
+  }, [ticketId]);
 
   const loadData = async (showLoader = true) => {
     if (showLoader) setIsLoading(true);
@@ -75,20 +78,50 @@ export function TicketChatView({ ticketId }: TicketChatViewProps) {
   };
 
   const handleSend = async () => {
-    if (!newMessage.trim() || !clientId || !ticketId) return;
+    if (!newMessage.trim() || !ticketId) return;
+    const targetClientId = ticket?.client_id || storeClientId;
+    if (!targetClientId) return;
 
     setIsSending(true);
     try {
-      // Optimistic append
       const content = newMessage;
       setNewMessage('');
       
-      await SupportService.sendMessage(clientId, ticketId, content);
+      await SupportService.sendMessage(targetClientId, ticketId, content);
       scrollToBottom();
     } catch (_err) {
        toast.error('Falha ao enviar mensagem.');
     } finally {
       setIsSending(false);
+    }
+  };
+
+  const handleConvertToTask = async () => {
+    if (!ticket || !profile?.id) return;
+    setIsConverting(true);
+    try {
+      await AutomationService.createTaskFromTicket(ticket.client_id, profile.id, {
+        id: ticket.id,
+        subject: ticket.subject,
+        description: messages[0]?.message || ''
+      });
+      toast.success('Ticket convertido em tarefa com sucesso!');
+    } catch (error) {
+      console.error('Erro ao converter ticket:', error);
+      toast.error('Erro ao converter ticket em tarefa.');
+    } finally {
+      setIsConverting(false);
+    }
+  };
+
+  const handleResolveTicket = async () => {
+    if (!ticketId) return;
+    try {
+      await SupportService.updateTicketStatus(ticketId, 'resolved');
+      setTicket(prev => prev ? { ...prev, status: 'resolved' } : null);
+      toast.success('Chamado marcado como resolvido.');
+    } catch (error) {
+      toast.error('Erro ao atualizar status do chamado.');
     }
   };
 
@@ -114,7 +147,7 @@ export function TicketChatView({ ticketId }: TicketChatViewProps) {
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-zinc-800 bg-zinc-900 shrink-0">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" className="hover:bg-zinc-800" onClick={() => navigate('/client/support')}>
+          <Button variant="ghost" size="icon" className="hover:bg-zinc-800" onClick={onBack || (() => navigate(-1))}>
             <ArrowLeft className="w-5 h-5 text-zinc-400" />
           </Button>
           <div>
@@ -127,9 +160,35 @@ export function TicketChatView({ ticketId }: TicketChatViewProps) {
                 <span className={`w-2 h-2 rounded-full ${ticket.status === 'resolved' ? 'bg-purple-500' : ticket.status === 'open' ? 'bg-emerald-500' : 'bg-blue-500'}`} />
                 {getStatusText(ticket.status)}
               </span>
+              {isAgency && (
+                <span className="text-zinc-400">| Cliente: {ticket.client?.name || 'Carregando...'}</span>
+              )}
             </div>
           </div>
         </div>
+
+        {isAgency && ticket.status !== 'resolved' && (
+          <div className="flex items-center gap-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="border-blue-500/30 text-blue-400 hover:bg-blue-500/10"
+              onClick={handleConvertToTask}
+              disabled={isConverting}
+            >
+              {isConverting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <CheckSquare className="w-4 h-4 mr-2" />}
+              Gerar Tarefa
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10"
+              onClick={handleResolveTicket}
+            >
+              Concluir
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Chat History */}

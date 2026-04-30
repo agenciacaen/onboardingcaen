@@ -251,6 +251,7 @@ export const AutomationService = {
           priority,
           created_by: userId,
           stage,
+          is_template: false,
         })
         .select('id')
         .single();
@@ -276,6 +277,7 @@ export const AutomationService = {
             created_by: userId,
             stage,
             order: idx,
+            is_template: false,
           }));
 
         if (subs.length > 0) {
@@ -301,5 +303,57 @@ export const AutomationService = {
     }
 
     return { tasksCreated };
+  },
+
+  /**
+   * Cria uma tarefa de ajuste a partir de uma reprovação de arte/criativo
+   */
+  async createTaskFromRejection(clientId: string, userId: string, creativeData: { title: string, feedback: string }) {
+    try {
+      const { error } = await supabase
+        .from('tasks')
+        .insert({
+          client_id: clientId,
+          title: `[Ajuste] - ${creativeData.title}`,
+          description: `Feedback do Cliente: ${creativeData.feedback}`,
+          module: 'social',
+          status: 'todo',
+          priority: 'high',
+          created_by: userId,
+          stage: 'production_fix',
+        });
+
+      if (error) throw error;
+      return { success: true };
+    } catch (error) {
+      console.error('Erro ao criar tarefa de ajuste:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Converte um ticket de suporte em uma tarefa de produção
+   */
+  async createTaskFromTicket(clientId: string, userId: string, ticketData: { id: string, subject: string, description?: string }) {
+    try {
+      const { error } = await supabase
+        .from('tasks')
+        .insert({
+          client_id: clientId,
+          title: `[Suporte] - ${ticketData.subject}`,
+          description: `Ticket ID: #${ticketData.id.split('-')[0]}\n\nDescrição: ${ticketData.description || 'Ver no ticket'}`,
+          module: 'general',
+          status: 'todo',
+          priority: 'medium',
+          created_by: userId,
+          stage: 'support_task',
+        });
+
+      if (error) throw error;
+      return { success: true };
+    } catch (error) {
+      console.error('Erro ao converter ticket em tarefa:', error);
+      throw error;
+    }
   },
 };

@@ -148,6 +148,9 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       <SidebarGroup label="Conteúdo">
         <SidebarItem icon={FileText} label="Documentos" href="/agency/documents" onNavigate={onNavigate} />
       </SidebarGroup>
+      <SidebarGroup label="Suporte">
+        <SidebarItem icon={MessageCircle} label="Atendimento" href="/agency/support" onNavigate={onNavigate} />
+      </SidebarGroup>
     </>
   );
 

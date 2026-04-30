@@ -2,15 +2,49 @@ import { supabase } from '@/services/supabase';
 import type { SupportTicket } from '../types';
 
 export const SupportService = {
-  async getTickets(clientId: string) {
+  async getTickets(clientId?: string) {
+    let query = supabase
+      .from('support_tickets')
+      .select(`
+        *,
+        client:clients (
+          name
+        )
+      `)
+      .order('created_at', { ascending: false });
+
+    if (clientId) {
+      query = query.eq('client_id', clientId);
+    }
+
+    const { data, error } = await query;
+
+    if (error) throw error;
+    return data as any[];
+  },
+
+  async getAllTickets() {
     const { data, error } = await supabase
       .from('support_tickets')
-      .select('*')
-      .eq('client_id', clientId)
+      .select(`
+        *,
+        client:clients (
+          name
+        )
+      `)
       .order('created_at', { ascending: false });
 
     if (error) throw error;
-    return data as SupportTicket[];
+    return data;
+  },
+
+  async updateTicketStatus(ticketId: string, status: SupportTicket['status']) {
+    const { error } = await supabase
+      .from('support_tickets')
+      .update({ status, updated_at: new Date().toISOString() })
+      .eq('id', ticketId);
+
+    if (error) throw error;
   },
 
   async getTicket(ticketId: string) {

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/services/supabase";
 import { NotificationService } from "@/services/notification.service";
+import { AutomationService } from "@/services/automation.service";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/ui/PageHeader";
@@ -84,8 +85,18 @@ export function ClientApprovalsPage() {
         return;
       }
       
-      toast.success(newStatus === "approved" ? "Arte aprovada com sucesso!" : "Alterações solicitadas com sucesso.");
+      if (newStatus === "approved" ? "Arte aprovada com sucesso!" : "Alterações solicitadas com sucesso.") {
+        toast.success(newStatus === "approved" ? "Arte aprovada com sucesso!" : "Alterações solicitadas com sucesso.");
+      }
       
+      // Se for reprovado, cria tarefa automática para a equipe
+      if (newStatus === 'rejected' && clientId && profile?.id) {
+        await AutomationService.createTaskFromRejection(clientId, profile.id, {
+          title: creatives.find(c => c.id === id)?.title || 'Arte sem título',
+          feedback: feedbackText || 'Sem feedback detalhado'
+        });
+      }
+
       setCreatives(prev => prev.map(c => 
         c.id === id ? { ...c, status: newStatus, feedback: feedbackText } : c
       ));
