@@ -1,18 +1,15 @@
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/services/supabase";
-import { DataTable } from "@/components/tables/DataTable";
-import { type ColumnDef } from "@tanstack/react-table";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Button } from "@/components/ui/button";
 import { ClientCreateModal } from "@/components/modals/ClientCreateModal";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { LoadingSkeleton } from "@/components/ui/LoadingSkeleton";
 import { Input } from "@/components/ui/input";
-import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { Search } from "lucide-react";
 import { type ClientWithProfile } from "@/types/client.types";
-
+import { ClientCard } from "@/components/cards/ClientCard";
 
 export function ClientListPage() {
   const [data, setData] = useState<ClientWithProfile[]>([]);
@@ -41,7 +38,6 @@ export function ClientListPage() {
       toast.error("Erro ao buscar clientes.");
       console.error(error);
     } else {
-      // Garantir que profiles seja um objeto simples se vier como array
       const formatted = (clients || []).map((c) => {
         const row = c as Record<string, unknown>;
         const profiles = row.profiles;
@@ -51,8 +47,7 @@ export function ClientListPage() {
         };
       });
       setData(formatted as ClientWithProfile[]);
-      
-      // Fetch financial summary
+
       const clientIds = (clients || []).map(c => c.id);
       if (clientIds.length > 0) {
         const { data: finData } = await supabase
@@ -60,7 +55,7 @@ export function ClientListPage() {
           .select('client_id, amount')
           .in('client_id', clientIds)
           .eq('status', 'pending');
-        
+
         const summary: Record<string, number> = {};
         finData?.forEach(f => {
           summary[f.client_id] = (summary[f.client_id] || 0) + (f.amount || 0);
@@ -77,68 +72,6 @@ export function ClientListPage() {
     };
     load();
   }, [fetchClients]);
-
-
-  const columns = useMemo<ColumnDef<ClientWithProfile>[]>(() => [
-    {
-      accessorKey: "name",
-      header: "Nome da Empresa",
-    },
-    {
-      accessorKey: "email",
-      header: "Email",
-    },
-    {
-      accessorKey: "status",
-      header: "Status",
-      cell: ({ row }) => <StatusBadge status={row.original.status} />,
-    },
-    {
-      accessorKey: "modules_enabled",
-      header: "Módulos",
-      cell: ({ row }) => {
-        const mods = row.original.modules_enabled;
-        if (!mods) return "-";
-        const parts = [];
-        if (mods.traffic) parts.push("Tráfego");
-        if (mods.social) parts.push("Social");
-        if (mods.web) parts.push("Web");
-        if (mods.crm) parts.push("CRM");
-        if (mods.approvals) parts.push("Aprovações");
-        if (mods.financial) parts.push("Financeiro");
-        if (mods.documents) parts.push("Docs");
-        if (mods.support) parts.push("Suporte");
-        return parts.join(", ");
-      },
-    },
-    {
-      accessorKey: "assigned_to",
-      header: "Responsável",
-      cell: ({ row }) => row.original.profiles?.full_name || "Não atribuído",
-    },
-    {
-      id: "balance",
-      header: "Pendente",
-      cell: ({ row }) => {
-        const amount = financials[row.original.id] || 0;
-        return (
-          <span className={amount > 0 ? "text-amber-600 font-bold" : "text-green-600"}>
-            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(amount)}
-          </span>
-        );
-      }
-    },
-    {
-      id: "actions",
-      cell: ({ row }) => {
-        return (
-          <Button variant="ghost" size="sm" asChild>
-            <Link to={`/agency/clients/${row.original.id}`}>Ver Detalhes</Link>
-          </Button>
-        );
-      },
-    },
-  ], [financials]);
 
   return (
     <div className="space-y-6">
@@ -164,8 +97,20 @@ export function ClientListPage() {
 
       {loading ? (
         <LoadingSkeleton className="h-[400px] w-full" />
+      ) : data.length === 0 ? (
+        <div className="text-center py-12 text-muted-foreground">
+          <p>Nenhum cliente encontrado.</p>
+        </div>
       ) : (
-        <DataTable columns={columns} data={data} />
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+          {data.map((client) => (
+            <ClientCard
+              key={client.id}
+              client={client}
+              pendingAmount={financials[client.id] || 0}
+            />
+          ))}
+        </div>
       )}
 
       <ClientCreateModal 

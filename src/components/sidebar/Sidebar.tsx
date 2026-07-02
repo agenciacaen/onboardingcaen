@@ -50,16 +50,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
         <SidebarItem icon={LayoutDashboard} label="Dashboard" href="/agency" onNavigate={onNavigate} />
       </SidebarGroup>
       <SidebarGroup label="Gestão">
-        <SidebarItem 
-          icon={Users} 
-          label="Clientes" 
-          href="/agency/clients" 
-          onNavigate={onNavigate}
-          subItems={[
-            { label: "Overview", href: "/agency/clients?tab=overview" },
-            { label: "Pipeline", href: "/agency/clients?tab=pipeline" },
-          ]}
-        />
+        <SidebarItem icon={Users} label="Clientes" href="/agency/clients" onNavigate={onNavigate} />
         <SidebarItem icon={UserCheck} label="Equipe" href="/agency/team" onNavigate={onNavigate} />
         <SidebarItem icon={ShieldCheck} label="Acessos" href="/agency/access" onNavigate={onNavigate} />
       </SidebarGroup>
@@ -78,50 +69,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
         <SidebarItem icon={GitBranch} label="Fluxos" href="/agency/flows" onNavigate={onNavigate} />
         <SidebarItem icon={ThumbsUp} label="Aprovações" href="/agency/approvals" onNavigate={onNavigate} />
       </SidebarGroup>
-      <SidebarGroup label="Serviços">
-        <SidebarItem 
-          icon={TrendingUp} 
-          label="Tráfego Pago" 
-          href="/agency/traffic" 
-          onNavigate={onNavigate}
-          subItems={[
-            { label: "Dashboard", href: "/agency/traffic?tab=dashboard" },
-            { label: "Campanhas", href: "/agency/traffic?tab=campaigns" },
-            { label: "Otimizações", href: "/agency/traffic?tab=optimizations" },
-          ]}
-        />
-        <SidebarItem 
-          icon={Share2} 
-          label="Social Media" 
-          href="/agency/social" 
-          onNavigate={onNavigate}
-          subItems={[
-            { label: "Calendário", href: "/agency/social?tab=calendar" },
-            { label: "Produção", href: "/agency/social?tab=production" },
-            { label: "Aprovações", href: "/agency/social?tab=approvals" },
-          ]}
-        />
-        <SidebarItem 
-          icon={Globe} 
-          label="Web" 
-          href="/agency/web" 
-          onNavigate={onNavigate}
-          subItems={[
-            { label: "Projetos", href: "/agency/web?tab=projects" },
-            { label: "Entregas", href: "/agency/web?tab=deliveries" },
-          ]}
-        />
-        <SidebarItem 
-          icon={Database} 
-          label="CRM & Tech" 
-          href="/agency/crm" 
-          onNavigate={onNavigate}
-          subItems={[
-            { label: "Integrações", href: "/agency/crm?tab=integrations" },
-            { label: "Automações", href: "/agency/crm?tab=automations" },
-          ]}
-        />
-      </SidebarGroup>
+
       <SidebarGroup label="Inteligência">
         <SidebarItem 
           icon={Brain} 

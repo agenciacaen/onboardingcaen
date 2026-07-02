@@ -19,7 +19,19 @@ import { AuthLoadingScreen } from './components/ui/AuthLoadingScreen';
 // Agência
 import { AgencyDashboard } from './app/agency/page';
 import { AgencyClientsPage } from './app/agency/clients/page';
-import { AgencyClientDetailPage } from './app/agency/clients/[id]/page';
+import { AgencyClientDetailLayout } from './app/agency/clients/[id]/page';
+import AgencyClientOverviewPage from './app/agency/clients/[id]/overview/page';
+import AgencyClientOnboardingPage from './app/agency/clients/[id]/onboarding/page';
+import AgencyClientTrafficPage from './app/agency/clients/[id]/traffic/page';
+import AgencyClientSocialPage from './app/agency/clients/[id]/social/page';
+import AgencyClientWebPage from './app/agency/clients/[id]/web/page';
+import AgencyClientCRMPage from './app/agency/clients/[id]/crm/page';
+import AgencyClientApprovalsPage from './app/agency/clients/[id]/approvals/page';
+import AgencyClientTasksPage from './app/agency/clients/[id]/tasks/page';
+import AgencyClientDocumentsPage from './app/agency/clients/[id]/documents/page';
+import AgencyClientFinancialPage from './app/agency/clients/[id]/financial/page';
+import AgencyClientSupportPage from './app/agency/clients/[id]/support/page';
+import AgencyClientAccessPage from './app/agency/clients/[id]/access/page';
 // AgencyCalendarPage removido - calendário agora é sub-item de Tarefas
 import { AgencyTasksPage } from './app/agency/tasks/page';
 import { AgencyFlowsPage } from './app/agency/flows/page';
@@ -29,10 +41,7 @@ import { AgencyDocumentsPage } from './app/agency/documents/page';
 import { AgencyReportsPage } from './app/agency/reports/page';
 import { AgencyFinancialPage } from './app/agency/financial/page';
 import { AgencyAccessPage } from './app/agency/access/page';
-import AgencySocialPage from './app/agency/social/page';
-import AgencyTrafficPage from './app/agency/traffic/page';
-import AgencyWebPage from './app/agency/web/page';
-import AgencyCRMPage from './app/agency/crm/page';
+// Serviços removidos da sidebar - agora são sub-rotas dentro de cada cliente
 // AgencyGeneralPage removido - módulo Geral eliminado
 import AIAgentPage from './app/agency/ai-agent/page';
 import AgencySupportPage from './app/agency/support/page';
@@ -71,7 +80,6 @@ export default function App() {
   useEffect(() => {
     let mounted = true;
 
-    // Timeout de segurança: se após 8s o auth ainda estiver em loading, forçar finalização
     const authTimeout = setTimeout(() => {
       if (mounted && useAuthStore.getState().isLoading) {
         console.warn('[Auth] Timeout de 8s atingido. Forçando finalização.');
@@ -97,7 +105,6 @@ export default function App() {
         } else {
           console.log('[Auth] Perfil carregado:', data?.role);
           
-          // Se tiver client_id, buscamos os dados do cliente separadamente
           if (data?.client_id) {
             console.log('[Auth] Buscando dados do cliente:', data.client_id);
             const { data: clientData, error: clientError } = await supabase
@@ -120,20 +127,14 @@ export default function App() {
       }
     };
 
-    // Usamos APENAS onAuthStateChange como fonte única de verdade.
-    // O evento INITIAL_SESSION é disparado imediatamente ao se inscrever,
-    // contendo a sessão restaurada do localStorage (se existir).
-    // Isso evita race conditions entre getSession() e onAuthStateChange.
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!mounted) return;
       console.log('[Auth] Evento:', event, session?.user?.email || 'sem sessão');
 
       switch (event) {
         case 'INITIAL_SESSION': {
-          // Sessão restaurada do localStorage no carregamento da página
           if (session?.user) {
             setUser(session.user);
-            // Verificar se o profile já foi pré-populado pela LoginPage
             const existingProfile = useAuthStore.getState().profile;
             if (existingProfile && existingProfile.id === session.user.id) {
               console.log('[Auth] Perfil já existe no store, pulando fetch.');
@@ -153,7 +154,6 @@ export default function App() {
         case 'SIGNED_IN': {
           if (session?.user) {
             setUser(session.user);
-            // Verificar se o profile já foi setado pela LoginPage
             const existingProfile = useAuthStore.getState().profile;
             if (existingProfile && existingProfile.id === session.user.id) {
               console.log('[Auth] Profile já setado pela LoginPage.');
@@ -175,7 +175,6 @@ export default function App() {
         }
 
         case 'TOKEN_REFRESHED': {
-          // Apenas atualizar o user object, não mexer no profile
           if (session?.user) {
             setUser(session.user);
           }
@@ -183,7 +182,6 @@ export default function App() {
         }
 
         default: {
-          // USER_UPDATED, PASSWORD_RECOVERY, etc.
           if (session?.user) {
             setUser(session.user);
           }
@@ -215,8 +213,22 @@ export default function App() {
             <Route element={<AgencyLayout />}>
               <Route path="/agency" element={<AgencyDashboard />} />
               <Route path="/agency/clients" element={<AgencyClientsPage />} />
-              <Route path="/agency/clients/:id" element={<AgencyClientDetailPage />} />
-              {/* Calendário agora é sub-item de Tarefas (?tab=calendar) */}
+              
+              <Route path="/agency/clients/:id" element={<AgencyClientDetailLayout />}>
+                <Route index element={<AgencyClientOverviewPage />} />
+                <Route path="onboarding" element={<AgencyClientOnboardingPage />} />
+                <Route path="traffic" element={<AgencyClientTrafficPage />} />
+                <Route path="social" element={<AgencyClientSocialPage />} />
+                <Route path="web" element={<AgencyClientWebPage />} />
+                <Route path="crm" element={<AgencyClientCRMPage />} />
+                <Route path="approvals" element={<AgencyClientApprovalsPage />} />
+                <Route path="tasks" element={<AgencyClientTasksPage />} />
+                <Route path="documents" element={<AgencyClientDocumentsPage />} />
+                <Route path="financial" element={<AgencyClientFinancialPage />} />
+                <Route path="support" element={<AgencyClientSupportPage />} />
+                <Route path="access" element={<AgencyClientAccessPage />} />
+              </Route>
+              
               <Route path="/agency/approvals" element={<AgencyApprovalsPage />} />
               <Route path="/agency/tasks" element={<AgencyTasksPage />} />
               <Route path="/agency/flows" element={<AgencyFlowsPage />} />
@@ -225,14 +237,9 @@ export default function App() {
               <Route path="/agency/reports" element={<AgencyReportsPage />} />
               <Route path="/agency/financial" element={<AgencyFinancialPage />} />
               <Route path="/agency/access" element={<AgencyAccessPage />} />
-              <Route path="/agency/social" element={<AgencySocialPage />} />
-              <Route path="/agency/traffic" element={<AgencyTrafficPage />} />
-              <Route path="/agency/web" element={<AgencyWebPage />} />
-              <Route path="/agency/crm" element={<AgencyCRMPage />} />
               <Route path="/agency/ai-agent" element={<AIAgentPage />} />
               <Route path="/agency/support" element={<AgencySupportPage />} />
               <Route path="/agency/support/:ticketId" element={<AgencyTicketDetailPage />} />
-              {/* Módulo Geral eliminado */}
             </Route>
           </Route>
           
@@ -240,7 +247,6 @@ export default function App() {
             <Route element={<ClientLayout />}>
               <Route path="/client" element={<ClientDashboard />} />
               <Route path="/client/onboarding" element={<ClientOnboardingPage />} />
-              {/* Calendário do cliente eliminado - vive dentro de Social Media */}
               <Route path="/client/traffic" element={<ClientTrafficPage />} />
               <Route path="/client/traffic/campaigns" element={<ClientCampaignsPage />} />
               <Route path="/client/traffic/campaigns/:id" element={<ClientCampaignDetailPage />} />
@@ -253,7 +259,6 @@ export default function App() {
               <Route path="/client/support/:ticketId" element={<ClientTicketDetailPage />} />
               <Route path="/client/documents" element={<ClientDocumentsPage />} />
               <Route path="/client/financial" element={<ClientFinancialPage />} />
-              {/* Módulo Geral do cliente eliminado */}
             </Route>
           </Route>
           
