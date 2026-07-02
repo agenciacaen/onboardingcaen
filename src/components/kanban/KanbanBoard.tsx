@@ -228,7 +228,9 @@ export function KanbanBoard({
   return (
     <>
       <div className="flex h-full gap-4 items-start w-max min-w-full">
-        {columns.map(col => (
+        {columns.map(col => {
+          const visibleTasks = parentTasks.filter(t => t.status === col.id && col.id !== 'done');
+          return (
           <div 
             key={col.id}
             onDragOver={handleDragOver}
@@ -238,11 +240,11 @@ export function KanbanBoard({
             <div className="flex justify-between items-center mb-4">
               <h3 className="font-semibold text-foreground">{col.title}</h3>
               <span className="bg-muted text-muted-foreground text-xs py-1 px-2 rounded-full font-medium">
-                {parentTasks.filter(t => t.status === col.id).length}
+                0
               </span>
             </div>
             <div className="flex-1 overflow-y-auto space-y-3 pr-1 pb-4">
-              {parentTasks.filter(t => t.status === col.id).map(task => {
+              {visibleTasks.map(task => {
                 const subs = subtasksMap.get(task.id) || [];
                 const completedSubs = subs.filter(s => s.status === 'done').length;
                 
@@ -262,14 +264,15 @@ export function KanbanBoard({
                   </div>
                 );
               })}
-              {parentTasks.filter(t => t.status === col.id).length === 0 && (
+              {visibleTasks.length === 0 && (
                  <div className="text-center text-sm text-muted-foreground py-10 border-2 border-dashed border-border rounded-lg">
-                    Arraste tarefas para cá
+                    {col.id === 'done' ? 'Tarefas concluídas vão para o Histórico' : 'Arraste tarefas para cá'}
                  </div>
               )}
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
 
       <TaskDetailModal
