@@ -105,13 +105,38 @@ export default function AgencyClientOnboardingPage() {
 
       if (error) throw error;
 
-      setOnboardingTasks(prev =>
-        prev.map(t =>
-          t.id === subtaskId
-            ? { ...t, status: newStatus as Task['status'], completed_at: newStatus === 'done' ? new Date().toISOString() : undefined }
-            : t
-        )
+      const updatedTasks = onboardingTasks.map(t =>
+        t.id === subtaskId
+          ? { ...t, status: newStatus as Task['status'], completed_at: newStatus === 'done' ? new Date().toISOString() : undefined }
+          : t
       );
+
+      setOnboardingTasks(updatedTasks);
+
+      // Se marcou como done, verificar se todas as subtarefas do pai foram concluídas
+      if (newStatus === 'done') {
+        const subtask = onboardingTasks.find(t => t.id === subtaskId);
+        const parentId = subtask?.parent_id;
+        if (parentId) {
+          const allSubs = updatedTasks.filter(t => t.parent_id === parentId);
+          const allDone = allSubs.every(t => t.status === 'done');
+          if (allDone && allSubs.length > 0) {
+            const { error: parentError } = await supabase
+              .from('tasks')
+              .update({ status: 'done', completed_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+              .eq('id', parentId);
+
+            if (!parentError) {
+              setOnboardingTasks(prev =>
+                prev.map(t =>
+                  t.id === parentId ? { ...t, status: 'done' as Task['status'], completed_at: new Date().toISOString() } : t
+                )
+              );
+              toast.success('Todas as subtarefas concluídas! Etapa finalizada.');
+            }
+          }
+        }
+      }
 
       toast.success(newStatus === 'done' ? 'Item concluído!' : 'Item reaberto.');
     } catch (error) {
