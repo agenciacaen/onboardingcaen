@@ -10,7 +10,7 @@ import {
   LayoutDashboard, Users, UserCheck, CheckSquare, GitBranch,
   FileText, BarChart2, TrendingUp, Share2, Globe, ThumbsUp,
   MessageCircle, DollarSign, LogOut, Hexagon, ShieldCheck, Database,
-  Target, Brain
+  Target, Brain, ListChecks
 } from "lucide-react";
 import { supabase } from "../../services/supabase";
 import { useAuthStore } from "../../store/authStore";
@@ -55,6 +55,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
         <SidebarItem icon={ShieldCheck} label="Acessos" href="/agency/access" onNavigate={onNavigate} />
       </SidebarGroup>
       <SidebarGroup label="Operacional">
+        <SidebarItem icon={ListChecks} label="Track Rotina" href="/agency/track-routine" onNavigate={onNavigate} />
         <SidebarItem 
           icon={CheckSquare} 
           label="Tarefas" 

@@ -44,6 +44,7 @@ import { AgencyAccessPage } from './app/agency/access/page';
 // Serviços removidos da sidebar - agora são sub-rotas dentro de cada cliente
 // AgencyGeneralPage removido - módulo Geral eliminado
 import AIAgentPage from './app/agency/ai-agent/page';
+import TrackRoutinePage from './app/agency/track-routine/page';
 import AgencySupportPage from './app/agency/support/page';
 import AgencyTicketDetailPage from './app/agency/support/[ticketId]/page';
 
@@ -237,6 +238,7 @@ export default function App() {
               <Route path="/agency/reports" element={<AgencyReportsPage />} />
               <Route path="/agency/financial" element={<AgencyFinancialPage />} />
               <Route path="/agency/access" element={<AgencyAccessPage />} />
+              <Route path="/agency/track-routine" element={<TrackRoutinePage />} />
               <Route path="/agency/ai-agent" element={<AIAgentPage />} />
               <Route path="/agency/support" element={<AgencySupportPage />} />
               <Route path="/agency/support/:ticketId" element={<AgencyTicketDetailPage />} />
