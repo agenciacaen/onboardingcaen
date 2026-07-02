@@ -4,6 +4,7 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { ClientFilterBar } from "@/components/calendar/ClientFilterBar";
+import { MonthlyCalendarView } from "@/components/calendar/MonthlyCalendarView";
 import { TaskCreateModal } from "@/components/modals/TaskCreateModal";
 import { KanbanBoard } from "@/components/kanban/KanbanBoard";
 import { TaskHistory } from "@/components/kanban/TaskHistory";
@@ -46,9 +47,7 @@ export function AgencyTasksPage() {
         </TabsContent>
 
         <TabsContent value="calendar" className="flex-1 overflow-auto pb-4 mt-0">
-          <div className="bg-card rounded-lg border border-border p-6">
-            <p className="text-muted-foreground text-center py-12">Calendário de tarefas em desenvolvimento</p>
-          </div>
+          <MonthlyCalendarView clientIdFilter={clientIdFilter} />
         </TabsContent>
       </Tabs>
 
