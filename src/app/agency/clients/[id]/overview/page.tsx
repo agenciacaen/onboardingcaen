@@ -50,15 +50,6 @@ export default function AgencyClientOverviewPage() {
       setPendingAmount(finData.reduce((sum, f) => sum + (f.amount || 0), 0));
     }
 
-    const { data: campData } = await supabase
-      .from("traffic_campaigns")
-      .select("id")
-      .eq("client_id", id);
-
-    if (campData) {
-      setCampaignCount(campData.length);
-    }
-
     setLoading(false);
   }, [id]);
 
