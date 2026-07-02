@@ -4,11 +4,10 @@ import { supabase } from "@/services/supabase";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { LoadingSkeleton } from "@/components/ui/LoadingSkeleton";
-import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import {
   Activity, TrendingUp, Share2, Globe, Database, DollarSign,
-  User, Building2, CalendarDays, ArrowRight
+  User, Building2, ArrowRight
 } from "lucide-react";
 import type { ClientWithProfile } from "@/types/client.types";
 
@@ -18,7 +17,6 @@ export default function AgencyClientOverviewPage() {
   const [client, setClient] = useState<ClientWithProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [pendingAmount, setPendingAmount] = useState(0);
-  const [campaignCount, setCampaignCount] = useState(0);
 
   const fetchData = useCallback(async () => {
     if (!id) return;

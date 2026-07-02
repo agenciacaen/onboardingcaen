@@ -1,6 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/services/supabase";
-import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Button } from "@/components/ui/button";
 import { ClientCreateModal } from "@/components/modals/ClientCreateModal";
 import { PageHeader } from "@/components/ui/PageHeader";

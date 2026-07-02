@@ -1,7 +1,7 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { MessageCircle, ArrowRight, Ticket } from "lucide-react";
+import { MessageCircle, Ticket } from "lucide-react";
 
 export default function AgencyClientSupportPage() {
   const { id } = useParams();

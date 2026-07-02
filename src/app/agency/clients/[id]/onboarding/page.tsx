@@ -2,7 +2,6 @@ import { useEffect, useState, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/services/supabase";
 import { Button } from "@/components/ui/button";
-import { LoadingSkeleton } from "@/components/ui/LoadingSkeleton";
 import { OnboardingRoadmap } from "@/modules/onboarding/components/OnboardingRoadmap";
 import { AutomationService } from "@/services/automation.service";
 import { useAuthStore } from "@/store/authStore";
