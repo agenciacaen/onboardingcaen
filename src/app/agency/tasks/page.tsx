@@ -8,10 +8,11 @@ import { MonthlyCalendarView } from "@/components/calendar/MonthlyCalendarView";
 import { TaskCreateModal } from "@/components/modals/TaskCreateModal";
 import { KanbanBoard } from "@/components/kanban/KanbanBoard";
 import { TaskHistory } from "@/components/kanban/TaskHistory";
-import { Tabs, TabsContent } from "@/components/ui/tabs";
+import { AgencyTemplatesPage } from "./templates/page";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 export function AgencyTasksPage() {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = searchParams.get('tab') || 'kanban';
   const [clientIdFilter, setClientIdFilter] = useState("all");
   const [isCreateModalOpen, setCreateModalOpen] = useState(false);
@@ -19,6 +20,10 @@ export function AgencyTasksPage() {
 
   const handleTaskCreated = () => {
     setRefreshKey(prev => prev + 1);
+  };
+
+  const setTab = (tab: string) => {
+    setSearchParams({ tab });
   };
 
   return (
@@ -37,7 +42,14 @@ export function AgencyTasksPage() {
         </div>
       </div>
 
-      <Tabs value={activeTab} className="flex-1 flex flex-col overflow-hidden">
+      <Tabs value={activeTab} onValueChange={setTab} className="flex-1 flex flex-col overflow-hidden">
+        <TabsList>
+          <TabsTrigger value="kanban">Kanban</TabsTrigger>
+          <TabsTrigger value="history">Histórico</TabsTrigger>
+          <TabsTrigger value="calendar">Calendário</TabsTrigger>
+          <TabsTrigger value="templates">Templates</TabsTrigger>
+        </TabsList>
+
         <TabsContent value="kanban" className="flex-1 overflow-x-auto pb-4 mt-0">
           <KanbanBoard clientIdFilter={clientIdFilter} key={`kanban-${refreshKey}`} />
         </TabsContent>
@@ -48,6 +60,10 @@ export function AgencyTasksPage() {
 
         <TabsContent value="calendar" className="flex-1 overflow-auto pb-4 mt-0">
           <MonthlyCalendarView clientIdFilter={clientIdFilter} />
+        </TabsContent>
+
+        <TabsContent value="templates" className="flex-1 overflow-auto pb-4 mt-0">
+          <AgencyTemplatesPage />
         </TabsContent>
       </Tabs>
 

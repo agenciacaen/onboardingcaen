@@ -34,6 +34,7 @@ import AgencyClientSupportPage from './app/agency/clients/[id]/support/page';
 import AgencyClientAccessPage from './app/agency/clients/[id]/access/page';
 // AgencyCalendarPage removido - calendário agora é sub-item de Tarefas
 import { AgencyTasksPage } from './app/agency/tasks/page';
+import { AgencyTemplatesPage } from './app/agency/tasks/templates/page';
 import { AgencyFlowsPage } from './app/agency/flows/page';
 import { AgencyTeamPage } from './app/agency/team/page';
 import { AgencyApprovalsPage } from './app/agency/approvals/page';
@@ -232,6 +233,7 @@ export default function App() {
               
               <Route path="/agency/approvals" element={<AgencyApprovalsPage />} />
               <Route path="/agency/tasks" element={<AgencyTasksPage />} />
+              <Route path="/agency/tasks/templates" element={<AgencyTemplatesPage />} />
               <Route path="/agency/flows" element={<AgencyFlowsPage />} />
               <Route path="/agency/team" element={<AgencyTeamPage />} />
                <Route path="/agency/documents" element={<AgencyDocumentsPage />} />

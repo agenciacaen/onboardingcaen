@@ -65,6 +65,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
             { label: "Kanban", href: "/agency/tasks?tab=kanban" },
             { label: "Histórico", href: "/agency/tasks?tab=history" },
             { label: "Calendário", href: "/agency/tasks?tab=calendar" },
+            { label: "Templates", href: "/agency/tasks?tab=templates" },
           ]}
         />
         <SidebarItem icon={GitBranch} label="Fluxos" href="/agency/flows" onNavigate={onNavigate} />

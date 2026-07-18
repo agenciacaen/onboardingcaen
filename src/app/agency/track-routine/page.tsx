@@ -1,15 +1,15 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/services/supabase";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
+
 import { PageHeader } from "@/components/ui/PageHeader";
 import { LoadingSkeleton } from "@/components/ui/LoadingSkeleton";
 import { toast } from "sonner";
 import {
-  Plus, Trash2, GripVertical, CheckSquare, Square,
-  X, Check, Loader2, ListChecks
+  Plus, Trash2, CheckSquare, Square,
+  Loader2, ListChecks
 } from "lucide-react";
 
 interface TrackColumn {
