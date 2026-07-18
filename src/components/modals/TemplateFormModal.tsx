@@ -7,7 +7,7 @@ import { TemplateService } from '@/services/template.service';
 import type { Template } from '@/services/template.service';
 import { supabase } from '@/services/supabase';
 import {
-  Plus, Trash2, X, Check, Loader2, ListChecks
+  Plus, X, Check, Loader2, ListChecks
 } from 'lucide-react';
 
 const MODULE_OPTIONS = [
@@ -35,20 +35,15 @@ interface TemplateFormModalProps {
   onSaved: () => void;
 }
 
-interface TaskFormItem {
-  id: string;
-  title: string;
-  description: string;
-  module: string;
-  priority: string;
-  stage: string;
-  subtasks: { id: string; title: string; description: string }[];
-}
-
 export function TemplateFormModal({ template, open, onOpenChange, onSaved }: TemplateFormModalProps) {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [tasks, setTasks] = useState<TaskFormItem[]>([]);
+  const [taskTitle, setTaskTitle] = useState('Projeto');
+  const [taskDescription, setTaskDescription] = useState('');
+  const [module, setModule] = useState('general');
+  const [priority, setPriority] = useState('medium');
+  const [stage, setStage] = useState('');
+  const [subtasks, setSubtasks] = useState<{ id: string; title: string; description: string }[]>([]);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -56,66 +51,39 @@ export function TemplateFormModal({ template, open, onOpenChange, onSaved }: Tem
       if (template) {
         setName(template.name);
         setDescription(template.description || '');
-        setTasks(template.tasks.map(t => ({
-          id: t.id,
-          title: t.title,
-          description: t.description || '',
-          module: t.module,
-          priority: t.priority,
-          stage: t.stage || '',
-          subtasks: t.subtasks.map(s => ({
-            id: s.id,
-            title: s.title,
-            description: s.description || '',
-          })),
+        setTaskTitle(template.task_title);
+        setTaskDescription(template.task_description || '');
+        setModule(template.module);
+        setPriority(template.priority);
+        setStage(template.stage || '');
+        setSubtasks(template.subtasks.map(s => ({
+          id: s.id,
+          title: s.title,
+          description: s.description || '',
         })));
       } else {
         setName('');
         setDescription('');
-        setTasks([]);
+        setTaskTitle('Projeto');
+        setTaskDescription('');
+        setModule('general');
+        setPriority('medium');
+        setStage('');
+        setSubtasks([]);
       }
     }
   }, [open, template]);
 
-  const addTask = () => {
-    setTasks(prev => [...prev, {
-      id: genId(),
-      title: '',
-      description: '',
-      module: 'general',
-      priority: 'medium',
-      stage: '',
-      subtasks: [],
-    }]);
+  const addSubtask = () => {
+    setSubtasks(prev => [...prev, { id: genId(), title: '', description: '' }]);
   };
 
-  const updateTask = (index: number, field: Partial<TaskFormItem>) => {
-    setTasks(prev => prev.map((t, i) => i === index ? { ...t, ...field } : t));
+  const updateSubtask = (id: string, field: Partial<{ title: string; description: string }>) => {
+    setSubtasks(prev => prev.map(s => s.id === id ? { ...s, ...field } : s));
   };
 
-  const removeTask = (index: number) => {
-    setTasks(prev => prev.filter((_, i) => i !== index));
-  };
-
-  const addSubtask = (taskIndex: number) => {
-    setTasks(prev => prev.map((t, i) => i === taskIndex ? {
-      ...t,
-      subtasks: [...t.subtasks, { id: genId(), title: '', description: '' }],
-    } : t));
-  };
-
-  const updateSubtask = (taskIndex: number, subId: string, field: Partial<{ title: string; description: string }>) => {
-    setTasks(prev => prev.map((t, i) => i === taskIndex ? {
-      ...t,
-      subtasks: t.subtasks.map(s => s.id === subId ? { ...s, ...field } : s),
-    } : t));
-  };
-
-  const removeSubtask = (taskIndex: number, subId: string) => {
-    setTasks(prev => prev.map((t, i) => i === taskIndex ? {
-      ...t,
-      subtasks: t.subtasks.filter(s => s.id !== subId),
-    } : t));
+  const removeSubtask = (id: string) => {
+    setSubtasks(prev => prev.filter(s => s.id !== id));
   };
 
   const handleSave = async () => {
@@ -123,9 +91,8 @@ export function TemplateFormModal({ template, open, onOpenChange, onSaved }: Tem
       toast.error('Nome do template é obrigatório');
       return;
     }
-    const validTasks = tasks.filter(t => t.title.trim());
-    if (validTasks.length === 0) {
-      toast.error('Adicione pelo menos uma tarefa');
+    if (!taskTitle.trim()) {
+      toast.error('Título da tarefa é obrigatório');
       return;
     }
 
@@ -134,16 +101,14 @@ export function TemplateFormModal({ template, open, onOpenChange, onSaved }: Tem
       const payload = {
         name: name.trim(),
         description: description.trim() || undefined,
-        tasks: validTasks.map(t => ({
-          title: t.title.trim(),
-          description: t.description.trim() || undefined,
-          module: t.module,
-          priority: t.priority,
-          stage: t.stage || undefined,
-          subtasks: t.subtasks.filter(s => s.title.trim()).map(s => ({
-            title: s.title.trim(),
-            description: s.description.trim() || undefined,
-          })),
+        task_title: taskTitle.trim(),
+        task_description: taskDescription.trim() || undefined,
+        module,
+        priority,
+        stage: stage || undefined,
+        subtasks: subtasks.filter(s => s.title.trim()).map(s => ({
+          title: s.title.trim(),
+          description: s.description.trim() || undefined,
         })),
       };
 
@@ -169,7 +134,7 @@ export function TemplateFormModal({ template, open, onOpenChange, onSaved }: Tem
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[800px] max-h-[92vh] overflow-hidden p-0 gap-0 rounded-xl">
+      <DialogContent className="sm:max-w-[700px] max-h-[92vh] overflow-hidden p-0 gap-0 rounded-xl">
         <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-card">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center">
@@ -180,20 +145,17 @@ export function TemplateFormModal({ template, open, onOpenChange, onSaved }: Tem
                 {template ? 'Editar Template' : 'Novo Template'}
               </h2>
               <p className="text-xs text-muted-foreground/70">
-                {template ? 'Modifique as tarefas e subtarefas' : 'Crie um modelo reutilizável de projeto'}
+                {template ? 'Modifique o template' : 'Crie um modelo reutilizável de projeto'}
               </p>
             </div>
           </div>
-          <Button variant="ghost" size="icon" onClick={() => onOpenChange(false)}>
-            <X className="w-4 h-4" />
-          </Button>
         </div>
 
         <div className="overflow-y-auto px-6 py-5 space-y-5" style={{ maxHeight: 'calc(92vh - 130px)' }}>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-xs font-semibold text-muted-foreground mb-1 block">Nome do Template</label>
-              <Input value={name} onChange={e => setName(e.target.value)} placeholder="Ex: Onboarding Completo" className="h-9" />
+              <Input value={name} onChange={e => setName(e.target.value)} placeholder="Ex: LP - Landing Page" className="h-9" />
             </div>
             <div>
               <label className="text-xs font-semibold text-muted-foreground mb-1 block">Descrição</label>
@@ -201,140 +163,102 @@ export function TemplateFormModal({ template, open, onOpenChange, onSaved }: Tem
             </div>
           </div>
 
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-bold text-foreground">
-                Tarefas do Template ({tasks.length})
-              </h3>
-              <Button variant="outline" size="sm" onClick={addTask} className="text-emerald-500 border-emerald-500/20 hover:bg-emerald-500/10">
-                <Plus className="w-3.5 h-3.5 mr-1.5" />
-                + Tarefa
-              </Button>
+          <div className="border border-border rounded-xl p-4 space-y-3 bg-muted/10">
+            <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+              <ListChecks className="w-4 h-4 text-muted-foreground" />
+              Dados da Tarefa Principal
+            </h3>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs font-semibold text-muted-foreground mb-1 block">Título da Tarefa</label>
+                <Input value={taskTitle} onChange={e => setTaskTitle(e.target.value)} placeholder="Ex: Criação de Landing Page" className="h-9" />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-muted-foreground mb-1 block">Descrição da Tarefa</label>
+                <Input value={taskDescription} onChange={e => setTaskDescription(e.target.value)} placeholder="Descrição opcional..." className="h-9" />
+              </div>
             </div>
 
-            {tasks.length === 0 ? (
-              <div className="text-center py-10 border-2 border-dashed border-border rounded-xl text-muted-foreground/50">
-                <ListChecks className="w-8 h-8 mx-auto mb-2 opacity-30" />
-                <p className="text-sm font-medium">Nenhuma tarefa ainda.</p>
-                <p className="text-xs mt-1">Adicione tarefas e configure as subtarefas de cada uma.</p>
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <label className="text-xs font-semibold text-muted-foreground mb-1 block">Módulo</label>
+                <select
+                  value={module}
+                  onChange={e => setModule(e.target.value)}
+                  className="w-full h-8 text-sm bg-background border border-border rounded-md px-2 focus:outline-none focus:ring-2 focus:ring-primary/20"
+                >
+                  {MODULE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                </select>
               </div>
-            ) : (
-              <div className="space-y-4">
-                {tasks.map((task, ti) => (
-                  <div key={task.id} className="border border-border rounded-xl overflow-hidden">
-                    <div className="flex items-center gap-3 px-4 py-3 bg-muted/30">
-                      <span className="w-6 h-6 rounded-full bg-emerald-500 text-white flex items-center justify-center text-xs font-bold shrink-0">
-                        {ti + 1}
-                      </span>
-                      <div className="flex-1 min-w-0">
-                        <Input
-                          value={task.title}
-                          onChange={e => updateTask(ti, { title: e.target.value })}
-                          placeholder="Título da tarefa..."
-                          className="h-8 text-sm font-semibold"
-                        />
-                      </div>
-                      <button type="button" onClick={() => removeTask(ti)}
-                        className="p-1 rounded hover:bg-red-500/10 text-muted-foreground/50 hover:text-red-500 transition-colors shrink-0">
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-
-                    <div className="px-4 pb-4 space-y-3 pt-3">
-                      <div>
-                        <label className="text-xs font-semibold text-muted-foreground mb-1 block">Descrição da Tarefa</label>
-                        <Input
-                          value={task.description}
-                          onChange={e => updateTask(ti, { description: e.target.value })}
-                          placeholder="Descrição opcional..."
-                          className="h-8 text-sm"
-                        />
-                      </div>
-
-                      <div className="grid grid-cols-3 gap-3">
-                        <div>
-                          <label className="text-xs font-semibold text-muted-foreground mb-1 block">Módulo</label>
-                          <select
-                            value={task.module}
-                            onChange={e => updateTask(ti, { module: e.target.value })}
-                            className="w-full h-8 text-sm bg-background border border-border rounded-md px-2 focus:outline-none focus:ring-2 focus:ring-primary/20"
-                          >
-                            {MODULE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                          </select>
-                        </div>
-                        <div>
-                          <label className="text-xs font-semibold text-muted-foreground mb-1 block">Prioridade</label>
-                          <select
-                            value={task.priority}
-                            onChange={e => updateTask(ti, { priority: e.target.value })}
-                            className="w-full h-8 text-sm bg-background border border-border rounded-md px-2 focus:outline-none focus:ring-2 focus:ring-primary/20"
-                          >
-                            {PRIORITY_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                          </select>
-                        </div>
-                        <div>
-                          <label className="text-xs font-semibold text-muted-foreground mb-1 block">Fase/Stage</label>
-                          <select
-                            value={task.stage}
-                            onChange={e => updateTask(ti, { stage: e.target.value })}
-                            className="w-full h-8 text-sm bg-background border border-border rounded-md px-2 focus:outline-none focus:ring-2 focus:ring-primary/20"
-                          >
-                            <option value="">Nenhum</option>
-                            <option value="onboarding_phase_1">Onboarding — Fase 1</option>
-                            <option value="onboarding_phase_2">Onboarding — Fase 2</option>
-                            <option value="custom">Personalizado</option>
-                          </select>
-                        </div>
-                      </div>
-
-                      <div>
-                        <div className="flex items-center justify-between mb-2">
-                          <label className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
-                            <ListChecks className="w-3.5 h-3.5" />
-                            Subtarefas ({task.subtasks.length})
-                          </label>
-                          <button
-                            type="button" onClick={() => addSubtask(ti)}
-                            className="flex items-center gap-1 text-xs text-blue-500 hover:text-blue-700 font-medium"
-                          >
-                            <Plus className="w-3.5 h-3.5" /> Adicionar
-                          </button>
-                        </div>
-                        <div className="space-y-1.5">
-                          {task.subtasks.map((sub, si) => (
-                            <div key={sub.id} className="flex items-center gap-2">
-                              <span className="text-muted-foreground/40 text-xs shrink-0">{si + 1}.</span>
-                              <Input
-                                value={sub.title}
-                                onChange={e => updateSubtask(ti, sub.id, { title: e.target.value })}
-                                placeholder="Título da subtarefa..."
-                                className="h-7 text-xs flex-1"
-                              />
-                              <button type="button" onClick={() => removeSubtask(ti, sub.id)}
-                                className="text-muted-foreground/30 hover:text-red-500 transition-colors shrink-0">
-                                <X className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
-                          ))}
-                          {task.subtasks.length === 0 && (
-                            <p className="text-xs text-muted-foreground/60 text-center py-2">
-                              Nenhuma subtarefa. Clique em "Adicionar".
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+              <div>
+                <label className="text-xs font-semibold text-muted-foreground mb-1 block">Prioridade</label>
+                <select
+                  value={priority}
+                  onChange={e => setPriority(e.target.value)}
+                  className="w-full h-8 text-sm bg-background border border-border rounded-md px-2 focus:outline-none focus:ring-2 focus:ring-primary/20"
+                >
+                  {PRIORITY_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                </select>
               </div>
-            )}
+              <div>
+                <label className="text-xs font-semibold text-muted-foreground mb-1 block">Fase</label>
+                <select
+                  value={stage}
+                  onChange={e => setStage(e.target.value)}
+                  className="w-full h-8 text-sm bg-background border border-border rounded-md px-2 focus:outline-none focus:ring-2 focus:ring-primary/20"
+                >
+                  <option value="">Nenhum</option>
+                  <option value="onboarding_phase_1">Onboarding — Fase 1</option>
+                  <option value="onboarding_phase_2">Onboarding — Fase 2</option>
+                  <option value="custom">Personalizado</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
+                <ListChecks className="w-3.5 h-3.5" />
+                Subtarefas ({subtasks.filter(s => s.title.trim()).length})
+              </label>
+              <button
+                type="button" onClick={addSubtask}
+                className="flex items-center gap-1 text-xs text-blue-500 hover:text-blue-700 font-medium"
+              >
+                <Plus className="w-3.5 h-3.5" /> Adicionar
+              </button>
+            </div>
+            <div className="space-y-1.5 max-h-[300px] overflow-y-auto border border-border rounded-lg p-2">
+              {subtasks.map((sub, si) => (
+                <div key={sub.id} className="flex items-center gap-2">
+                  <span className="text-muted-foreground/40 text-xs shrink-0">{si + 1}.</span>
+                  <Input
+                    value={sub.title}
+                    onChange={e => updateSubtask(sub.id, { title: e.target.value })}
+                    placeholder="Título da subtarefa..."
+                    className="h-7 text-xs flex-1"
+                  />
+                  <button type="button" onClick={() => removeSubtask(sub.id)}
+                    className="text-muted-foreground/30 hover:text-red-500 transition-colors shrink-0">
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ))}
+              {subtasks.length === 0 && (
+                <p className="text-xs text-muted-foreground/60 text-center py-4">
+                  Nenhuma subtarefa. Clique em "Adicionar".
+                </p>
+              )}
+            </div>
           </div>
         </div>
 
         <div className="border-t border-border px-6 py-3 bg-card flex items-center justify-between">
           <div className="text-xs text-muted-foreground">
-            {tasks.filter(t => t.title.trim()).length > 0 && (
-              <span>Total: <strong>{tasks.filter(t => t.title.trim()).length}</strong> tarefa(s) e <strong>{tasks.reduce((acc, t) => acc + t.subtasks.filter(s => s.title.trim()).length, 0)}</strong> subtarefa(s).</span>
+            {subtasks.filter(s => s.title.trim()).length > 0 && (
+              <span>Total: <strong>1</strong> tarefa e <strong>{subtasks.filter(s => s.title.trim()).length}</strong> subtarefa(s).</span>
             )}
           </div>
           <div className="flex gap-2">

@@ -46,6 +46,8 @@ export function TemplateApplyModal({ template, open, onOpenChange, onApplied }: 
     }
   };
 
+  if (!template) return null;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[400px]">
@@ -54,12 +56,12 @@ export function TemplateApplyModal({ template, open, onOpenChange, onApplied }: 
         </DialogHeader>
         <div className="space-y-4">
           <div>
-            <p className="text-sm font-semibold text-foreground mb-1">{template?.name}</p>
-            {template?.description && (
+            <p className="text-sm font-semibold text-foreground mb-1">{template.name}</p>
+            {template.description && (
               <p className="text-xs text-muted-foreground mb-3">{template.description}</p>
             )}
             <p className="text-xs text-muted-foreground mb-1">
-              Este template criará <strong>{template?.tasks.length}</strong> tarefa(s) e <strong>{template?.tasks.reduce((acc, t) => acc + (t.subtasks?.length || 0), 0)}</strong> subtarefa(s).
+              Será criada a tarefa <strong>"{template.task_title}"</strong> com <strong>{template.subtasks?.length || 0}</strong> subtarefa(s).
             </p>
           </div>
 

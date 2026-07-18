@@ -121,27 +121,28 @@ export function AgencyTemplatesPage() {
 
                 <div className="flex gap-3 mb-3">
                   <div className="bg-muted/50 rounded-lg px-3 py-1.5 text-center min-w-[60px]">
-                    <p className="text-lg font-bold text-emerald-600">{tmpl.tasks.length}</p>
-                    <p className="text-[10px] text-muted-foreground">tarefas</p>
+                    <p className="text-lg font-bold text-emerald-600">1</p>
+                    <p className="text-[10px] text-muted-foreground">tarefa</p>
                   </div>
                   <div className="bg-muted/50 rounded-lg px-3 py-1.5 text-center min-w-[60px]">
-                    <p className="text-lg font-bold text-blue-600">{tmpl.tasks.reduce((acc, t) => acc + (t.subtasks?.length || 0), 0)}</p>
+                    <p className="text-lg font-bold text-blue-600">{tmpl.subtasks?.length || 0}</p>
                     <p className="text-[10px] text-muted-foreground">subtarefas</p>
                   </div>
                 </div>
 
+                <div className="text-xs text-foreground font-medium mb-2 truncate">
+                  {tmpl.task_title}
+                </div>
+
                 <div className="space-y-1.5 mb-4">
-                  {tmpl.tasks.slice(0, 3).map(t => (
-                    <div key={t.id} className="flex items-center gap-2 text-xs text-muted-foreground">
+                  {tmpl.subtasks?.slice(0, 5).map(s => (
+                    <div key={s.id} className="flex items-center gap-2 text-xs text-muted-foreground">
                       <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
-                      <span className="truncate">{t.title}</span>
-                      {t.subtasks && t.subtasks.length > 0 && (
-                        <span className="text-[10px] text-muted-foreground/50 shrink-0">({t.subtasks.length} sub)</span>
-                      )}
+                      <span className="truncate">{s.title}</span>
                     </div>
                   ))}
-                  {tmpl.tasks.length > 3 && (
-                    <p className="text-xs text-muted-foreground/50">+{tmpl.tasks.length - 3} mais</p>
+                  {(tmpl.subtasks?.length || 0) > 5 && (
+                    <p className="text-xs text-muted-foreground/50">+{(tmpl.subtasks?.length || 0) - 5} mais</p>
                   )}
                 </div>
 

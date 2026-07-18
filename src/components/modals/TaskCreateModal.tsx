@@ -52,8 +52,6 @@ export function TaskCreateModal({
   const [templates, setTemplates] = useState<{ id: string; name: string }[]>([]);
   const [selectedTemplateId, setSelectedTemplateId] = useState('');
   const [selectedTemplate, setSelectedTemplate] = useState<any>(null);
-  const [selectedTaskId, setSelectedTaskId] = useState('');
-  const [applyMode, setApplyMode] = useState<'single' | 'full'>('single');
 
   const {
     register,
@@ -85,8 +83,6 @@ export function TaskCreateModal({
       });
       setSelectedTemplateId('');
       setSelectedTemplate(null);
-      setSelectedTaskId('');
-      setApplyMode('single');
       fetchData();
     }
   }, [open, reset]);
@@ -110,7 +106,6 @@ export function TaskCreateModal({
 
   const handleTemplateChange = async (templateId: string) => {
     setSelectedTemplateId(templateId);
-    setSelectedTaskId('');
     if (!templateId || templateId === 'none') {
       setSelectedTemplate(null);
       return;
@@ -118,22 +113,13 @@ export function TaskCreateModal({
     try {
       const tmpl = await TemplateService.getTemplate(templateId);
       setSelectedTemplate(tmpl);
+      setValue("title", tmpl.task_title);
+      setValue("description", tmpl.task_description || '');
+      setValue("module", tmpl.module as CreateTaskFormValues['module']);
+      setValue("priority", tmpl.priority as CreateTaskFormValues['priority']);
+      setValue("stage", tmpl.stage || '');
     } catch (err) {
       console.error(err);
-    }
-  };
-
-  const handleTaskSelect = (taskId: string) => {
-    setSelectedTaskId(taskId);
-    if (taskId && selectedTemplate) {
-      const task = selectedTemplate.tasks.find((t: any) => t.id === taskId);
-      if (task) {
-        setValue("title", task.title);
-        setValue("description", task.description || '');
-        setValue("module", task.module);
-        setValue("priority", task.priority);
-        setValue("stage", task.stage || '');
-      }
     }
   };
 
@@ -144,43 +130,7 @@ export function TaskCreateModal({
       if (!user) throw new Error("Usuário não autenticado");
 
       if (selectedTemplateId && selectedTemplate) {
-        if (applyMode === 'full') {
-          await TemplateService.applyTemplate(selectedTemplateId, data.client_id, user.id);
-          toast.success("Template aplicado com sucesso!");
-        } else {
-          const task = selectedTemplate.tasks.find((t: any) => t.id === selectedTaskId);
-          if (task) {
-            const { data: parent, error: parentErr } = await supabase.from('tasks').insert({
-              client_id: data.client_id,
-              title: task.title,
-              description: task.description || '',
-              module: task.module,
-              status: 'todo',
-              priority: task.priority,
-              created_by: user.id,
-              stage: task.stage || null,
-            }).select('id').single();
-
-            if (parentErr) throw parentErr;
-
-            if (task.subtasks && task.subtasks.length > 0) {
-              const subs = task.subtasks.map((s: any, idx: number) => ({
-                client_id: data.client_id,
-                parent_id: parent.id,
-                title: s.title,
-                description: s.description || '',
-                module: task.module,
-                status: 'todo',
-                priority: task.priority,
-                created_by: user.id,
-                stage: task.stage || null,
-                order: idx,
-              }));
-              const { error: subsErr } = await supabase.from('tasks').insert(subs);
-              if (subsErr) throw subsErr;
-            }
-          }
-        }
+        await TemplateService.applyTemplate(selectedTemplateId, data.client_id, user.id);
         toast.success("Template aplicado com sucesso!");
       } else {
         const { error } = await supabase.from('tasks').insert({
@@ -228,63 +178,13 @@ export function TaskCreateModal({
           </div>
 
           {selectedTemplate && (
-            <div className="bg-muted/30 rounded-lg p-3 border border-border space-y-2">
-              <div className="flex items-center justify-between">
-                <p className="text-xs font-semibold text-foreground">
-                  Template: {selectedTemplate.name}
-                </p>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setApplyMode('single')}
-                    className={`text-[10px] px-2 py-1 rounded font-medium transition-colors ${applyMode === 'single' ? 'bg-blue-500 text-white' : 'bg-muted text-muted-foreground'}`}
-                  >
-                    Tarefa Única
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setApplyMode('full')}
-                    className={`text-[10px] px-2 py-1 rounded font-medium transition-colors ${applyMode === 'full' ? 'bg-emerald-500 text-white' : 'bg-muted text-muted-foreground'}`}
-                  >
-                    Template Completo
-                  </button>
-                </div>
-              </div>
-
-              {applyMode === 'full' ? (
-                <div className="text-xs text-muted-foreground">
-                  <p>O template completo será aplicado: <strong>{selectedTemplate.tasks.length}</strong> tarefa(s) e <strong>{selectedTemplate.tasks.reduce((acc: number, t: any) => acc + (t.subtasks?.length || 0), 0)}</strong> subtarefa(s).</p>
-                </div>
-              ) : (
-                <div>
-                  <label className="text-xs font-semibold text-muted-foreground mb-1 block">Selecione a Tarefa</label>
-                  <Select value={selectedTaskId} onValueChange={handleTaskSelect}>
-                    <SelectTrigger><SelectValue placeholder="Escolha uma tarefa..." /></SelectTrigger>
-                    <SelectContent>
-                      {selectedTemplate.tasks.map((t: any) => (
-                        <SelectItem key={t.id} value={t.id}>
-                          {t.title} ({t.subtasks?.length || 0} sub)
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-
-              {applyMode === 'single' && selectedTaskId && selectedTemplate && (
-                <div className="mt-2 text-xs text-muted-foreground">
-                  {(() => {
-                    const task = selectedTemplate.tasks.find((t: any) => t.id === selectedTaskId);
-                    return task ? (
-                      <p>Subtarefas: <strong>{task.subtasks?.length || 0}</strong></p>
-                    ) : null;
-                  })()}
-                </div>
-              )}
+            <div className="bg-muted/30 rounded-lg p-3 border border-border text-xs text-muted-foreground space-y-1">
+              <p className="font-semibold text-foreground">{selectedTemplate.task_title}</p>
+              <p>Subtarefas: <strong>{selectedTemplate.subtasks?.length || 0}</strong></p>
             </div>
           )}
 
-          {(!selectedTemplateId || (applyMode === 'single')) && (
+          {(!selectedTemplateId) && (
             <>
               <div className="grid w-full items-center gap-1.5">
                 <Label>Título</Label>
@@ -372,7 +272,7 @@ export function TaskCreateModal({
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
             <Button type="submit" disabled={loading}>
               {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-              {selectedTemplateId && applyMode === 'full' ? 'Aplicar Template' : 'Salvar'}
+              {selectedTemplateId ? 'Aplicar Template' : 'Salvar'}
             </Button>
           </DialogFooter>
         </form>
