@@ -531,10 +531,6 @@ export function TaskDetailModal({
               </div>
             </div>
 
-            {/* Close */}
-            <Button variant="ghost" size="icon" className="shrink-0 -mt-0.5 -mr-1" onClick={() => onOpenChange(false)}>
-              <X className="w-4 h-4" />
-            </Button>
           </div>
 
           {/* Meta info */}

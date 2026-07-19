@@ -466,9 +466,6 @@ export function FlowBuilderModal({ flow, open, onOpenChange, onSaved }: FlowBuil
               {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Check className="w-4 h-4 mr-2" />}
               Salvar
             </Button>
-            <Button variant="ghost" size="icon" onClick={() => onOpenChange(false)}>
-              <X className="w-4 h-4" />
-            </Button>
           </div>
         </div>
 
