@@ -10,7 +10,7 @@ import {
   Building2, LayoutDashboard, Rocket, TrendingUp, Share2,
   Globe, Database, ThumbsUp, CheckSquare, FileText,
   DollarSign, MessageCircle, ShieldCheck, ArrowRight,
-  Pencil
+  Pencil, Layers
 } from "lucide-react";
 import type { Client } from "@/types/client.types";
 
@@ -25,6 +25,7 @@ interface NavTab {
 const navTabs: NavTab[] = [
   { key: "overview", label: "Overview", href: "", icon: <LayoutDashboard className="h-4 w-4" />, condition: () => true },
   { key: "onboarding", label: "Onboarding", href: "/onboarding", icon: <Rocket className="h-4 w-4" />, condition: () => true },
+  { key: "solutions", label: "Soluções", href: "/solutions", icon: <Layers className="h-4 w-4" />, condition: () => true },
   { key: "traffic", label: "Tráfego", href: "/traffic", icon: <TrendingUp className="h-4 w-4" />, condition: (m) => m.traffic },
   { key: "social", label: "Social", href: "/social", icon: <Share2 className="h-4 w-4" />, condition: (m) => m.social },
   { key: "web", label: "Web", href: "/web", icon: <Globe className="h-4 w-4" />, condition: (m) => m.web },

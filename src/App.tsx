@@ -22,6 +22,7 @@ import { AgencyClientsPage } from './app/agency/clients/page';
 import { AgencyClientDetailLayout } from './app/agency/clients/[id]/page';
 import AgencyClientOverviewPage from './app/agency/clients/[id]/overview/page';
 import AgencyClientOnboardingPage from './app/agency/clients/[id]/onboarding/page';
+import AgencyClientSolutionsPage from './app/agency/clients/[id]/solutions/page';
 import AgencyClientTrafficPage from './app/agency/clients/[id]/traffic/page';
 import AgencyClientSocialPage from './app/agency/clients/[id]/social/page';
 import AgencyClientWebPage from './app/agency/clients/[id]/web/page';
@@ -219,6 +220,7 @@ export default function App() {
               <Route path="/agency/clients/:id" element={<AgencyClientDetailLayout />}>
                 <Route index element={<AgencyClientOverviewPage />} />
                 <Route path="onboarding" element={<AgencyClientOnboardingPage />} />
+                <Route path="solutions" element={<AgencyClientSolutionsPage />} />
                 <Route path="traffic" element={<AgencyClientTrafficPage />} />
                 <Route path="social" element={<AgencyClientSocialPage />} />
                 <Route path="web" element={<AgencyClientWebPage />} />
