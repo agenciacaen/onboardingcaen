@@ -16,6 +16,15 @@ export interface Task {
   order?: number;
   created_at: string;
   updated_at: string;
+  task_type?: string;
+  responsible_role?: string;
+  day_offset?: number;
+  duration_days?: number;
+  milestone?: string;
+  depends_on_task_ids?: string[];
+  solution_instance_id?: string;
+  template_key?: string;
+  completed_by?: string;
 }
 
 export interface Document {
