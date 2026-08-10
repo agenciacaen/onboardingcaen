@@ -293,7 +293,12 @@ export function createSolutionEngine(client: SupabaseClient) {
       .eq('is_active', true)
       .order('created_at', { ascending: true });
     if (error) throw error;
-    return (data ?? []) as Solution[];
+
+    const rows = (data ?? []) as (Solution & { solution_versions?: SolutionVersion[] })[];
+    return rows.map(({ solution_versions, ...solution }) => ({
+      ...solution,
+      versions: solution_versions ?? [],
+    }));
   }
 
   async function listClientInstances(clientId: string): Promise<SolutionInstance[]> {
