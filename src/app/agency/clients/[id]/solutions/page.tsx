@@ -164,7 +164,7 @@ export default function AgencyClientSolutionsPage() {
     }
   };
 
-  const runAction = async (instanceId: string, action: () => Promise<void>, successMsg: string) => {
+  const runAction = async (instanceId: string, action: () => Promise<unknown>, successMsg: string) => {
     setActionId(instanceId);
     try {
       await action();
