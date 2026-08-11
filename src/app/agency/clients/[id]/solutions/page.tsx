@@ -152,7 +152,7 @@ export default function AgencyClientSolutionsPage() {
       });
       toast.success(
         created
-          ? `Solução vinculada! ${tasksCreated} tarefas criadas no roadmap.`
+          ? `Solução vinculada! Semana 1 liberada com ${tasksCreated} tarefas no roadmap.`
           : "Esta solução já está vinculada a este cliente."
       );
       await loadData();
@@ -225,7 +225,7 @@ export default function AgencyClientSolutionsPage() {
             Vincular solução
           </CardTitle>
           <CardDescription>
-            Selecione a solução e o escopo. O roadmap completo será gerado automaticamente.
+            O roadmap é liberado semana a semana: ao concluir todas as tarefas de uma semana, a próxima é criada automaticamente.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">

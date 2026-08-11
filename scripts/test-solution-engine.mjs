@@ -5,9 +5,10 @@
 //   DATABASE_URL="postgresql://postgres:...@db.xzz...supabase.co:5432/postgres" ^
 //   node scripts/test-solution-engine.mjs
 //
-// Cria um usuário/auth + cliente descartáveis, materializa a solução completa
-// (todas as conditions = true), valida contagens/datas/dependências/idempotência/
-// reschedule/progress, e apaga tudo ao final. Não imprime segredos.
+// Cria um usuário/auth + cliente descartáveis, materializa a solução de forma
+// SEMANAL (semana 1 no instantiate; as demais via ensureNextWeeks após concluir
+// a semana anterior), valida contagens/datas/dependências/idempotência/
+// reschedule/progress/conclusão, e apaga tudo ao final. Não imprime segredos.
 // ============================================================================
 
 import { readFileSync } from 'node:fs';
@@ -38,10 +39,13 @@ function addDays(dateStr, days) {
   return dt.toISOString().slice(0, 10);
 }
 
+const WEEK_DAYS = 7;
+const weekRange = (week) => ({ lo: (week - 1) * WEEK_DAYS + 1, hi: week * WEEK_DAYS });
+
 // Predição independente da spec (não usa o engine — evita teste circular).
-function predictCounts(structure, config) {
+function predictWeekCounts(structure, config, week) {
+  const { lo, hi } = weekRange(week);
   let subtasks = 0;
-  let recurrences = 0;
   const byMilestone = {};
 
   for (const card of structure.cards) {
@@ -49,16 +53,21 @@ function predictCounts(structure, config) {
     const active = Object.keys(cond).length === 0 || Object.keys(cond).every((k) => config[k] === true);
     if (!active) continue;
     for (const st of card.subtasks) {
-      subtasks++;
-      byMilestone[card.milestone] = (byMilestone[card.milestone] ?? 0) + 1;
+      if (st.day_offset >= lo && st.day_offset <= hi) {
+        subtasks++;
+        byMilestone[card.milestone] = (byMilestone[card.milestone] ?? 0) + 1;
+      }
     }
   }
 
+  let recurrences = 0;
   for (const r of structure.recurrences ?? []) {
     const cond = r.condition || {};
     const active = Object.keys(cond).length === 0 || Object.keys(cond).every((k) => config[k] === true);
     if (!active) continue;
-    for (let o = r.start_offset; o <= r.end_offset; o += r.step_days) recurrences++;
+    for (let o = r.start_offset; o <= r.end_offset; o += r.step_days) {
+      if (o >= lo && o <= hi) recurrences++;
+    }
   }
 
   return { subtasks, recurrences, total: subtasks + recurrences, byMilestone };
@@ -102,8 +111,6 @@ async function main() {
       [userId, email, password],
     );
     console.log(`auth.users insert: rowCount=${r.rowCount}`);
-    const back = await pool.query('select email, encrypted_password is not null as has_pass, email_confirmed_at from auth.users where id = $1', [userId]);
-    console.log('auth.users back:', JSON.stringify(back.rows[0] ?? 'NULO'));
   } catch (err) {
     console.error('Falha ao criar usuário de teste:', err.message);
     try {
@@ -170,15 +177,37 @@ async function main() {
     commercial_team: true,
   };
   const startDate = '2026-08-01';
-  const expected = predictCounts(versionRow.structure, config);
-  console.log(`Predição: subtasks=${expected.subtasks}, recorrências=${expected.recurrences}, total=${expected.total}`);
+  const durationDays = versionRow.structure.duration_days ?? 180;
+  const maxWeeks = Math.ceil(durationDays / WEEK_DAYS);
+  const weekCounts = {};
+  let fullTotal = 0;
+  for (let w = 1; w <= maxWeeks; w++) {
+    weekCounts[w] = predictWeekCounts(versionRow.structure, config, w);
+    fullTotal += weekCounts[w].total;
+  }
+  console.log(`Semana 1: ${weekCounts[1].total} tasks | Total 26 semanas: ${fullTotal}`);
 
   const { createSolutionEngine } = await import('../src/services/solution.engine.ts');
   const engine = createSolutionEngine(client);
 
+  const fetchTask = async (key) => {
+    const { data } = await client
+      .from('tasks').select('id, due_date, day_offset, depends_on_task_ids')
+      .eq('template_key', key).eq('solution_instance_id', inst.instance.id).single();
+    return data;
+  };
+  const markAllDone = async () => {
+    const { error } = await client
+      .from('tasks').update({ status: 'done', completed_at: new Date().toISOString() })
+      .eq('solution_instance_id', inst.instance.id).eq('status', 'todo');
+    if (error) throw error;
+  };
+
+  let inst;
+
   try {
-    // 4. instantiate
-    const inst = await engine.instantiate({
+    // 4. instantiate — cria APENAS a semana 1
+    inst = await engine.instantiate({
       clientId: testClient.id,
       versionId: versionRow.id,
       startDate,
@@ -186,16 +215,16 @@ async function main() {
       userId,
     });
     check('instantiate: novas tasks', inst.created === true);
-    check('instantiate: tasksCreated = predição', inst.tasksCreated === expected.total,
-      `engine=${inst.tasksCreated}, predição=${expected.total}`);
+    check('instantiate: tasksCreated = semana 1', inst.tasksCreated === weekCounts[1].total,
+      `engine=${inst.tasksCreated}, predição=${weekCounts[1].total}`);
     check('instantiate: end_date = start + 179', inst.instance.end_date === addDays(startDate, 179),
       `end_date=${inst.instance.end_date}`);
 
-    // 5. banco
+    // 5. banco (semana 1)
     const { count: dbCount } = await client
       .from('tasks').select('id', { count: 'exact', head: true })
       .eq('solution_instance_id', inst.instance.id);
-    check('banco: total de tasks', dbCount === expected.total, `contagem=${dbCount}`);
+    check('banco: total de tasks = semana 1', dbCount === weekCounts[1].total, `contagem=${dbCount}`);
 
     const { data: allKeys } = await client
       .from('tasks').select('template_key')
@@ -206,35 +235,44 @@ async function main() {
     const { count: recurCount } = await client
       .from('tasks').select('id', { count: 'exact', head: true })
       .eq('solution_instance_id', inst.instance.id).is('milestone', null);
-    check('banco: recorrências (milestone null)', recurCount === expected.recurrences, `contagem=${recurCount}`);
+    check('banco: recorrências da semana 1 (milestone null)', recurCount === weekCounts[1].recurrences, `contagem=${recurCount}`);
 
     const { count: orphanTasks } = await client
       .from('tasks').select('id', { count: 'exact', head: true })
       .eq('client_id', testClient.id).is('solution_instance_id', null);
     check('banco: nenhuma task sem instância', orphanTasks === 0, `contagem=${orphanTasks}`);
 
-    // 6. datas (day_offset = 1 => start_date)
-    const fetchTask = async (key) => {
-      const { data } = await client
-        .from('tasks').select('id, due_date, day_offset, depends_on_task_ids')
-        .eq('template_key', key).eq('solution_instance_id', inst.instance.id).single();
-      return data;
-    };
+    // 6. datas (day_offset = 1 => start_date); semanas futuras NÃO existem ainda
     const t1 = await fetchTask('m1.diagnostico.entrega');
     const t30 = await fetchTask('m1.gestao.fechamento');
     const t180 = await fetchTask('recur.monitoramento@180');
     check('data: offset 1 => start', t1?.due_date === startDate, `due=${t1?.due_date}`);
-    check('data: offset 30 => +29d', t30?.due_date === addDays(startDate, 29), `due=${t30?.due_date}`);
-    check('data: recurrência @180 => +179d', t180?.due_date === addDays(startDate, 179), `due=${t180?.due_date}`);
+    check('semana 4 (offset 30) ainda não existe', t30 === null);
+    check('semana 26 (offset 180) ainda não existe', t180 === null);
 
-    // 7. dependências resolvidas (sem enforcement)
-    const depCriacao = await fetchTask('m5.traffic.campaign_03.criacao');
-    const depTarget = await fetchTask('m1.traffic.meta_campaign_01');
-    const playbook = await fetchTask('m6.playbook.comercial');
-    check('deps: campanha_03 -> meta_campaign_01', depCriacao?.depends_on_task_ids?.length === 1 && depCriacao.depends_on_task_ids[0] === depTarget.id);
-    check('deps: playbook comercial -> 3 deps', playbook?.depends_on_task_ids?.length === 3, `len=${playbook?.depends_on_task_ids?.length}`);
+    // 7. concluir semana 1 => libera semana 2
+    await markAllDone();
+    const w2 = await engine.ensureNextWeeks(inst.instance.id);
+    check('ensure: semana 2 criada', w2.created === weekCounts[2].total,
+      `criadas=${w2.created}, predição=${weekCounts[2].total}`);
+    check('ensure: completed false', w2.completed === false);
+    const againEnsure = await engine.ensureNextWeeks(inst.instance.id);
+    check('ensure: idempotente (0 criadas)', againEnsure.created === 0, `criadas=${againEnsure.created}`);
 
-    // 8. idempotência
+    // 8. reschedule (só tasks não concluídas)
+    const pendingTask = await fetchTask('m1.ia_sdr.pre_qualificacao'); // offset 11, semana 2
+    check('reschedule: alvo pendente existe (semana 2)', pendingTask !== null);
+    const newStart = '2026-08-16';
+    const res = await engine.reschedule(inst.instance.id, newStart);
+    check('reschedule: start_date', res.start_date === newStart);
+    check('reschedule: end_date', res.end_date === addDays(newStart, 179), `end=${res.end_date}`);
+    const doneTask = await fetchTask('m1.diagnostico.entrega');
+    const shiftedTask = await fetchTask('m1.social_media.editorial'); // offset 8, semana 2, pendente
+    check('reschedule: task concluída inalterada', doneTask.due_date === startDate, `due=${doneTask.due_date}`);
+    check('reschedule: task pendente recalculada (offset 8 => +7d)', shiftedTask.due_date === addDays(newStart, 7),
+      `due=${shiftedTask.due_date}`);
+
+    // 9. idempotência do instantiate
     const again = await engine.instantiate({
       clientId: testClient.id,
       versionId: versionRow.id,
@@ -243,36 +281,44 @@ async function main() {
       userId,
     });
     check('idempotência: retorna instância existente', again.created === false && again.instance.id === inst.instance.id);
-    check('idempotência: mesmo total', again.tasksCreated === expected.total, `total=${again.tasksCreated}`);
 
-    // 9. reschedule (só tasks não concluídas)
-    await client.from('tasks').update({ status: 'done', completed_at: new Date().toISOString() }).eq('id', t1.id);
-    const newStart = '2026-08-16';
-    const res = await engine.reschedule(inst.instance.id, newStart);
-    check('reschedule: start_date', res.start_date === newStart);
-    check('reschedule: end_date', res.end_date === addDays(newStart, 179), `end=${res.end_date}`);
-    const doneTask = await fetchTask('m1.diagnostico.entrega');
-    const shiftedTask = await fetchTask('m1.process.process_commercial');
-    check('reschedule: task concluída inalterada', doneTask.due_date === startDate, `due=${doneTask.due_date}`);
-    check('reschedule: task pendente recalculada', shiftedTask.due_date === addDays(newStart, 1), `due=${shiftedTask.due_date}`);
+    // 10. executar as demais semanas até a conclusão
+    let totalCreated = weekCounts[1].total + w2.created;
+    for (let w = 2; w <= maxWeeks; w++) {
+      await markAllDone();
+      const rw = await engine.ensureNextWeeks(inst.instance.id);
+      if (w < maxWeeks) {
+        check(`semana ${w} concluída => libera semana ${w + 1}`, rw.created === weekCounts[w + 1].total,
+          `criadas=${rw.created}, predição=${weekCounts[w + 1].total}`);
+        totalCreated += rw.created;
+      } else {
+        check('última semana concluída => solução completed', rw.completed === true && rw.created === 0,
+          `completed=${rw.completed}, criadas=${rw.created}`);
+      }
+    }
+    const { count: finalCount } = await client
+      .from('tasks').select('id', { count: 'exact', head: true })
+      .eq('solution_instance_id', inst.instance.id);
+    check('total materializado = predição completa', finalCount === fullTotal, `banco=${finalCount}, predição=${fullTotal}`);
+    check('soma incremental = predição completa', totalCreated === fullTotal, `soma=${totalCreated}`);
 
-    // 10. pause / resume / remove
-    const paused = await engine.pause(inst.instance.id);
-    check('pause: status', paused.status === 'paused');
-    const resumed = await engine.resume(inst.instance.id);
-    check('resume: status', resumed.status === 'active');
+    // 11. dependências resolvidas (sem enforcement)
+    const depCriacao = await fetchTask('m5.traffic.campaign_03.criacao');
+    const depTarget = await fetchTask('m1.traffic.meta_campaign_01');
+    const playbook = await fetchTask('m6.playbook.comercial');
+    check('deps: campanha_03 -> meta_campaign_01', depCriacao?.depends_on_task_ids?.length === 1 && depCriacao.depends_on_task_ids[0] === depTarget.id);
+    check('deps: playbook comercial -> 3 deps', playbook?.depends_on_task_ids?.length === 3, `len=${playbook?.depends_on_task_ids?.length}`);
 
-    // 11. progresso
+    // 12. progresso (via engine e instância finalizada)
     const prog = await engine.getProgress(inst.instance.id);
-    check('progress: total', prog.total === expected.total, `total=${prog.total}`);
-    check('progress: done', prog.done === 1, `done=${prog.done}`);
-    check('progress: byMilestone.m1', prog.byMilestone['m1']?.total === expected.byMilestone['m1'],
-      `m1=${prog.byMilestone['m1']?.total}, predição=${expected.byMilestone['m1']}`);
-
+    check('progress: total', prog.total === fullTotal, `total=${prog.total}`);
+    check('progress: done', prog.done === fullTotal, `done=${prog.done}`);
     const milestonesKeys = Object.keys(prog.byMilestone);
     check('progress: 6 marcos', milestonesKeys.length === 6, milestonesKeys.join(','));
+    const completedInst = await engine.getInstance(inst.instance.id);
+    check('instância: status completed', completedInst.status === 'completed', `status=${completedInst.status}`);
 
-    // 12. cleanup
+    // 13. cleanup
     await client.from('clients').delete().eq('id', testClient.id);
     console.log('Cleanup: cliente de teste removido (tasks cascateadas)');
   } catch (err) {

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/services/supabase';
+import { SolutionService } from '@/services/solution.service';
 import { TaskCard } from './TaskCard';
 import { TaskDetailModal } from '@/components/modals/TaskDetailModal';
 import { toast } from 'sonner';
@@ -15,6 +16,7 @@ type Task = {
   client_id?: string;
   stage?: string;
   parent_id?: string | null;
+  solution_instance_id?: string | null;
   clients: { name: string };
   profiles: { full_name: string };
 };
@@ -40,7 +42,7 @@ export function KanbanBoard({
 
   const fetchTasks = useCallback(async () => {
     let query = supabase.from('tasks').select(`
-      id, title, description, status, priority, due_date, module, client_id, stage, parent_id,
+      id, title, description, status, priority, due_date, module, client_id, stage, parent_id, solution_instance_id,
       clients!tasks_client_id_fkey ( name ), profiles!tasks_assigned_to_fkey ( full_name )
     `).order('created_at', { ascending: false });
 
@@ -156,9 +158,28 @@ export function KanbanBoard({
       if (movedTask.client_id && movedTask.stage?.startsWith('onboarding_phase_')) {
         await checkOnboardingCompletion(movedTask.client_id);
       }
+
+      // Se a tarefa é de uma solução, verificar se a próxima semana pode ser liberada
+      if (movedTask.solution_instance_id) {
+        await ensureSolutionNextWeeks(movedTask.solution_instance_id);
+      }
     }
 
     setDraggedTaskId(null);
+  };
+
+  const ensureSolutionNextWeeks = async (instanceId: string) => {
+    try {
+      const result = await SolutionService.ensureNextWeeks(instanceId);
+      if (result.completed) {
+        toast.success('Solução concluída! Todas as semanas foram executadas.');
+      } else if (result.created > 0) {
+        toast.success(`Semana ${result.week} liberada — ${result.created} novas tarefas no roadmap!`);
+        await fetchTasks();
+      }
+    } catch (err) {
+      console.error('Erro ao liberar próxima semana da solução:', err);
+    }
   };
 
   const checkOnboardingCompletion = async (clientId: string) => {
@@ -212,6 +233,11 @@ export function KanbanBoard({
     // Se a tarefa selecionada tem client_id e é de onboarding, checar conclusão
     if (selectedTask?.client_id && selectedTask.stage?.startsWith('onboarding_phase_')) {
       await checkOnboardingCompletion(selectedTask.client_id);
+    }
+
+    // Se a tarefa é de uma solução, verificar se a próxima semana pode ser liberada
+    if (selectedTask?.solution_instance_id) {
+      await ensureSolutionNextWeeks(selectedTask.solution_instance_id);
     }
   };
 

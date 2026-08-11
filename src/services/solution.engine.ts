@@ -14,6 +14,9 @@ import type {
 } from '../types/solution.types';
 
 const PARALLEL_CHUNK = 100;
+const WEEK_DAYS = 7;
+
+const weekOf = (dayOffset: number): number => Math.ceil(dayOffset / WEEK_DAYS);
 
 function chunk<T>(items: T[], size: number): T[][] {
   const chunks: T[][] = [];
@@ -79,10 +82,28 @@ export function createSolutionEngine(client: SupabaseClient) {
   async function resolveDependencies(
     plannedTasks: PlannedTask[],
     rows: { id: string; template_key: string }[],
+    instanceId: string,
   ): Promise<void> {
     const rowIdByKey = new Map(rows.map((r) => [r.template_key, r.id]));
-    const missing: string[] = [];
 
+    const missingKeys = new Set<string>();
+    for (const planned of plannedTasks) {
+      for (const dep of planned.depends_on) {
+        if (!rowIdByKey.has(dep)) missingKeys.add(dep);
+      }
+    }
+
+    if (missingKeys.size > 0) {
+      const { data: older, error: olderError } = await client
+        .from('tasks')
+        .select('id, template_key')
+        .eq('solution_instance_id', instanceId)
+        .in('template_key', Array.from(missingKeys));
+      if (olderError) throw olderError;
+      for (const r of older ?? []) rowIdByKey.set(r.template_key, r.id);
+    }
+
+    const missing: string[] = [];
     const pending: { rowId: string; ids: string[] }[] = [];
 
     for (const planned of plannedTasks) {
@@ -101,7 +122,7 @@ export function createSolutionEngine(client: SupabaseClient) {
 
     if (missing.length > 0) {
       console.warn(
-        `[solution-engine] dependências ignoradas (excluídas por condição): ${missing.join(', ')}`,
+        `[solution-engine] dependências ignoradas (excluídas por condição ou não materializadas): ${missing.join(', ')}`,
       );
     }
 
@@ -116,7 +137,9 @@ export function createSolutionEngine(client: SupabaseClient) {
 
   /**
    * Materializa uma solução para um cliente a partir da versão escolhida.
-   * Idempotente: se a instância (status != removed) existir, retorna a existente.
+   * Libera apenas as tarefas da SEMANA 1 (day_offset 1–7); as demais semanas
+   * são liberadas sob demanda via ensureNextWeeks. Idempotente: se a
+   * instância (status != removed) existir, retorna a existente.
    */
   async function instantiate(params: InstantiateParams): Promise<InstantiateResult> {
     const { clientId, versionId, startDate, config, userId } = params;
@@ -140,7 +163,7 @@ export function createSolutionEngine(client: SupabaseClient) {
     const version = await getVersion(versionId);
     const structure = version.structure as SolutionStructure;
     const durationDays = structure.duration_days ?? 180;
-    const planned = expandStructure(structure, config);
+    const planned = expandStructure(structure, config).filter((p) => weekOf(p.day_offset) === 1);
 
     const { data: instance, error: instanceError } = await client
       .from('client_solutions')
@@ -173,7 +196,7 @@ export function createSolutionEngine(client: SupabaseClient) {
       throw insertError || new Error('Falha ao materializar tarefas da solução');
     }
 
-    await resolveDependencies(planned, rows as { id: string; template_key: string }[]);
+    await resolveDependencies(planned, rows as { id: string; template_key: string }[], instance.id);
 
     return { instance: instance as SolutionInstance, created: true, tasksCreated: rows.length };
   }
@@ -187,6 +210,80 @@ export function createSolutionEngine(client: SupabaseClient) {
       .single();
     if (error || !data) throw error || new Error('Falha ao atualizar status da instância');
     return data as SolutionInstance;
+  }
+
+  /**
+   * Libera as próximas semanas do roadmap: avança semana a semana enquanto a
+   * semana corrente estiver 100% concluída, materializando apenas a primeira
+   * semana com tarefas pendentes de criação. Idempotente.
+   */
+  async function ensureNextWeeks(
+    instanceId: string,
+  ): Promise<{ week: number; created: number; completed: boolean }> {
+    const instance = await getInstance(instanceId);
+    if (instance.status !== 'active') {
+      return { week: 0, created: 0, completed: false };
+    }
+
+    const version = await getVersion(instance.version_id);
+    const structure = version.structure as SolutionStructure;
+    const planned = expandStructure(structure, instance.config);
+    const durationDays = structure.duration_days ?? 180;
+    const maxWeek = Math.ceil(durationDays / WEEK_DAYS);
+
+    const { data: existingRows, error: existingError } = await client
+      .from('tasks')
+      .select('template_key, status')
+      .eq('solution_instance_id', instanceId);
+    if (existingError) throw existingError;
+
+    const byKey = new Map<string, string>();
+    for (const row of existingRows ?? []) byKey.set(row.template_key, row.status);
+
+    let created = 0;
+    let advancedWeek = 0;
+
+    for (let week = 1; week <= maxWeek; week++) {
+      const plannedWeek = planned.filter((p) => weekOf(p.day_offset) === week);
+      if (plannedWeek.length === 0) continue;
+
+      const allMaterialized = plannedWeek.every((p) => byKey.has(p.template_key));
+      const allDone = allMaterialized && plannedWeek.every((p) => byKey.get(p.template_key) === 'done');
+
+      if (allDone) continue;
+
+      if (allMaterialized) break;
+
+      const missing = plannedWeek.filter((p) => !byKey.has(p.template_key));
+      if (missing.length === 0) break;
+
+      const rows = missing.map((p) =>
+        toTaskRow(p, instance.client_id, instanceId, instance.created_by ?? '', instance.start_date),
+      );
+
+      const { data: inserted, error: insertError } = await client
+        .from('tasks')
+        .insert(rows)
+        .select('id, template_key');
+      if (insertError || !inserted) {
+        throw insertError || new Error('Falha ao liberar semana da solução');
+      }
+
+      await resolveDependencies(missing, inserted as { id: string; template_key: string }[], instanceId);
+      for (const row of inserted) byKey.set(row.template_key, 'todo');
+
+      created += inserted.length;
+      advancedWeek = week;
+      break;
+    }
+
+    const allComplete = planned.every((p) => byKey.get(p.template_key) === 'done');
+    if (allComplete) {
+      await setStatus(instanceId, 'completed');
+      return { week: 0, created: 0, completed: true };
+    }
+
+    return { week: advancedWeek, created, completed: false };
   }
 
   function pause(instanceId: string): Promise<SolutionInstance> {
@@ -313,6 +410,7 @@ export function createSolutionEngine(client: SupabaseClient) {
 
   return {
     instantiate,
+    ensureNextWeeks,
     pause,
     resume,
     remove,
